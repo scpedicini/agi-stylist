@@ -46,11 +46,11 @@ It also helps maintain stylistic continuity across all of your images.
 
 ## Quick start
 
+Needs [Node.js](https://nodejs.org) and pnpm (`npm install -g pnpm`).
+
 ```bash
-corepack enable                   # once, if pnpm isn't installed (the version is pinned in package.json)
 pnpm install
-pnpm exec playwright install chromium   # once, for the e2e tests
-pnpm dev                       # http://localhost:5250
+pnpm dev   # http://localhost:5250
 ```
 
 Use an agentic harness such as OpenCode or PI to interact with the skills programmatically.
@@ -119,7 +119,7 @@ Myst and KQ6 scenes use it for their skies, seas, back walls and other big backd
 | `pnpm dev` / `preview` | viewer on port **5250** (dev server / built app) |
 | `pnpm build` | typecheck and build the viewer into `dist/` |
 | `pnpm test` | unit, golden (75 exact + 6 ≥ 90%) and CLI tests (Vitest) |
-| `pnpm test:e2e` | Playwright tests (their own server on port 5251) |
+| `pnpm test:e2e` | Playwright tests (their own server on port 5251; run `pnpm exec playwright install chromium` once first) |
 | `pnpm render <scene.pic> [--variant all] [--compare] [--confusion] [--steps n] [--beside picture.png] [--overlay ink.png]` | render to `out/*.png` |
 | `pnpm grid <image> [--trim] [--anchor top] [--tile 11x8:3,1] [--fit]` | reframe a source image to the 1.9:1 screen and write gridded copies for translating it by eye; `--fit` (or a `.txt` ASCII layout) is for layout sketches (needs ImageMagick; `--help` lists every option) |
 | `pnpm lint:pic [-- <scene.pic>...] [--strict]` | check scenes for fill mistakes, gaps, broken variants |
