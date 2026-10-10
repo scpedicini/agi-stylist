@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
-import { APP_DESCRIPTION, APP_NAME, SITE_URL, X_HANDLE } from './src/app/config.ts';
+import { APP_DESCRIPTION, APP_NAME, REPO_URL, SITE_URL, X_HANDLE } from './src/app/config.ts';
 
 const escapeHtml = (s: string) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
@@ -37,14 +37,15 @@ export default defineConfig({
   server: { port: 5250, strictPort: true },
   plugins: [
     {
-      // index.html writes the name, address, description and X account as %APP_NAME%, %SITE_URL%,
-      // %APP_DESCRIPTION% and %X_HANDLE% (all set in src/app/config.ts), %OG_IMAGE% and %X_IMAGE% for the
+      // index.html writes the name, address, description, repository and X account as %APP_NAME%,
+      // %SITE_URL%, %APP_DESCRIPTION%, %REPO_URL% and %X_HANDLE% (all set in src/app/config.ts), %OG_IMAGE% and %X_IMAGE% for the
       // preview images' URLs, and %JSON_LD% for the structured data
       name: 'site-config',
       transformIndexHtml: {
         order: 'pre',
         handler: (html) =>
           html.replaceAll('%APP_NAME%', escapeHtml(APP_NAME)).replaceAll('%SITE_URL%', SITE_URL).replaceAll('%APP_DESCRIPTION%', escapeHtml(APP_DESCRIPTION))
+            .replaceAll('%REPO_URL%', escapeHtml(REPO_URL))
             .replaceAll('%X_HANDLE%', escapeHtml(X_HANDLE))
             .replaceAll('%OG_IMAGE%', OG_IMAGE)
             .replaceAll('%X_IMAGE%', X_IMAGE)

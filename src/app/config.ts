@@ -8,6 +8,9 @@ export const APP_NAME = 'Paint Quest';
 /** Where the site is served. Link previews, the canonical link and the sitemap need absolute URLs. */
 export const SITE_URL = 'https://kq-styles.specr.net/';
 
+/** The source code on GitHub, linked from the page footer. */
+export const REPO_URL = 'https://github.com/scpedicini/agi-stylist';
+
 /** The X (Twitter) account credited on link previews there (twitter:site and twitter:creator). */
 export const X_HANDLE = '@wunderbaba';
 

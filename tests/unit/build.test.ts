@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { APP_DESCRIPTION, APP_NAME, SITE_URL, X_HANDLE } from '../../src/app/config.ts';
+import { APP_DESCRIPTION, APP_NAME, REPO_URL, SITE_URL, X_HANDLE } from '../../src/app/config.ts';
 
 describe('production build', () => {
   // a real build, written out, so the test sees what gets deployed (public/ files included)
@@ -28,6 +28,7 @@ describe('production build', () => {
   it('writes the project name into index.html and leaves no placeholder', () => {
     expect(html).toContain(`<title>${APP_NAME}: `);
     expect(html).toContain(`<h1>${APP_NAME}</h1>`);
+    expect(html).toContain(`<a href="${REPO_URL}"`);
     expect(html).not.toMatch(/%[A-Z_]+%/);
   });
 
