@@ -1,0 +1,342 @@
+{
+  "id": "02-river-valley",
+  "source": "tests/fixtures/sketches/02-river-valley.png",
+  "brief": "The mountains have snowy peaks. The cottage has a red roof and smoke coming from the chimney. The boat is a little rowing boat.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "SKY: orange sunset",
+      "kind": "region",
+      "at": [
+        220,
+        90
+      ],
+      "is": "orange sunset sky above the mountains",
+      "labelBox": [
+        79,
+        79,
+        362,
+        107
+      ],
+      "pic": [
+        34.4,
+        19.7
+      ]
+    },
+    {
+      "label": "MOUNTAINS",
+      "kind": "region",
+      "at": [
+        730,
+        280
+      ],
+      "is": "mountain range following the drawn outline",
+      "lines": [
+        [
+          [
+            0,
+            330
+          ],
+          [
+            120,
+            230
+          ],
+          [
+            230,
+            290
+          ],
+          [
+            380,
+            170
+          ],
+          [
+            520,
+            300
+          ],
+          [
+            640,
+            200
+          ],
+          [
+            780,
+            150
+          ],
+          [
+            900,
+            260
+          ],
+          [
+            1024,
+            210
+          ]
+        ],
+        [
+          [
+            0,
+            330
+          ],
+          [
+            1024,
+            330
+          ]
+        ]
+      ],
+      "labelBox": [
+        639,
+        269,
+        822,
+        291
+      ],
+      "pic": [
+        114.1,
+        61.3
+      ]
+    },
+    {
+      "label": "RIVER",
+      "kind": "region",
+      "at": [
+        520,
+        590
+      ],
+      "is": "river between the two drawn banks, widening toward the viewer",
+      "lines": [
+        [
+          [
+            500,
+            330
+          ],
+          [
+            470,
+            420
+          ],
+          [
+            420,
+            520
+          ],
+          [
+            340,
+            640
+          ],
+          [
+            300,
+            768
+          ]
+        ],
+        [
+          [
+            545,
+            330
+          ],
+          [
+            580,
+            430
+          ],
+          [
+            640,
+            540
+          ],
+          [
+            690,
+            650
+          ],
+          [
+            720,
+            768
+          ]
+        ]
+      ],
+      "labelBox": [
+        479,
+        579,
+        562,
+        601
+      ],
+      "pic": [
+        81.3,
+        129.1
+      ]
+    },
+    {
+      "label": "MEADOW",
+      "kind": "region",
+      "at": [
+        170,
+        520
+      ],
+      "is": "meadow left of the river",
+      "lines": [
+        [
+          [
+            0,
+            330
+          ],
+          [
+            1024,
+            330
+          ]
+        ],
+        [
+          [
+            500,
+            330
+          ],
+          [
+            470,
+            420
+          ],
+          [
+            420,
+            520
+          ],
+          [
+            340,
+            640
+          ],
+          [
+            300,
+            768
+          ]
+        ]
+      ],
+      "labelBox": [
+        101,
+        509,
+        240,
+        531
+      ],
+      "pic": [
+        26.6,
+        113.8
+      ]
+    },
+    {
+      "label": "MEADOW",
+      "kind": "region",
+      "at": [
+        870,
+        640
+      ],
+      "is": "meadow right of the river",
+      "lines": [
+        [
+          [
+            0,
+            330
+          ],
+          [
+            1024,
+            330
+          ]
+        ],
+        [
+          [
+            545,
+            330
+          ],
+          [
+            580,
+            430
+          ],
+          [
+            640,
+            540
+          ],
+          [
+            690,
+            650
+          ],
+          [
+            720,
+            768
+          ]
+        ]
+      ],
+      "labelBox": [
+        801,
+        629,
+        940,
+        651
+      ],
+      "pic": [
+        135.9,
+        140
+      ]
+    },
+    {
+      "label": "(horizon line)",
+      "kind": "path",
+      "at": [
+        512,
+        330
+      ],
+      "is": "the foot of the mountains / far edge of the meadows",
+      "lines": [
+        [
+          [
+            0,
+            330
+          ],
+          [
+            1024,
+            330
+          ]
+        ]
+      ],
+      "pic": [
+        80,
+        72.2
+      ]
+    },
+    {
+      "label": "COTTAGE",
+      "kind": "grounded",
+      "at": [
+        830,
+        420
+      ],
+      "is": "cottage, red roof, chimney smoke",
+      "support": "right meadow",
+      "labelBox": [
+        758,
+        409,
+        902,
+        431
+      ],
+      "pic": [
+        129.7,
+        91.9
+      ]
+    },
+    {
+      "label": "SMALL_BOAT",
+      "kind": "grounded",
+      "at": [
+        520,
+        690
+      ],
+      "is": "small rowing boat",
+      "support": "on the river",
+      "labelBox": [
+        434,
+        679,
+        605,
+        701
+      ],
+      "pic": [
+        81.3,
+        150.9
+      ]
+    }
+  ],
+  "requirements": [
+    "snowy mountain peaks",
+    "orange sunset sky",
+    "cottage with a red roof",
+    "smoke from the cottage chimney",
+    "a small rowing boat on the river",
+    "mountain silhouette follows the drawn outline",
+    "river follows the drawn banks"
+  ],
+  "ambiguities": []
+}

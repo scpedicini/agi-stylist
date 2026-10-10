@@ -1,0 +1,181 @@
+# Castle on a Hill
+# Source: layout sketch tests/fixtures/sketches/01-castle-words.png; reframed with: pnpm grid tests/fixtures/sketches/01-castle-words.png --crop 0,0,640,480 --fit --name sketches-01-castle-words
+# Brief: a grey stone castle with two round towers and red flags. Late afternoon. The path is
+#   dirt and winds down toward the viewer.
+# Method: composed from a layout sketch. Labels: FLAG → red pennant on a pole atop the central
+#   keep, cloth centred (84,16); CASTLE ON A HILL → grey stone castle (curtain wall, square keep,
+#   two round towers with red flags) x 50-115, base y 79-81, standing on a grassy hilltop that
+#   falls away to both sides; DRAWBRIDGE → lowered brown plank bridge with chains, from the gate
+#   sill (y 79) across the moat to y 93, x 75-90; MOAT → blue water ring round the castle on the
+#   hilltop, ellipse centre (82,84) 48×10, label (120,86) in its right arm; PATH → brown dirt band
+#   from the bridge foot (82,93) winding right, left, then right off the bottom edge, through
+#   (75,119); ROCKS (left) → three grey boulders around (22,140), base y≈150; ROCKS (right) → three
+#   boulders around (141,144), base y≈153. Geometry: none drawn (words only).
+# Interpreted: the sketch has one FLAG over the middle while the brief says "red flags" on two
+#   round towers: drew the sketched flag on a central keep at the label and a red flag on each
+#   tower as well. "On a hill": the castle and moat sit on a hilltop plateau (y≈72) with slopes
+#   down to y≈105 at the screen edges and far lightblue mountains and a green treeline behind.
+#   Late afternoon → variant `day` with a low yellow sun in the west (left, invented) so the
+#   towers are shaded on their right and the rocks cast green shadows to the right.
+scene "Castle on a Hill"
+variants day
+
+# ---------- helpers ----------
+
+# crenellated parapet: merlons mw wide, gaps gap wide, notches h deep
+fn battlement(x1, x2, top, bottom, h = 3, mw = 3, gap = 2, c = lightgrey) {
+  let pts = [[x1, bottom], [x1, top]]
+  let x = x1
+  while x + mw + gap < x2 {
+    push(pts, [x + mw, top])
+    push(pts, [x + mw, top + h])
+    push(pts, [x + mw + gap, top + h])
+    push(pts, [x + mw + gap, top])
+    x += mw + gap
+  }
+  push(pts, [x2, top])
+  push(pts, [x2, bottom])
+  shape(pts, c)
+}
+
+# red flag on a pole; (px, py) = top of the pole, flies to the right
+fn flag(px, py, pole_h, w = 7, h = 6) {
+  color black
+  line px, py, px, py + pole_h
+  shape([[px + 1, py], [px + w, py + 1], [px + w - 1, py + h / 2], [px + w, py + h - 1], [px + 1, py + h]], red)
+}
+
+# round tower: centre column cx, half-width hw, body from top down to base (curved foot)
+fn tower(cx, hw, top, base) {
+  let body = [[cx - hw, top], [cx + hw, top]] + arc(cx, base, hw, 2, 90, 270, 15)
+  shape(body, lightgrey)
+  # shaded right third (sun in the west)
+  let sx = cx + round(hw / 3)
+  shape([[sx, top + 1], [cx + hw - 1, top + 1], [cx + hw - 1, base], [sx, base + 2]], darkgrey, null)
+  stones(cx - hw, top + 2, sx - 1, base, 5, 5, darkgrey, body)
+  color black
+  outline body
+  # corbelled parapet, a little wider than the body
+  battlement(cx - hw - 1, cx + hw + 1, top - 7, top - 3, 3, 2, 2)
+  shape([[cx - hw - 1, top - 3], [cx + hw + 1, top - 3], [cx + hw, top], [cx - hw, top]], lightgrey)
+  color darkgrey
+  rect sx, top - 6, cx + hw, top - 1
+  color black
+  outline [[cx - hw - 1, top - 7], [cx + hw + 1, top - 7], [cx + hw + 1, top - 3], [cx + hw, top], [cx - hw, top], [cx - hw - 1, top - 3]]
+  # arrow slits
+  rect cx - 1, top + 8, cx - 1, top + 13
+  rect cx - 1, top + 24, cx - 1, top + 29
+  flag(cx, top - 19, 12, 6, 5)
+}
+
+# ---------- sky, sun, far land ----------
+color blue
+rect 0, 0, 159, 110
+# low afternoon sun in the west
+shape(arc(18, 50, 5, 9, 0, 360, 20), yellow, null)
+hills(52, 84, lightblue, 4)
+treeline(86, 108, green, 7)
+
+# ---------- the hill ----------
+let hill = [[-2, 110], [10, 103], [22, 93], [32, 83], [44, 75], [62, 72], [100, 72], [120, 74],
+  [132, 82], [142, 92], [152, 100], [162, 106], [162, 170], [-2, 170]]
+shape(hill, lightgreen)
+# shoulder in shade on the side away from the sun
+shape([[126, 77], [132, 82], [142, 92], [152, 100], [162, 106], [162, 124], [150, 114], [138, 100], [130, 88]], green, null)
+
+# ---------- moat round the castle ----------
+shape(arc(82, 84, 48, 10, 0, 360, 10), blue)
+# island the castle stands on
+shape(arc(82, 78, 38, 4, 0, 360, 15), lightgreen)
+color lightblue
+line 40, 84, 46, 84
+line 52, 88, 58, 88
+line 104, 90, 110, 90
+line 117, 83, 124, 83
+line 120, 87, 126, 87
+
+# ---------- castle ----------
+# curtain wall
+color lightgrey
+rect 62, 48, 103, 79
+stones(62, 50, 103, 79, 5, 7, darkgrey)
+color black
+outline [[62, 48], [103, 48], [103, 79], [62, 79]]
+battlement(62, 103, 44, 48, 3, 3, 2)
+
+# central keep
+color lightgrey
+rect 71, 28, 94, 79
+stones(71, 30, 94, 79, 5, 7, darkgrey)
+color darkgrey
+rect 91, 29, 93, 79
+color black
+outline [[71, 28], [94, 28], [94, 79], [71, 79]]
+battlement(70, 95, 23, 28, 3, 3, 2)
+color darkgrey
+rect 92, 24, 94, 27
+color black
+outline [[70, 23], [95, 23], [95, 28], [70, 28]]
+# keep windows
+shape(archway(77, 33, 1, 2, 40), black)
+shape(archway(88, 33, 1, 2, 40), black)
+flag(80, 13, 10, 8, 6)
+
+# gate with the portcullis raised
+shape(archway(82.5, 61, 6, 6, 79), black)
+color darkgrey
+for x in [78, 80, 82, 84, 86] { line x, 62, x, 66 }
+line 77, 66, 88, 66
+
+# round towers at the corners
+tower(57, 6, 34, 80)
+tower(108, 6, 34, 80)
+
+# ---------- path (dirt) ----------
+let route = [[82, 92], [88, 95], [92, 101], [90, 107], [83, 113], [75, 119], [69, 126], [67, 134],
+  [70, 143], [77, 151], [85, 159], [90, 170]]
+# edges offset sideways row by row (a road in perspective), widening toward the viewer
+let left_edge = []
+let right_edge = []
+for p in route {
+  let hw = 5 + (p[1] - 90) / 80 * 11
+  push(left_edge, [p[0] - hw, p[1]])
+  push(right_edge, [p[0] + hw, p[1]])
+}
+shape(left_edge + reverse(right_edge), brown)
+color darkgrey
+for p in [[90, 103], [79, 116], [70, 129], [63, 140], [82, 147], [74, 158], [96, 163], [68, 150]] {
+  line p[0], p[1], p[0] + 1, p[1]
+}
+color yellow
+line 86, 107, 89, 105
+line 64, 131, 65, 127
+line 76, 141, 79, 144
+
+# ---------- drawbridge ----------
+shape([[76, 79], [89, 79], [90, 93], [75, 93]], brown)
+color black
+for y in [82, 85, 88, 91] { line 76, y, 89, y }
+color darkgrey
+line 72, 58, 75, 92
+line 93, 58, 90, 92
+
+# ---------- rocks (shadows fall to the right) ----------
+shape([[30, 150], [42, 148], [50, 151], [36, 154]], green, null)
+boulder([[8, 148], [11, 136], [20, 131], [30, 134], [34, 144], [26, 151], [14, 151]])
+boulder([[28, 150], [31, 142], [38, 140], [42, 146], [40, 151]])
+boulder([[2, 152], [4, 145], [10, 144], [13, 150], [9, 154]])
+
+shape([[150, 154], [162, 152], [162, 158], [152, 158]], green, null)
+boulder([[130, 151], [133, 139], [142, 134], [152, 138], [155, 148], [148, 154], [136, 154]])
+boulder([[122, 154], [124, 148], [130, 146], [134, 152], [129, 156]])
+boulder([[152, 154], [154, 146], [160, 144], [162, 156]])
+
+# a few grass tufts
+color green
+for p in [[20, 112], [40, 100], [118, 104], [128, 126], [44, 124], [108, 140], [34, 160], [116, 162]] {
+  line p[0], p[1], p[0] - 1, p[1] - 2
+  line p[0], p[1], p[0] + 1, p[1] - 2
+}
+
+frame()

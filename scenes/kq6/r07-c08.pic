@@ -1,0 +1,224 @@
+# Arched Guest Chamber
+# Source: King's Quest VI VGA background, reference/kq6/r07-c08.png
+#   (an empty arched chamber in the Castle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r07-c08.png --name kq6-r07-c08
+# Method: translated by eye. Kept: the plank ceiling with its gilt beams and cornices, the
+#   three arched niches of the back wall with their medallions, the two niches on each side
+#   wall, the gilt pendant brackets and slim columns with red rings, the hanging chandelier,
+#   the pale marble floor, the red rug with its gold border, and the stone ledge in front.
+# Dropped: the wall mottling, the spandrel scrollwork (now small dark pendants), the light
+#   switch on the back wall, the column shadows on the floor, the rug's fine pattern.
+# Colours: slate-blue niches -> lightblue with blue rims, the lamp-lit middle niche -> cyan,
+#   side-wall faces -> blue, cream and gilt trim -> yellow with brown shade and red lines,
+#   wood ceiling -> brown with red seams, medallions -> lightgrey in darkgrey rims,
+#   columns -> lightgrey with darkgrey shade and red rings, floor -> white with lightcyan
+#   wall-foot shadows and column reflections, rug -> red with a yellow border, ledge -> darkgrey and lightgrey.
+scene "Arched Guest Chamber"
+variants lit
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn medallion(cx, cy, rx = 4, ry = 6) {
+  color black
+  ellipse cx, cy, rx + 1, ry + 1
+  color darkgrey
+  ellipse cx, cy, rx, ry
+  color lightgrey
+  ellipse cx, cy, max(rx - 1, 1), max(ry - 2, 1)
+  color white
+  plot cx - 1, cy - 1, cx + 1, cy + 1
+}
+
+fn bracket(x, top, bottom) {
+  # red capital band under the spandrel, then a gilt wedge tapering to the column head
+  shape([[x - 3, top + 2], [x + 3, top + 2], [x + 1, bottom], [x - 1, bottom]], yellow)
+  color brown
+  line x + 2, top + 4, x + 1, bottom - 2
+  shape([[x - 4, top], [x + 4, top], [x + 4, top + 2], [x - 4, top + 2]], red)
+}
+
+fn col(x, top, bottom, ring, w = 1) {
+  # slim column: grey shaft, shaded right edge, a red ring and a red base
+  shape([[x - w, top], [x + w, top], [x + w, bottom], [x - w, bottom]], lightgrey)
+  color darkgrey
+  line x + w - (w > 1 ? 1 : 0), top + 1, x + w - (w > 1 ? 1 : 0), bottom - 1
+  shape([[x - w - 1, ring - 1], [x + w + 1, ring - 1], [x + w + 1, ring + 1], [x - w - 1, ring + 1]], red)
+  shape([[x - w - 1, bottom - 4], [x + w + 1, bottom - 4], [x + w + 1, bottom], [x - w - 1, bottom]], red)
+  color yellow
+  plot x, bottom - 2
+}
+
+fn niche_pts(cx, rx, bottom, d = 0) {
+  # trefoil-topped niche: low shoulders rising to a round head that holds the medallion
+  let pts = [[cx - rx + d, bottom], [cx - rx + d, 62 + d], [cx - rx + 2 + d, 57 + d],
+    [cx - rx + 5 + d, 54 + d], [cx - 7 + d, 53 + d]]
+  pts = pts + arc(cx, 49, 6 - d, 8 - d, 250, 470, 15)
+  return pts + [[cx + 7 - d, 53 + d], [cx + rx - 5 - d, 54 + d], [cx + rx - 2 - d, 57 + d],
+    [cx + rx - d, 62 + d], [cx + rx - d, bottom]]
+}
+
+fn niche(cx, rx, bottom, c) {
+  shape(niche_pts(cx, rx, bottom), blue)
+  shape(niche_pts(cx, rx, bottom, 1.5), c, null)
+}
+
+fn ornament(x, y) {
+  shape([[x - 4, y], [x + 4, y], [x + 1, y + 6], [x, y + 9], [x - 1, y + 6]], magenta)
+  color blue
+  line x, y + 1, x, y + 6
+}
+
+# ---- ceiling ---------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color brown
+  rect 0, 0, 159, 42
+}
+# plank seams converging on the far wall
+color red
+for x0 in range(-10, 175, 11) {
+  let t = 33 / 70
+  stroke [x0, 0], [x0 + (84 - x0) * t, 33]
+}
+# gilt cross beams with a dark underside
+fn beam(y, xl, xr) {
+  shape([[xl, y], [xr, y], [xr, y + 2], [xl, y + 2]], yellow, null)
+  color red
+  line xl, y + 3, xr, y + 3
+}
+beam 9, 24, 136
+beam 20, 32, 132
+beam 27, 38, 130
+# back cornice
+shape([[38, 32], [131, 32], [131, 38], [38, 38]], yellow, null)
+color lightgrey
+line 40, 33, 129, 33
+color red
+line 38, 38, 131, 38
+
+# ---- back wall ---------------------------------------------------------------------------------
+delay {
+  shape([[40, 39], [129, 39], [129, 121], [40, 121]], yellow, null)
+}
+niche 55.5, 12.5, 121, lightblue
+niche 84, 12, 121, cyan
+niche 113, 13, 121, lightblue
+ornament 70, 40
+ornament 98, 40
+medallion 55.5, 49
+medallion 84, 49
+medallion 113, 49
+
+# ---- side walls --------------------------------------------------------------------------------
+shape([[0, 6], [40, 41], [40, 121], [0, 147]], blue)
+shape([[160, 6], [129, 41], [129, 121], [160, 145]], blue)
+# niches, foreshortened
+shape([[11, 140], [11, 40], [13, 31], [17, 25], [21, 29], [24, 40], [24, 131]], lightblue)
+shape([[30, 128], [30, 50], [32, 44], [34, 41], [37, 44], [39, 52], [39, 122]], lightblue)
+shape([[130, 123], [130, 52], [131, 46], [133, 43], [135, 46], [135, 126]], lightblue)
+shape([[142, 132], [142, 36], [144, 29], [146, 26], [148, 30], [149, 38], [149, 137]], lightblue)
+medallion 17, 32, 3, 6
+medallion 34.5, 47, 2, 5
+medallion 133, 48, 1, 4
+medallion 145.5, 33, 2, 6
+
+# ---- side cornice bands --------------------------------------------------------------------------
+shape([[-1, -1], [21, -1], [44, 33], [40, 42], [-1, 6]], yellow)
+shape([[160, -1], [140, -1], [125, 33], [129, 42], [160, 6]], yellow)
+color red
+stroke [6, -1], [42, 38]
+stroke [154, -1], [127, 38]
+color brown
+stroke [0, 4], [40, 40]
+stroke [159, 4], [129, 40]
+
+# ---- brackets and columns ----------------------------------------------------------------------
+bracket 41, 60, 80
+bracket 70, 60, 80
+bracket 98, 60, 80
+bracket 128, 60, 80
+col 41, 80, 121, 104
+col 70, 80, 121, 104
+col 98, 80, 121, 104
+col 128, 80, 121, 104
+
+# side-wall pilasters: gilt shafts hanging from the cornice, with a red band
+shape([[0, 8], [11, 17], [11, 70], [10, 76], [8, 80], [6, 80], [4, 76], [3, 70], [3, 30], [0, 20]], yellow)
+shape([[2, 42], [12, 42], [12, 46], [2, 46]], red)
+shape([[21, 26], [30, 34], [30, 58], [29, 62], [27, 65], [25, 62], [24, 58], [23, 40]], yellow)
+shape([[23, 51], [31, 51], [31, 54], [23, 54]], red)
+shape([[159, 8], [149, 16], [149, 70], [150, 76], [152, 80], [154, 80], [156, 76], [157, 70], [157, 30], [160, 22]], yellow)
+shape([[148, 42], [158, 42], [158, 46], [148, 46]], red)
+shape([[142, 28], [135, 33], [136, 58], [137, 62], [139, 65], [141, 62], [141, 58], [141, 34]], yellow)
+shape([[135, 51], [142, 51], [142, 54], [135, 54]], red)
+color brown
+line 10, 20, 10, 74
+line 29, 36, 29, 60
+line 156, 30, 156, 74
+line 140, 36, 140, 60
+
+# ---- floor ---------------------------------------------------------------------------------------
+shape([[40, 121], [129, 121], [160, 145], [160, 161], [-1, 161], [-1, 147]], white, null)
+# wall-foot shadow
+shape([[40, 122], [129, 122], [132, 126], [37, 126]], lightcyan, null)
+shape([[39, 122], [43, 125], [3, 152], [-1, 152], [-1, 147]], lightcyan, null)
+shape([[130, 122], [126, 125], [156, 149], [160, 149], [160, 145]], lightcyan, null)
+# column reflections in the polished floor
+shape([[5, 145], [9, 145], [10, 160], [4, 160]], lightcyan, null)
+shape([[25, 131], [29, 131], [29, 148], [24, 148]], lightcyan, null)
+shape([[137, 129], [141, 129], [142, 146], [137, 146]], lightcyan, null)
+shape([[150, 142], [154, 142], [155, 160], [150, 160]], lightcyan, null)
+color black
+line 0, 147, 40, 121, 129, 121, 159, 144
+
+col 27, 64, 131, 110
+col 139, 64, 129, 108
+col 7, 80, 145, 118, 2
+col 152, 80, 142, 116, 2
+
+# ---- rug -----------------------------------------------------------------------------------------
+shape([[53, 129], [125, 129], [143, 151], [34, 151]], red)
+color yellow
+outline [57, 131], [122, 131], [137, 148], [41, 148]
+line 34, 151, 53, 129
+color magenta
+for p in [[60, 135], [118, 135], [52, 145], [127, 145], [89, 139]] {
+  plot p[0], p[1]
+  plot p[0] - 1, p[1]
+  plot p[0] + 1, p[1]
+  plot p[0], p[1] - 1
+  plot p[0], p[1] + 1
+}
+color cyan
+line 97, 143, 99, 141, 100, 143, 102, 142
+
+# ---- front ledge ---------------------------------------------------------------------------------
+shape([[-1, 161], [160, 161], [160, 168], [-1, 168]], darkgrey, null)
+color lightgrey
+line 0, 161, 159, 161
+shape([[41, 159], [53, 159], [54, 168], [40, 168]], lightgrey)
+shape([[100, 159], [111, 159], [112, 168], [99, 168]], lightgrey)
+color darkgrey
+line 52, 160, 53, 167
+line 110, 160, 111, 167
+
+# ---- chandelier ----------------------------------------------------------------------------------
+color black
+line 84, 6, 84, 65
+shape([[83, 9], [85, 9], [85, 11], [83, 11]], black)
+# upper ring, lower tier with its candles, then the bowl and finial
+shape([[79, 65], [89, 65], [88, 67], [80, 67]], black)
+shape([[83, 67], [85, 67], [85, 70], [83, 70]], black)
+shape([[74, 70], [94, 70], [91, 73], [77, 73]], black)
+shape([[80, 73], [88, 73], [86, 77], [82, 77]], black)
+shape([[83, 77], [85, 77], [84, 80]], black)
+color yellow
+for x in [80, 84, 88] { line x, 63, x, 64 }
+for x in [75, 79, 89, 93] { line x, 68, x, 69 }
+line 77, 71, 91, 71
+line 82, 75, 86, 75
+plot 81, 66, 87, 66
+color white
+plot 80, 62, 84, 62, 88, 62, 75, 67, 79, 67, 89, 67, 93, 67
+
+frame()

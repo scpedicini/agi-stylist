@@ -1,0 +1,235 @@
+# The Planetarium Chair
+# Source: Myst (1993) render, reference/myst/r08-c14.png; reframed with:
+#   pnpm grid reference/myst/r08-c14.png --crop 0,0,544,333 --name myst-r08-c14
+# Method: translated by eye. Kept: the pale curved wall and dome, the sagging wire with its four
+#   bullet lamps and their light fans, the dark red rail round the wall, three white pillars
+#   with their antennas and speaker feet, the raised wooden deck ring and its plank floor, the
+#   marble octagon with its black compass star, the chair's stand post and overhead panel, the
+#   red reclining chair and its strut, the shadow under it. Dropped: the faint dust specks in
+#   the dome, the bumpy texture of the rail and deck ring, the bolts on the pillars, most of the
+#   marble veining. Moved: nothing.
+# Colours: wall and dome → lightgrey, lamp light → white fans, wire → darkgrey, lamps and
+#   pillars → white with lightgrey shade and black caps, dark red wood → red with black seams
+#   and undersides, tan marble → yellow with brown veins, blue-grey marble → lightgrey with
+#   darkgrey veins, pale marble → white with lightgrey veins, star → black with cyan glints,
+#   pink rose marks → lightred, leather → red with lightred highlights, chrome → lightgrey.
+scene "The Planetarium Chair"
+variants lit
+
+# ---- shared geometry --------------------------------------------------------------------
+# far edge of the wooden deck where it meets the wall
+let fe = [[-1, 118], [10, 113], [20, 110], [30, 106], [40, 103], [50, 101], [60, 100], [70, 98],
+  [80, 97], [90, 97], [100, 99], [110, 100], [120, 102], [130, 103], [140, 105], [150, 109], [160, 113]]
+# inner edge of the deck's raised ring: a little deeper towards the sides
+let ie = []
+for p in fe { push(ie, [p[0], p[1] + 6 + 4 * abs(p[0] - 80) / 80]) }
+# the marble octagon (its foot runs off the bottom)
+let oct = [[49, 119], [110, 120], [140, 147], [142, 175], [18, 175], [20, 147]]
+# centre of the compass star
+let cx = 86
+let cy = 147
+
+# ---- deck planks: concentric seams round the octagon ------------------------------------
+# Painted first, so everything else stands on it, but held back with delay: over the original
+# the viewer paints it last, filling in behind what's already there, after the pillars, lamps and chair (and before the wall).
+delay {
+  color red
+  rect 0, 0, 159, 167
+}
+for i in 0..12 {
+  color i % 2 == 0 ? black : brown
+  outline scale(oct, 1.1 + i * 0.14)
+}
+
+# ---- wall and dome ------------------------------------------------------------------------
+# held back too, after the deck: the lamps, pillars and wire show first
+delay 2 {
+  shape([[-1, -1], [160, -1]] + reverse(fe), lightgrey, null)
+}
+color black
+stroke fe
+
+# ---- the raised deck ring ------------------------------------------------------------------
+shape(fe + reverse(ie), red)
+color brown
+stroke shift(fe, 0, 2)
+
+# ---- rail round the wall -------------------------------------------------------------------
+let rt = [[-1, 81], [30, 78], [60, 76], [80, 75], [100, 75], [130, 77], [160, 80]]
+let rb = [[-1, 90], [30, 85], [60, 81], [80, 80], [100, 80], [130, 83], [160, 89]]
+shape(rt + reverse(rb), red)
+color black
+stroke shift(rb, 0, -1)
+color brown
+stroke shift(rt, 0, 1)
+
+# ---- lamp light on the wall, the wire and the lamps -----------------------------------------
+# a beam of light straight down from each lamp, narrowing as it fades
+fn glow(x, y, w) {
+  color white
+  rect x - w, y, x + w, y + 9
+  rect x - w + 1, y + 10, x + w - 1, y + 17
+}
+glow(2, 45, 2)
+glow(57, 49, 1)
+glow(103, 49, 1)
+glow(157, 45, 2)
+
+color darkgrey
+stroke [[-1, 33], [5, 34], [20, 37], [30, 38], [40, 40], [50, 40], [60, 41], [70, 42], [90, 42],
+  [100, 41], [110, 40], [120, 39], [130, 38], [140, 36], [150, 34], [160, 33]]
+
+fn lamp(x, top, hw, h) {
+  let cap = top + round(h * 0.7)
+  shape([[x - hw, top + hw + 1], [x - 1, top], [x + 1, top], [x + hw, top + hw + 1], [x + hw, cap], [x - hw, cap]], white)
+  color lightgrey
+  stroke x + hw - 1, top + hw + 1, x + hw - 1, cap - 1
+  shape([[x - hw, cap], [x + hw, cap], [x + hw - 1, top + h], [x - hw + 1, top + h]], black)
+}
+lamp(2, 30, 3, 15)
+lamp(57, 39, 2, 10)
+lamp(103, 39, 2, 10)
+lamp(157, 30, 3, 15)
+
+# ---- marble octagon: mostly pale grey and white, one small tan piece -----------------------
+shape(oct, lightgrey)
+shape([[20, 147], [cx, cy], [70, 175], [18, 175]], white)            # pale, lower left
+shape([[cx, cy], [140, 147], [142, 175], [100, 175]], white)          # pale, lower right
+shape([[49, 119], [72, 119], [cx, cy], [42, 126]], white)             # pale, top left
+shape([[cx, cy], [118, 128], [140, 147]], yellow)                     # tan, right
+color black
+outline oct
+# joints and veins: tan streaks through the grey and white
+color darkgrey
+stroke [[42, 126], [cx, cy]]
+stroke [[98, 119], [cx, cy]]
+stroke [[30, 140], [36, 136], [42, 135], [50, 131]]
+color brown
+stroke [[26, 144], [34, 141], [40, 142], [48, 138]]
+stroke [[24, 158], [30, 155], [36, 156], [44, 152]]
+stroke [[52, 121], [58, 123], [62, 122]]
+stroke [[114, 160], [122, 156], [130, 157], [136, 153]]
+stroke [[124, 136], [130, 141]]
+color yellow
+stroke [[30, 164], [38, 161], [46, 162]]
+stroke [[102, 122], [108, 124]]
+color lightgrey
+stroke [[112, 165], [120, 162], [128, 164], [134, 162]]
+
+# ---- the compass star and the chair's shadow --------------------------------------------------
+fn pt(a, k) { return [cx + 44 * k * sin(a), cy - 24 * k * cos(a)] }
+for i in 0..24 {
+  let a = i * 15
+  let k = i % 2 == 0 ? 1.12 : 0.86
+  let w = i % 2 == 0 ? 11 : 8
+  shape([pt(a - w, 0.48), pt(a, k), pt(a + w, 0.48)], black, null)
+  color cyan
+  stroke [pt(a + 5, 0.55), pt(a, k)]
+}
+shape(blob(86, 149, 20, 24, 3, 0.12), black, null)
+fn kite(x, y) {
+  color lightred
+  outline [x - 3, y], [x, y - 2], [x + 3, y], [x, y + 2]
+}
+kite(66, 136)
+kite(64, 157)
+kite(80, 165)
+kite(102, 146)
+kite(98, 160)
+
+# ---- pillars, antennas and their speaker feet ------------------------------------------------
+fn antenna(x, top, bottom) {
+  color white
+  stroke x, top, x, bottom
+  color darkgrey
+  stroke x + 1, top + 6, x + 1, bottom
+}
+fn pillar(x1, x2, top, bottom) {
+  shape(archway((x1 + x2) / 2, top, (x2 - x1) / 2, (x2 - x1) * 0.8, bottom), white)
+  color lightgrey
+  rect x2 - 2, top + 3, x2 - 1, bottom - 1
+}
+fn foot(x, y) {
+  color black
+  ellipse x, y, 4, 5
+  color darkgrey
+  ellipse x, y, 3, 4
+  color lightgrey
+  rect x, y - 1, x + 1, y
+  color white
+  rect x + 1, y - 1, x + 1, y - 1
+}
+antenna(31, 35, 71)
+pillar(30, 36, 71, 104)
+foot(35, 107)
+antenna(127, 36, 70)
+pillar(124, 130, 70, 102)
+foot(124, 105)
+antenna(80, 30, 70)
+pillar(79, 83, 70, 96)
+
+# ---- the stand post and the overhead panel --------------------------------------------------
+color darkgrey
+rect 75, 50, 78, 104
+color lightgrey
+rect 76, 50, 76, 104
+color black
+stroke 74, 50, 74, 104
+stroke 79, 55, 79, 104
+rect 75, 66, 78, 68
+rect 75, 88, 78, 89
+rect 73, 49, 80, 55
+color brown
+rect 80, 51, 86, 52
+color yellow
+stroke 80, 51, 86, 51
+shape([[83, 50], [88, 50], [93, 54], [107, 55], [104, 60], [87, 60]], black)
+color lightgrey
+stroke 88, 59, 103, 59
+color yellow
+rect 90, 58, 91, 58
+rect 100, 58, 101, 58
+
+# ---- the reclining chair ---------------------------------------------------------------------
+# strut down to the floor
+shape(band([[68, 121], [62, 145], [57, 170]], 6, 6), darkgrey)
+color lightgrey
+stroke offset([[68, 121], [62, 145], [57, 170]], -1)
+# black frame behind and under the cushions
+shape([[87, 67], [103, 65], [107, 69], [108, 88], [103, 105], [97, 111], [92, 114], [92, 124],
+  [70, 126], [60, 123], [59, 116], [61, 99], [62, 92], [76, 90], [80, 87], [83, 82], [87, 80]], black)
+color lightgrey
+stroke [[106, 72], [107, 87], [102, 104], [95, 111]]
+# headrest: a squarish tufted block
+shape([[90, 69], [102, 67], [104, 70], [103, 78], [92, 80], [89, 77]], red)
+color black
+for x in [93, 96, 99] { stroke x, 70 - (x - 93) / 4, x, 78 - (x - 93) / 4 }
+color lightred
+stroke [[91, 69], [101, 67]]
+# back cushion
+shape([[85, 84], [104, 85], [103, 92], [83, 91]], red)
+shape([[87, 86], [97, 86], [96, 88], [86, 88]], lightred, null)
+color lightred
+stroke [[86, 84], [103, 85]]
+color lightgrey
+stroke [[84, 93], [102, 94]]
+# seat
+shape([[81, 96], [99, 97], [97, 107], [78, 107]], red)
+shape([[83, 98], [93, 98], [92, 101], [82, 101]], lightred, null)
+color lightred
+stroke [[82, 96], [98, 97]]
+color lightgrey
+stroke [[78, 109], [96, 109]]
+# arm rest
+shape([[63, 93], [79, 92], [80, 96], [64, 97]], red)
+color lightred
+stroke [[64, 93], [78, 92]]
+# leg rest and its chrome-piped front
+shape([[62, 105], [89, 104], [91, 115], [60, 116]], red)
+shape([[65, 106], [80, 106], [80, 109], [64, 110]], lightred, null)
+color lightred
+stroke [[63, 105], [88, 104]]
+color lightgrey
+stroke [[60, 118], [91, 117]]
+
+frame()

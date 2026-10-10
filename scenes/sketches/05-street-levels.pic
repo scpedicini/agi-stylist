@@ -1,0 +1,400 @@
+# Street Levels
+# Source: layout sketch tests/fixtures/sketches/05-street-levels.png; reframed with: pnpm grid tests/fixtures/sketches/05-street-levels.png --crop 0,0,1600,500 --fit --name sketches-05-street-levels
+# Brief: a medieval town street at dusk with warm lit windows. The bakery has a pretzel sign.
+#   Cobbled street.
+# Method: composed from a layout sketch. Labels: BAKERY → half-timbered bakery, lightgrey
+#   plaster, red gable roof, lit shop window with loaves, iron bracket with a pretzel sign,
+#   centred x 22, base on the street y 140; LAMP_POST → black iron lamp post with a lit lantern,
+#   post at x 52, base y 140; INN → brown timber inn with a slate roof, chimney and a hanging
+#   tankard sign, centred x 94, base on the raised terrace y 120; SHOP → stone-and-timber shop
+#   with a red-and-white striped awning (the label sits on the awning) and a lit shop window,
+#   centred x 126, base y 140; SINGER ON BALCONY → singer in a magenta dress, arms out, in a lit
+#   upper doorway at x 125, standing on the balcony; (balcony box) → extent: wooden balcony
+#   x 115-135, y 66-73; CAT → ginger cat sitting on the street, x 148, base y 140; STEPS → three
+#   stone steps up the left side of the terrace, following the drawn line.
+#   Geometry: street line y 140 (x 0-72 and 110-159); steps rising at x 72 (to y 134), 75
+#   (to y 127), 78 (to y 120); terrace top y 120 from x 78 to 110, sheer stone face at x 110.
+# Interpreted: the ground line is the back edge of the street seen head-on, so buildings stand
+#   on it and the cobbled street fills y 141-167; the raised block under the INN is a stone
+#   terrace (retaining wall) reached by the steps. Inventions: dusk sky in bands (blue,
+#   magenta, lightred, yellow); a blue silhouette of far rooftops and a spire in the gaps
+#   between the buildings; the inn's tankard sign, chimney and red door; the shop's awning;
+#   musical notes by the singer; the lamp is lit. Variant named dusk (the brief's lighting).
+scene "Street Levels"
+variants dusk
+
+let street_y = 140
+
+fn win(x1, y1, x2, y2, glass = yellow, cross = true) {
+  color black
+  rect x1 - 1, y1 - 1, x2 + 1, y2 + 1
+  color glass
+  rect x1, y1, x2, y2
+  if cross {
+    color black
+    let mx = round((x1 + x2) / 2)
+    let my = round((y1 + y2) / 2)
+    line mx, y1, mx, y2
+    line x1, my, x2, my
+  }
+}
+
+# ---------------------------------------------------------------- sky (dusk bands)
+color blue
+rect 0, 0, 159, 14
+color magenta
+rect 0, 15, 159, 32
+color lightred
+rect 0, 33, 159, 50
+color yellow
+rect 0, 51, 159, 140
+
+# ---------------------------------------------------------------- far rooftops (blue silhouette)
+let far = [[0, 92], [6, 92], [12, 82], [18, 92], [44, 92], [44, 86], [50, 78], [56, 86],
+  [58, 86], [58, 76], [61, 76], [62, 60], [63, 76], [66, 76], [66, 84], [72, 84], [72, 80],
+  [78, 72], [84, 80], [108, 80], [108, 88], [113, 82], [118, 88], [140, 88], [140, 84],
+  [146, 76], [152, 84], [156, 84], [156, 80], [159, 80], [159, 140], [0, 140]]
+shape(far, blue, black)
+color yellow
+rect 57, 118, 58, 120
+rect 66, 92, 67, 94
+rect 142, 92, 143, 94
+rect 152, 102, 153, 104
+rect 146, 112, 147, 114
+
+# ---------------------------------------------------------------- cobbled street
+color black
+rect 0, street_y + 1, 159, 167
+fn cobbles() {
+  # rows of rounded stones in black mortar, bigger towards the viewer
+  let rows = [[143, 1.5, 1], [147, 2, 1.5], [152, 2.5, 2], [158, 3, 2.5], [165, 4, 3]]
+  let k = 0
+  for r in rows {
+    let cy = r[0]
+    let rx = r[1]
+    let ry = r[2]
+    let step = rx * 2 + 1.5
+    let x = (k % 2) * step / 2
+    let i = 0
+    while x < 162 {
+      let jx = noise(k * 31 + 1, i) - 0.5
+      let jy = noise(k * 17 + 5, i) - 0.5
+      color darkgrey
+      ellipse x + jx, cy + jy, rx, ry
+      color lightgrey
+      stroke round(x + jx - rx / 2), round(cy + jy - ry), round(x + jx), round(cy + jy - ry)
+      x += step
+      i += 1
+    }
+    k += 1
+  }
+}
+cobbles()
+
+# ---------------------------------------------------------------- bakery
+fn bakery() {
+  # walls
+  shape([[4, 80], [40, 80], [40, street_y], [4, street_y]], lightgrey)
+  # half-timbering
+  color brown
+  rect 4, 80, 5, street_y
+  rect 39, 80, 40, street_y
+  rect 4, 106, 40, 107
+  rect 4, 80, 40, 81
+  line 6, 104, 14, 83
+  line 38, 104, 30, 83
+  color black
+  line 3, 80, 3, street_y
+  line 41, 80, 41, street_y
+  # plinth
+  color darkgrey
+  rect 4, 137, 40, street_y
+  # roof
+  shape([[0, 82], [22, 55], [44, 82]], red)
+  color brown
+  line 9, 74, 35, 74
+  line 15, 67, 29, 67
+  # gable window
+  color black
+  ellipse 22, 71, 2, 3
+  color yellow
+  ellipse 22, 71, 1, 2
+  # upper windows
+  win(9, 88, 14, 99)
+  win(30, 88, 35, 99)
+  # door
+  shape([[7, 118], [8, 115], [13, 115], [14, 118], [14, 136], [7, 136]], brown)
+  color black
+  line 12, 126, 12, 127
+  # lit display window with loaves
+  win(18, 113, 36, 130, yellow, false)
+  color black
+  line 27, 113, 27, 130
+  # loaves on the sill and on a shelf
+  for l in [[21, 128], [25, 128], [30, 128], [34, 128], [22, 120], [32, 120]] {
+    color brown
+    rect l[0] - 1, l[1] - 1, l[0] + 1, l[1] - 1
+    rect l[0] - 2, l[1], l[0] + 2, l[1] + 1
+  }
+  color black
+  line 18, 122, 36, 122
+  color brown
+  line 18, 131, 36, 131
+}
+bakery()
+
+# pretzel sign on an iron bracket
+# paint a small pixel map: one string per row, one character per column
+fn pixmap(x0, y0, rows, keys) {
+  for j in 0..len(rows) {
+    let row = rows[j]
+    for i in 0..len(row) {
+      let k = row[i]
+      for kv in keys {
+        if kv[0] == k {
+          color kv[1]
+          line x0 + i, y0 + j, x0 + i, y0 + j
+        }
+      }
+    }
+  }
+}
+
+fn pretzel_sign() {
+  color black
+  line 42, 82, 52, 82
+  line 42, 87, 46, 82
+  line 44, 82, 44, 83
+  line 50, 82, 50, 83
+  # a brown pretzel: a loop, its two ends twisted in the middle and folded down onto
+  # the loop's sides, leaving two big holes up top and a small one below
+  pixmap(41, 84, [
+    ".KKKK.KKKK.",
+    "KBBBBKBBBBK",
+    "KBBBBBBBBBK",
+    "KBoooBoooBK",
+    "KBoooBoooBK",
+    "KBoooBoooBK",
+    "KBoooBoooBK",
+    "KBBoBBBoBBK",
+    ".KBBBoBBBK.",
+    ".KBBoooBBK.",
+    ".KBBoooBBK.",
+    "..KBBBBBK..",
+    "...KKKKK..."
+  ], [["K", black], ["B", brown], ["o", blue], ["Y", yellow]])
+}
+pretzel_sign()
+
+# ---------------------------------------------------------------- lamp post
+fn lamp_post(x, base) {
+  color black
+  rect x - 2, base - 3, x + 2, base
+  rect x, 108, x + 1, base
+  line x - 1, 115, x + 2, 115
+  # lantern
+  rect x - 2, 100, x + 3, 108
+  line x - 3, 100, x + 4, 100
+  line x, 98, x + 1, 98
+  color yellow
+  rect x - 1, 101, x + 2, 106
+  color white
+  line x, 102, x + 1, 102
+}
+lamp_post(52, street_y)
+
+# ---------------------------------------------------------------- terrace and steps
+let terrace = [[72, street_y], [72, 134], [75, 134], [75, 127], [78, 127], [78, 120],
+  [110, 120], [110, street_y]]
+shape(terrace, lightgrey)
+stones(79, 121, 109, street_y - 1, 5, 8, darkgrey)
+color white
+line 73, 134, 74, 134
+line 76, 127, 77, 127
+line 79, 121, 109, 121
+color darkgrey
+line 74, 135, 74, 139
+line 77, 128, 77, 133
+
+# ---------------------------------------------------------------- inn
+fn inn() {
+  shape([[81, 81], [107, 81], [107, 119], [81, 119]], brown)
+  color black
+  for y in range(86, 119, 6) { line 82, y, 106, y }
+  # chimney
+  shape([[99, 58], [104, 58], [104, 70], [99, 70]], lightgrey)
+  color darkgrey
+  line 100, 62, 103, 62
+  line 100, 66, 103, 66
+  # roof
+  shape([[77, 82], [84, 64], [104, 64], [111, 82]], darkgrey)
+  color lightgrey
+  line 84, 70, 104, 70
+  line 82, 76, 106, 76
+  # windows
+  win(84, 89, 89, 97)
+  win(99, 89, 104, 97)
+  win(84, 105, 89, 113)
+  win(99, 105, 104, 113)
+  # door
+  shape([[91, 119], [91, 107], [94, 104], [97, 107], [97, 119]], red)
+  color black
+  line 94, 107, 94, 119
+  color yellow
+  line 96, 113, 96, 113
+}
+inn()
+
+fn inn_sign() {
+  color black
+  line 81, 92, 72, 92
+  line 81, 97, 77, 92
+  line 73, 92, 73, 94
+  line 78, 92, 78, 94
+  shape([[72, 95], [79, 95], [79, 102], [72, 102]], brown)
+  # tankard
+  color yellow
+  rect 74, 97, 76, 101
+  line 77, 98, 77, 100
+  color white
+  line 74, 97, 76, 97
+}
+inn_sign()
+
+# ---------------------------------------------------------------- shop
+fn shop() {
+  shape([[113, 40], [139, 40], [139, street_y], [113, street_y]], lightgrey)
+  # timber frame
+  color brown
+  rect 113, 40, 114, street_y
+  rect 138, 40, 139, street_y
+  rect 113, 76, 139, 77
+  rect 113, 101, 139, 102
+  color black
+  line 112, 40, 112, street_y
+  line 140, 40, 140, street_y
+  # stone ground floor
+  stones(115, 103, 137, street_y, 5, 7, darkgrey)
+  # roof
+  shape([[109, 42], [126, 19], [143, 42]], blue)
+  color lightblue
+  line 117, 33, 135, 33
+  # gable window
+  win(124, 28, 127, 35, yellow, false)
+  # middle-floor windows
+  win(117, 83, 122, 95)
+  win(130, 83, 135, 95)
+  # lit upper doorway behind the singer
+  shape([[119, 72], [119, 47], [121, 43], [129, 43], [131, 47], [131, 72]], yellow)
+  # lit shop window and door under the awning
+  win(117, 113, 129, 131, yellow, false)
+  color black
+  line 117, 122, 129, 122
+  color brown
+  rect 119, 119, 120, 121
+  rect 124, 118, 126, 121
+  color red
+  rect 120, 128, 122, 131
+  color blue
+  rect 125, 129, 127, 131
+  shape([[131, 113], [136, 113], [136, 139], [131, 139]], brown)
+  color black
+  line 132, 126, 132, 127
+}
+shop()
+
+fn awning(x1, x2, y1, y2) {
+  shape([[x1 + 1, y1], [x2 - 1, y1], [x2 + 1, y2], [x1 - 1, y2]], white)
+  let i = 0
+  for x in range(x1, x2 + 1, 3) {
+    if i % 2 == 0 {
+      color red
+      polygon x, y1 + 1, x + 1, y1 + 1, x + 2, y2 - 1, x, y2 - 1
+    }
+    i += 1
+  }
+  color black
+  line x1 - 1, y2, x2 + 1, y2
+  # scalloped edge
+  color red
+  for x in range(x1, x2, 3) { line x, y2 + 1, x + 1, y2 + 1 }
+}
+awning(114, 138, 104, 110)
+
+# ---------------------------------------------------------------- singer on the balcony
+fn singer(x, feet) {
+  # sleeves: arms raised and spread, singing
+  color magenta
+  line x - 2, 54, x - 4, 51
+  line x + 2, 54, x + 4, 51
+  line x - 2, 55, x - 4, 52
+  line x + 2, 55, x + 4, 52
+  color lightred
+  line x - 5, 50, x - 5, 51
+  line x + 5, 50, x + 5, 51
+  # dress
+  shape([[x - 2, 53], [x + 2, 53], [x + 4, feet], [x - 4, feet]], magenta, black)
+  color lightmagenta
+  line x - 1, 56, x + 1, 56
+  # head: long brown hair round a face
+  color brown
+  rect x - 2, 46, x + 2, 53
+  color lightred
+  rect x - 1, 48, x + 1, 52
+  color black
+  line x, 51, x, 51
+}
+singer(125, 72)
+
+fn notes() {
+  color black
+  # two quavers
+  rect 133, 46, 134, 47
+  line 134, 42, 134, 46
+  line 134, 42, 135, 43
+  rect 136, 51, 137, 52
+  line 137, 47, 137, 51
+  line 137, 47, 138, 48
+  rect 115, 47, 116, 48
+  line 116, 43, 116, 47
+}
+notes()
+
+fn balcony(x1, x2, top, bot) {
+  # floor beam and corbels
+  shape([[x1, bot - 1], [x2, bot - 1], [x2, bot], [x1, bot]], brown)
+  shape([[x1 + 2, bot + 1], [x1 + 4, bot + 1], [x1 + 3, bot + 4]], brown)
+  shape([[x2 - 4, bot + 1], [x2 - 2, bot + 1], [x2 - 3, bot + 4]], brown)
+  # rail and balusters
+  shape([[x1, top], [x2, top], [x2, top + 1], [x1, top + 1]], brown)
+  color brown
+  for x in range(x1 + 1, x2, 2) { line x, top + 2, x, bot - 2 }
+  color black
+  for x in range(x1 + 2, x2, 2) { line x, top + 2, x, bot - 2 }
+}
+balcony(115, 135, 66, 73)
+
+# ---------------------------------------------------------------- cat
+fn cat(x, base) {
+  # tail
+  color black
+  line x + 3, base, x + 5, base - 1, x + 6, base - 4
+  color brown
+  shape(blob(x, base - 4, 3, 4, 2, 0.05), brown)
+  # head facing left
+  shape([[x - 4, base - 9], [x - 4, base - 12], [x - 3, base - 10], [x - 1, base - 10],
+    [x, base - 12], [x, base - 8], [x - 1, base - 6], [x - 3, base - 6], [x - 4, base - 7]], brown)
+  color yellow
+  line x - 3, base - 8, x - 3, base - 8
+  line x - 1, base - 8, x - 1, base - 8
+  color black
+  line x - 1, base - 3, x - 1, base
+}
+cat(149, street_y)
+
+# street edge
+color black
+line 0, street_y, 71, street_y
+line 111, street_y, 159, street_y
+
+frame()

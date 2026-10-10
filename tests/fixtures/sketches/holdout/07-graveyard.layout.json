@@ -1,0 +1,236 @@
+{
+  "id": "07-graveyard",
+  "source": "tests/fixtures/sketches/holdout/07-graveyard.png",
+  "brief": "The church is small with a crooked steeple. The ghost is pale and wispy. Iron gate.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "NOTE: misty night",
+      "kind": "note",
+      "at": [
+        860,
+        60
+      ],
+      "is": "instructions: night, mist",
+      "labelBox": [
+        741,
+        41,
+        981,
+        76
+      ],
+      "pic": [
+        134.4,
+        13.1
+      ]
+    },
+    {
+      "label": "CHURCH",
+      "kind": "grounded",
+      "at": [
+        560,
+        230
+      ],
+      "is": "small church with a crooked steeple",
+      "support": "hilltop (y≈360)",
+      "supportLine": [
+        [
+          0,
+          520
+        ],
+        [
+          200,
+          470
+        ],
+        [
+          420,
+          380
+        ],
+        [
+          640,
+          360
+        ],
+        [
+          850,
+          420
+        ],
+        [
+          1024,
+          470
+        ]
+      ],
+      "labelBox": [
+        478,
+        216,
+        642,
+        241
+      ],
+      "pic": [
+        87.5,
+        50.3
+      ]
+    },
+    {
+      "label": "GHOST_FLOATING_LEFT",
+      "kind": "point",
+      "at": [
+        300,
+        200
+      ],
+      "is": "pale wispy ghost drifting left",
+      "labelBox": [
+        132,
+        180,
+        467,
+        222
+      ],
+      "pic": [
+        46.9,
+        43.8
+      ]
+    },
+    {
+      "label": "DEAD_TREE",
+      "kind": "grounded",
+      "at": [
+        870,
+        330
+      ],
+      "is": "dead tree",
+      "support": "hill line (y≈430)",
+      "supportLine": [
+        [
+          0,
+          520
+        ],
+        [
+          200,
+          470
+        ],
+        [
+          420,
+          380
+        ],
+        [
+          640,
+          360
+        ],
+        [
+          850,
+          420
+        ],
+        [
+          1024,
+          470
+        ]
+      ],
+      "labelBox": [
+        779,
+        317,
+        961,
+        343
+      ],
+      "pic": [
+        135.9,
+        72.2
+      ]
+    },
+    {
+      "label": "(hill line)",
+      "kind": "path",
+      "at": [
+        512,
+        420
+      ],
+      "is": "the hill's outline",
+      "lines": [
+        [
+          [
+            0,
+            520
+          ],
+          [
+            200,
+            470
+          ],
+          [
+            420,
+            380
+          ],
+          [
+            640,
+            360
+          ],
+          [
+            850,
+            420
+          ],
+          [
+            1024,
+            470
+          ]
+        ]
+      ],
+      "pic": [
+        80,
+        91.9
+      ]
+    },
+    {
+      "label": "GRAVES x5",
+      "kind": "grounded",
+      "at": [
+        540,
+        560
+      ],
+      "is": "five gravestones",
+      "support": "hillside",
+      "count": 5,
+      "labelBox": [
+        449,
+        547,
+        630,
+        576
+      ],
+      "pic": [
+        84.4,
+        122.5
+      ]
+    },
+    {
+      "label": "GATE",
+      "kind": "extent",
+      "at": [
+        130,
+        555
+      ],
+      "is": "iron gate",
+      "box": [
+        60,
+        470,
+        200,
+        640
+      ],
+      "labelBox": [
+        87,
+        543,
+        173,
+        568
+      ],
+      "pic": [
+        20.3,
+        121.4
+      ]
+    }
+  ],
+  "requirements": [
+    "night",
+    "mist",
+    "small church",
+    "crooked steeple",
+    "pale wispy ghost facing/moving left",
+    "exactly five graves",
+    "iron gate",
+    "dead tree"
+  ],
+  "ambiguities": []
+}

@@ -1,0 +1,227 @@
+# The Poplar Road to the Castle
+# Source: layout sketch tests/fixtures/sketches/holdout/16-castle-road.png (hybrid: words plus
+#   brushstrokes); reframed with:
+#   pnpm grid tests/fixtures/sketches/holdout/16-castle-road.png --crop 0,0,1024,768 --fit --name sketches-16-castle-road
+# Brief: A long straight road leads to a distant castle on the horizon. Poplar trees line both
+#   sides of the road, getting smaller into the distance. Late afternoon.
+# Method: composed from a layout sketch. Labels: Castle → small distant grey castle (two
+#   crenellated corner towers, curtain wall, a central keep with a red roof and a pennant, a
+#   dark gate where the road arrives), standing on the horizon line, base y 55, x 62-98, top of
+#   the keep roof y 18, the label (80,43.5) inside the keep; Road → straight brown dirt road along the brown stroke ~1,
+#   from the castle gate (80,55) down off the bottom edge, half-width 11 at the bottom and
+#   narrowing to one column at the gate (straight edges converging on the gate, as the brief's
+#   "long straight road" heads straight away; the stroke's wobble is under a pixel); Poplars (both words) → twelve Lombardy poplars, one per
+#   green dab, in two rows converging on the gate, sized by groundscale of their bases (tall
+#   near ones running up into the sky, the far ones a few rows tall).
+#   Geometry: black line #2 → horizon y 55; brown line ~1 → the road's centre line;
+#   green dabs ~2 … ~13 → one poplar each, trunk under the dab, base just below it (bases
+#   left/right at y 64, 72, 83, 101, 125, 156).
+# Stage: horizon y 55 (drawn)
+# Interpreted: "Late afternoon" → day variant, golden hour: a low yellow sun on the left
+#   (24,24) over blue / lightcyan / yellow sky bands; the poplars, castle towers and keep lit on
+#   the left and shaded darkgrey/cyan on the right; long cast shadows falling right and a
+#   little towards the viewer (green on the grass, darkgrey where they cross the road). The
+#   paint's brown = a dirt road (brown). Poplars: green spindles with lightgreen lit strokes,
+#   short brown trunks; the nearest are about 117 rows tall (tops y 39), so they rise past the
+#   horizon and their tops converge on the castle too; the two nearest the castle are small
+#   3-column spindles. The far poplars overlap the castle's lower corners (they stand in front
+#   of it). Invented to make the scene whole: a low lightblue line of far
+#   hills along the horizon behind the castle (a brown ridge line at y 55), lightgreen meadow on
+#   both sides, and two thin white cloud streaks upper right. The
+#   castle's look (towers, red keep roof, pennant) is my choice; the brief gives none.
+scene "The Poplar Road to the Castle"
+variants day
+
+let hz = 55
+
+# ---------------------------------------------------------------- sky (late afternoon bands)
+color blue
+rect 0, 0, 159, 9
+color lightcyan
+rect 0, 10, 159, 37
+color yellow
+rect 0, 38, 159, 56
+
+# low sun on the left
+color yellow
+ellipse 24, 24, 7, 13
+color white
+ellipse 23, 23, 4, 8
+
+# a couple of thin lit cloud streaks
+color white
+rect 98, 16, 128, 17
+rect 108, 14, 120, 15
+
+# ---------------------------------------------------------------- far hills along the horizon
+let hillpts = [[0, 56], [0, 51]] + wavy(0, 159, 50, 3, 4, 12) + [[159, 51], [159, 56]]
+shape(hillpts, lightblue, null)
+color blue
+stroke wavy(0, 159, 50, 3, 4, 12)
+
+# ---------------------------------------------------------------- ground
+color lightgreen
+rect 0, hz, 159, 167
+color brown
+stroke 0, hz, 159, hz
+
+# ---------------------------------------------------------------- the castle (on the horizon)
+fn crenels(x1, x2, y, c) {
+  # battlement teeth along the top of a wall, 2 columns wide, 2-column gaps
+  let x = x1
+  while x + 1 <= x2 {
+    shape([[x, y - 2], [x + 1, y - 2], [x + 1, y], [x, y]], c, black)
+    x += 3
+  }
+}
+
+# curtain wall
+shape([[68, 44], [92, 44], [92, 55], [68, 55]], lightgrey)
+crenels(68, 92, 44, lightgrey)
+# keep, shaded on the right (the sun is on the left)
+shape([[75, 30], [85, 30], [85, 55], [75, 55]], lightgrey)
+color darkgrey
+rect 83, 31, 84, 54
+# red conical roof and pennant
+shape([[73, 30], [80, 18], [87, 30]], red)
+color darkgrey
+line 80, 18, 80, 13
+color red
+rect 81, 13, 83, 14
+# corner towers
+shape([[62, 34], [70, 34], [70, 55], [62, 55]], lightgrey)
+crenels(62, 70, 34, lightgrey)
+color darkgrey
+rect 68, 35, 69, 54
+shape([[90, 34], [98, 34], [98, 55], [90, 55]], lightgrey)
+crenels(90, 98, 34, lightgrey)
+color darkgrey
+rect 96, 35, 97, 54
+# windows
+color black
+rect 65, 38, 65, 40
+rect 93, 38, 93, 40
+rect 79, 34, 80, 37
+rect 65, 45, 65, 47
+rect 93, 45, 93, 47
+# the gate where the road arrives
+shape([[78, 55], [78, 50], [79, 49], [81, 49], [82, 50], [82, 55]], black, null)
+
+# ---------------------------------------------------------------- the poplars (green dabs)
+# [x, base] for each dab, far to near; left and right rows
+let rows = [
+  [75.1, 64], [85.1, 64],
+  [74.1, 72], [86, 72],
+  [72.3, 83], [87.9, 83],
+  [69.1, 101], [91, 101],
+  [64.4, 125], [95.7, 125],
+  [58.2, 156], [102, 156]
+]
+
+let tall = 130    # a poplar's height in rows on the bottom row
+let wide = 5      # its half-width in columns there
+
+# road half-width on a row (for the shadows that cross it)
+fn road_hw(y) { return 1 + 10 * (y - hz) / (167 - hz) }
+
+# long cast shadow: falls right and a little towards the viewer
+fn shadow_pts(x, base, s) {
+  let len = 0.34 * tall * s
+  let t = 2 + 4 * s
+  return [[x - 1, base], [x + len * 0.5, base + t * 0.2], [x + len, base + t * 0.9],
+          [x + len * 0.5, base + t * 1.2], [x, base + t * 0.5]]
+}
+
+# where a shadow crosses the road it is darkgrey on the brown, inside the road's edges
+fn road_shadow(pts) {
+  for yy in range(floor(pts[0][1]), ceil(pts[3][1]) + 1) {
+    let sp = spanx(pts, yy)
+    if sp != null {
+      let a = max(sp[0], 80 - road_hw(yy) + 1)
+      let b = min(sp[1], 80 + road_hw(yy) - 1)
+      if b >= a {
+        color darkgrey
+        stroke a, yy, b, yy
+      }
+    }
+  }
+}
+
+fn poplar(x, base, s, seed) {
+  let h = tall * s
+  let hw = wide * s
+  if hw < 1.2 {
+    # tiny far poplar: a 3-column green spindle, its shaded right edge black
+    let w = 1.2
+    shape([[x - w * 0.6, base], [x - w, base - h * 0.35], [x, base - h], [x + w, base - h * 0.35],
+           [x + w * 0.6, base]], green, null)
+    color black
+    stroke round(x + w), round(base - h * 0.4), round(x + w * 0.6), round(base)
+    return null
+  }
+  let th = max(2, h * 0.07)          # bare trunk below the crown
+  let cb = base - th                 # crown bottom
+  let ch = h - th                    # crown height
+  let left = []
+  let right = []
+  let n = 14
+  for i in 0..=n {
+    let t = i / n
+    let w = t < 0.3 ? 0.55 + 0.45 * (t / 0.3) : ((1 - t) / 0.7 + sqrt((1 - t) / 0.7)) / 2
+    w = w * hw * (0.9 + 0.2 * noise(seed, i))
+    let y = cb - ch * t
+    push(left, [x - w, y])
+    push(right, [x + w, y])
+  }
+  # trunk
+  color brown
+  rect floor(x), round(cb), floor(x) + max(0, round(hw * 0.3)), round(base)
+  color black
+  line floor(x) + max(0, round(hw * 0.3)) + 1, round(cb), floor(x) + max(0, round(hw * 0.3)) + 1, round(base)
+  # crown
+  let crown = left + reverse(right)
+  shape(crown, green)
+  # shaded right side, lit left side
+  if hw >= 2 {
+    let shade = []
+    for p in right { push(shade, [x + (p[0] - x) * 0.5, p[1]]) }
+    shape(shade + reverse(slice(right, 1, len(right) - 1)), cyan, null)
+    color lightgreen
+    let k = max(2, round(h / 14))
+    for j in 1..k {
+      let t = j / k
+      let y = cb - ch * t * 0.92
+      let sp = spanx(crown, y)
+      if sp != null {
+        let lx = sp[0] + 1
+        stroke lx, y, lx + (t > 0.5 ? 0 : 1), y - max(1, h / 30)
+      }
+    }
+    # outline again over the shading
+    color black
+    outline crown
+  }
+}
+
+# shadows on the grass first, then the road over them, then the shadows across the road
+let shadows = []
+for r in rows {
+  let s = (r[1] - hz) / (167 - hz)
+  if s > 0.15 { push(shadows, shadow_pts(r[0], r[1], s)) }
+}
+for p in shadows { shape(p, green, null) }
+
+# ---------------------------------------------------------------- the road (brown stroke ~1)
+# straight away from us, so its edges are straight lines converging on the gate; a column
+# wide at the gate (trail() would thin it to nothing over the last few rows)
+shape([[79, 55], [81, 55], [91, 167], [69, 167]], brown)
+for p in shadows { road_shadow(p) }
+
+# ---------------------------------------------------------------- the trees, far to near
+for i in 0..len(rows) {
+  let r = rows[i]
+  let s = (r[1] - hz) / (167 - hz)
+  poplar(r[0], r[1], s, i + 3)
+}
+
+frame()

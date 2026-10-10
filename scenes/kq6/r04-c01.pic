@@ -1,0 +1,297 @@
+# Ferryman's Cabin
+# Source: King's Quest VI (VGA) - reference/kq6/r04-c01.png; reframed with:
+#   pnpm grid reference/kq6/r04-c01.png --name kq6-r04-c01
+# Method: translated by eye. Kept: the big wooden knothole frame with its tan bevelled rim,
+#   the planked barrel ceiling with three iron ribs, plank walls, three iron posts, the open
+#   back door with sky, ship's wheel and sand, the black stovepipe and stove, portholes, two
+#   hanging lanterns, the round mirror, picture and blue plaque, the bunk with its blanket,
+#   two chairs, the little table on a barrel, the counter with bottles, the oil lamp in front.
+#   Dropped: wood grain detail, plank texture on every board, the chair spindles' detail,
+#   the crate under the counter, small clutter on the shelves. Moved: the oil lamp 3 px left
+#   so its glass clears the rim.
+# Colours: tan frame wood → brown with red grain, bevelled rim → yellow with brown shading,
+#   dusky cabin walls → red with black seams, ceiling and floor planks → brown with red/black
+#   seams, blue-grey iron (ribs, posts, stovepipe) → darkgrey with black, sky → lightcyan,
+#   sand → yellow, blanket → yellow/white, lamp glass → white/lightcyan, brass → yellow/brown.
+scene "Ferryman's Cabin"
+variants lit
+
+# ---- ceiling: brown planks running back towards the door --------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color brown
+  rect 0, 0, 159, 167
+}
+color red
+for x in range(-60, 230, 10) {
+  stroke 76 + (x - 76) * 0.3, 36, x, -1
+}
+
+# ---- walls: dusky plank walls (left, back, right) -----------------------------------------
+delay 2 {
+  shape([[0, 34], [22, 34], [40, 42], [62, 47], [90, 47], [116, 48], [136, 42], [159, 40],
+         [159, 112], [0, 112]], red, null)
+}
+color black
+line 22, 34, 40, 42, 62, 47, 90, 47, 116, 48, 136, 42
+# vertical plank seams
+for x in [26, 31, 36, 41, 46, 51, 56, 60, 66, 89, 93, 97, 101, 105, 110, 114, 120, 125, 130] {
+  let top = x < 62 ? 34 + (x - 22) * 0.33 : (x > 116 ? 48 - (x - 116) * 0.3 : 47)
+  color black
+  stroke x, top + 2, x, 112
+}
+
+# ---- floor: boards radiating from the door -------------------------------------------------
+delay {
+  shape([[0, 114], [22, 112], [50, 104], [62, 98], [90, 98], [104, 104], [135, 108],
+         [159, 110], [159, 167], [0, 167]], brown, null)
+}
+# board seams: black every other one, red between; start them clear of the vanishing point
+for i in 0..28 {
+  let x = -120 + i * 15
+  color i % 2 == 0 ? black : red
+  stroke 76 + (x - 76) * 0.12, 106, x, 167
+}
+color black
+line 22, 112, 50, 104, 62, 98, 90, 98, 104, 104, 135, 108
+color red
+line 60, 108, 92, 108
+line 46, 122, 106, 122
+
+# ---- the open back door: sky, ship's wheel, sand -----------------------------------------
+shape([[66, 50], [85, 50], [85, 99], [66, 99]], brown)
+shape([[68, 52], [83, 52], [83, 98], [68, 98]], lightcyan, null)
+# sand dunes outside and the deck beyond
+shape([[68, 76], [73, 73], [79, 75], [83, 72], [83, 98], [68, 98]], yellow, null)
+color brown
+line 69, 82, 76, 80, 83, 81
+shape([[68, 88], [83, 88], [83, 98], [68, 98]], brown, null)
+color black
+line 68, 88, 83, 88
+line 68, 93, 83, 93
+# the ship's wheel on its post
+color black
+line 75, 70, 75, 87
+line 76, 70, 76, 87
+color brown
+line arc(75, 63, 6, 7, 0, 360, 20)
+line 69, 63, 81, 63
+line 75, 56, 75, 70
+line 71, 58, 79, 68
+line 79, 58, 71, 68
+color black
+line 74, 62, 76, 64
+
+# ---- iron ribs across the barrel ceiling ---------------------------------------------------
+fn rib(pts) {
+  color darkgrey
+  stroke pts
+  stroke shift(pts, 0, 1)
+  color black
+  stroke shift(pts, 0, 2)
+}
+rib([[22, 14], [40, 6], [60, 1], [80, -1], [100, 1], [118, 8], [132, 16]])
+rib([[22, 30], [34, 24], [48, 19], [64, 16], [80, 15], [98, 18], [114, 25], [126, 33],
+     [136, 42]])
+rib([[24, 44], [40, 39], [62, 35], [80, 34], [96, 37], [110, 43], [118, 48]])
+
+# ---- iron posts ----------------------------------------------------------------------------
+fn post(x, top, bot) {
+  shape([[x, top], [x + 2, top], [x + 2, bot], [x, bot]], darkgrey)
+}
+post(61, 32, 100)
+post(86, 33, 100)
+post(115, 26, 108)
+
+# ---- things on the walls -------------------------------------------------------------------
+# portholes
+shape([[124, 62], [125, 61], [126, 62], [126, 70], [125, 71], [124, 70]], lightcyan, black)
+shape([[132, 61], [133, 59], [135, 61], [135, 70], [133, 72], [132, 70]], lightcyan, black)
+shape([[30, 59], [32, 58], [33, 60], [33, 66], [31, 67], [30, 65]], lightcyan, black)
+# round mirror in a brass ring
+shape(blob(51, 66, 4, 5, 1, 0.02, 14), yellow)
+shape(blob(51, 66, 2.5, 3.5, 1, 0.02, 12), darkgrey, null)
+color lightcyan
+line 50, 64, 52, 64
+line 50, 65, 51, 65
+# framed picture
+shape([[58, 66], [64, 66], [64, 75], [58, 75]], black)
+shape([[59, 68], [63, 68], [63, 73], [59, 73]], darkgrey, null)
+color lightgrey
+line 61, 69, 61, 71
+# blue plaque
+shape(blob(97, 68, 3, 4, 2, 0.02, 12), blue)
+color lightblue
+line 97, 66, 97, 70
+line 96, 68, 98, 68
+
+# hanging lanterns
+fn lantern(x, y) {
+  color black
+  line x, y - 12, x, y - 4
+  shape([[x - 2, y - 4], [x + 2, y - 4], [x + 2, y + 4], [x, y + 6], [x - 2, y + 4]], yellow)
+  color white
+  line x - 1, y - 2, x - 1, y + 2
+  color black
+  line x - 2, y, x + 2, y
+}
+lantern(40, 60)
+lantern(102, 58)
+
+# ---- the black stovepipe and the stove -----------------------------------------------------
+let pipe = [[25, -2], [25, 58], [27, 70], [31, 80], [33, 90], [33, 130]]
+shape(band(pipe, 8, 6), darkgrey)
+color blue
+stroke shift(pipe, 1, 0)
+shape([[33, 124], [50, 124], [54, 130], [54, 148], [33, 148]], black)
+color darkgrey
+line 36, 128, 50, 128
+line 50, 128, 52, 132
+
+# ---- the bunk on the left ------------------------------------------------------------------
+shape([[22, 96], [50, 94], [52, 100], [52, 110], [22, 116]], brown)
+color yellow
+line 23, 97, 51, 95
+color black
+line 24, 104, 51, 101
+line 24, 110, 51, 106
+# a rumpled blanket in a few lumps along the top of the bunk
+blobs([[27, 92, 5, 2], [35, 91, 4, 3], [43, 93, 5, 2]], yellow, black, 0.3, 4)
+color brown
+line 31, 93, 33, 91
+line 39, 94, 41, 92
+color white
+line 26, 91, 29, 90
+line 34, 89, 36, 89
+
+# ---- the counter on the right --------------------------------------------------------------
+shape([[104, 92], [134, 90], [134, 106], [104, 106]], brown)
+color yellow
+line 105, 92, 133, 90
+color black
+line 104, 94, 134, 92
+line 112, 95, 112, 106
+line 124, 94, 124, 106
+# bottles
+shape([[110, 84], [112, 84], [112, 91], [110, 91]], blue)
+shape([[120, 82], [122, 82], [122, 90], [120, 90]], darkgrey)
+shape([[127, 84], [129, 84], [129, 90], [127, 90]], cyan)
+
+# ---- chairs and the little table on a barrel ----------------------------------------------
+fn chair(x, y, flip) {
+  # slat back: a brown panel with a yellow top rail and black slots
+  shape([[x, y - 15], [x + 7 * flip, y - 15], [x + 7 * flip, y], [x, y]], brown)
+  color yellow
+  line x + flip, y - 14, x + 6 * flip, y - 14
+  color black
+  line x + 2 * flip, y - 11, x + 2 * flip, y - 2
+  line x + 5 * flip, y - 11, x + 5 * flip, y - 2
+  # seat
+  shape([[x - 2 * flip, y], [x + 8 * flip, y - 1], [x + 10 * flip, y + 3], [x, y + 4]], brown)
+  color yellow
+  line x, y + 1, x + 7 * flip, y
+  # legs
+  color black
+  line x, y + 4, x, y + 12
+  line x + 9 * flip, y + 3, x + 9 * flip, y + 11
+  line x + 4 * flip, y + 4, x + 4 * flip, y + 10
+}
+chair(57, 106, 1)
+chair(96, 106, -1)
+
+# barrel and table top
+shape([[72, 118], [81, 118], [82, 132], [71, 132]], red)
+color black
+line 72, 122, 81, 122
+line 72, 128, 81, 128
+shape([[69, 114], [84, 114], [85, 118], [68, 118]], yellow)
+color brown
+line 72, 115, 82, 115
+line 76, 114, 76, 117
+
+# ---- foreground: the oil lamp on its table ------------------------------------------------
+shape([[95, 128], [121, 128], [121, 140], [95, 140]], brown)
+color yellow
+line 96, 128, 120, 128
+color black
+line 95, 130, 121, 130
+# brass base
+shape(blob(108, 132, 6, 3, 3, 0.05, 14), yellow, brown)
+color brown
+line 103, 133, 113, 133
+# glass chimney
+shape([[105, 107], [111, 107], [111, 112], [114, 118], [115, 125], [112, 130], [104, 130],
+       [101, 125], [102, 118], [105, 112]], white, lightgrey)
+color lightcyan
+line 104, 118, 103, 125
+line 107, 109, 107, 128
+color lightgrey
+line 112, 119, 113, 125
+color yellow
+line 109, 122, 109, 127
+color brown
+line 109, 128
+
+# ---- the knothole frame: tan bevelled rim, then the wood around it ------------------------
+# the opening edge, clockwise from the top left
+let hole = [[44, -1], [38, 3], [32, 10], [28, 18], [24, 26], [21, 36], [20, 50], [20, 66],
+            [20, 82], [22, 98], [25, 110], [29, 118], [34, 126], [41, 134], [49, 141],
+            [58, 146], [68, 149], [80, 151], [92, 149], [104, 145], [110, 140], [113, 132],
+            [117, 122], [124, 112], [131, 100], [135, 88], [137, 75], [137, 60], [135, 47],
+            [131, 35], [125, 23], [118, 12], [113, 4], [110, -1]]
+# rim: everything outside the hole, in two halves split at the top and bottom
+let left_hole = [[44, -1], [38, 3], [32, 10], [28, 18], [24, 26], [21, 36], [20, 50],
+                 [20, 66], [20, 82], [22, 98], [25, 110], [29, 118], [34, 126], [41, 134],
+                 [49, 141], [58, 146], [68, 149], [80, 151]]
+let right_hole = [[80, 151], [92, 149], [104, 145], [110, 140], [113, 132], [117, 122],
+                  [124, 112], [131, 100], [135, 88], [137, 75], [137, 60], [135, 47],
+                  [131, 35], [125, 23], [118, 12], [113, 4], [110, -1]]
+shape(left_hole + [[80, 168], [-1, 168], [-1, -1]], yellow, null)
+shape(right_hole + [[160, -1], [160, 168], [80, 168]], yellow, null)
+
+# brown shading on the inner lip of the rim
+color brown
+stroke shift(left_hole, -1, 1)
+stroke [[28, 125], [36, 135], [46, 144], [60, 151], [80, 154], [100, 150], [108, 146]]
+stroke shift(right_hole, 2, 0)
+
+# the wood around the rim: left piece, right piece
+let left_wood = [[-1, -1], [22, -1], [21, 8], [16, 20], [12, 34], [11, 50], [11, 70],
+                 [13, 90], [16, 104], [20, 116], [22, 124], [21, 145], [22, 168], [-1, 168]]
+let right_wood = [[124, -1], [129, 8], [135, 20], [140, 36], [143, 55], [143, 76],
+                  [141, 94], [136, 106], [128, 118], [122, 128], [117, 136], [114, 146],
+                  [114, 168], [160, 168], [160, -1]]
+shape(left_wood, brown, null)
+shape(right_wood, brown, null)
+# the bump of the rim at the top left
+shape([[22, -1], [38, -1], [34, 6], [30, 14], [27, 18], [21, 18], [21, 8]], yellow, null)
+# grain: lines that follow the curve of the rim, wavering as they go
+let ledge = [[22, -1], [21, 8], [16, 20], [12, 34], [11, 50], [11, 70], [13, 90], [16, 104],
+             [20, 116], [22, 124], [21, 145], [22, 168]]
+let redge = [[124, -1], [129, 8], [135, 20], [140, 36], [143, 55], [143, 76], [141, 94],
+             [136, 106], [128, 118], [122, 128], [117, 136], [114, 146], [114, 168]]
+color red
+stroke shift(ledge, -4, 0)
+stroke shift(ledge, -9, 6)
+stroke [[3, -1], [2, 40], [4, 90], [3, 130], [5, 168]]
+stroke shift(redge, 4, 0)
+stroke shift(redge, 10, 8)
+stroke [[155, -1], [156, 50], [154, 110], [156, 168]]
+color black
+stroke [[10, 23], [6, 37], [5, 53], [5, 73], [7, 93], [10, 107]]
+stroke [[149, 30], [151, 70], [150, 100]]
+stroke [[127, 140], [126, 168]]
+# faint grain on the lit bottom plank
+color brown
+stroke [[30, 140], [44, 152], [62, 160], [80, 162], [98, 158], [108, 152]]
+stroke [[40, 160], [60, 166]]
+# crease lines where the bottom plank of the rim meets the side wood
+color brown
+stroke 22, 124, 26, 120, 30, 120
+stroke 114, 146, 110, 141
+# outline of the knothole
+color black
+stroke hole
+
+frame()

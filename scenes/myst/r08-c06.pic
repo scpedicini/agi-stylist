@@ -1,0 +1,373 @@
+# The Cabin Boiler
+# Source: Myst (1993) render, reference/myst/r08-c06.png; reframed with:
+#   pnpm grid reference/myst/r08-c06.png --crop 0,0,544,333 --name myst-r08-c06
+# Method: translated by eye. Kept: the timber frame seen head-on (near corner posts, the top tie
+#   beam and its shadowed twin, the far tie beam, rafters and braces, the iron brackets), the
+#   log walls on both sides and at the back, the riveted boiler with its round gauge and
+#   firebox, the red valve wheel and its pipe, the window at left with the tree trunk on its
+#   concrete base, and the plank floor. Dropped: wood grain, most rivets and bolts, the boiler's
+#   label plate, the small fittings behind the boiler, the sky's clouds but two. Moved: nothing.
+# Colours: lit timber → brown with yellow lit edges and black grooves on the shaded side, roof
+#   boards in deep shadow → black with red board lines, log walls and far ceiling in shadow →
+#   red log faces on black gaps with a few brown lit edges, darker than the lit frame, the
+#   boiler alcove → black, bronze boiler → brown with a yellow lit band and black seams, iron
+#   brackets and firebox → darkgrey with lightgrey edges, valve wheel → lightred with a red
+#   shade (red would sink into the red log walls), sky → lightcyan (roster convention; the
+#   source's is dim blue), trees → green,
+#   trunk → red, concrete → lightgrey, floor planks → brown with black seams.
+scene "The Cabin Boiler"
+variants lit
+
+# the vanishing point of the room, for the side walls' log lines
+let vx = 80
+let vy = 92
+
+# ---- deep shadow behind everything -------------------------------------------------------
+# Painted first, so everything else stands on it, but held back with delay: over the original
+# the viewer paints it last, filling in behind what's already there.
+delay {
+  color black
+  rect 0, 0, 159, 167
+}
+
+# ---- roof boards and rafters above the top beam ------------------------------------------
+# dark boards in deep shadow
+color red
+for x in range(2, 159, 13) {
+  stroke x, 3, x + 7, 3
+  stroke x + 5, 7, x + 11, 7
+}
+# rafters rising to the ridge at the top bracket, and two at the corners
+shape(band([[52, 13], [76, -3]], 6), brown)
+shape(band([[108, 13], [84, -3]], 6), brown)
+shape(band([[8, 13], [24, -3]], 6), brown)
+shape(band([[152, 13], [136, -3]], 6), brown)
+color yellow
+stroke 53, 9, 70, -2
+stroke 107, 9, 90, -2
+
+# ---- top tie beam, with its shadowed twin below ------------------------------------------
+shape([[0, 11], [159, 11], [159, 20], [0, 20]], brown)
+color yellow
+stroke 12, 12, 70, 12
+stroke 90, 12, 146, 12
+color red
+stroke 20, 16, 40, 16
+stroke 52, 17, 66, 17
+stroke 96, 15, 120, 15
+stroke 128, 17, 142, 17
+
+# ---- the far ceiling, its braces and the far tie beam ------------------------------------
+logs(14, 146, 27, 37, 51)
+# braces: from the near posts down to the mid brackets, and a V into the centre bracket
+shape(band([[12, 25], [33, 41]], 6), brown)
+shape(band([[148, 25], [127, 41]], 6), brown)
+shape(band([[60, 26], [78, 38]], 5), brown)
+shape(band([[100, 26], [82, 38]], 5), brown)
+color yellow
+stroke 15, 26, 31, 38
+stroke 61, 26, 75, 35
+# the far tie beam
+shape([[28, 36], [132, 36], [132, 44], [28, 44]], brown)
+color yellow
+stroke 37, 37, 74, 37
+stroke 86, 37, 124, 37
+color red
+stroke 44, 41, 60, 41
+stroke 96, 40, 116, 40
+
+# ---- log walls -----------------------------------------------------------------------------
+# dark log courses across a box: black gaps, red log faces 3 rows tall with a brown lit top
+# edge on some, and the odd log end
+fn logs(x1, x2, y1, y2, s) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], black, null)
+  let y = y1 + 1
+  let i = 0
+  while y + 2 <= y2 {
+    color red
+    rect x1, y, x2, y + 2
+    if noise(s, i) < 0.45 {
+      let xa = x1 + noise(s + 1, i) * (x2 - x1) * 0.5
+      color brown
+      stroke xa, y, xa + 4 + noise(s + 2, i) * 8, y
+    }
+    if noise(s + 3, i) < 0.4 {
+      color black
+      let xe = x1 + 3 + noise(s + 4, i) * (x2 - x1 - 6)
+      stroke xe, y, xe, y + 2
+    }
+    y += 5 + floor(noise(s + 5, i) * 2)
+    i += 1
+  }
+}
+
+# a side wall's log courses running from the near edge (xn) towards the vanishing point, cut
+# at xf: red log faces with black gaps, thicker nearer the viewer
+fn sidelogs(xn, xf, y1, y2, s) {
+  let k = (vx - xf) / (vx - xn)
+  let y = y1
+  let i = 0
+  while y < y2 {
+    let yf = vy + (y - vy) * k
+    shape([[xn, y], [xf, yf], [xf, yf + 3 * k], [xn, y + 3]], red, null)
+    if noise(s, i) < 0.4 {
+      let c = 0.1 + noise(s + 1, i) * 0.4
+      color brown
+      stroke xn + (xf - xn) * c, y + (yf - y) * c, xn + (xf - xn) * (c + 0.35), y + (yf - y) * (c + 0.35)
+    }
+    y += 6 + floor(noise(s + 3, i) * 2)
+    i += 1
+  }
+}
+
+# left and right side walls, between the near posts and the mid posts
+shape([[14, 26], [31, 40], [31, 141], [14, 167]], black, null)
+sidelogs(14, 31, 32, 166, 11)
+shape([[145, 26], [129, 40], [129, 141], [145, 167]], black, null)
+sidelogs(145, 129, 33, 166, 21)
+
+# back wall: left of the alcove (around the window) and right of it (behind the wheel)
+logs(36, 55, 44, 61, 31)
+logs(36, 55, 111, 141, 32)
+logs(104, 124, 44, 141, 41)
+color black
+stroke 28, 44, 132, 44
+
+# ---- the window: sky, pines, the trunk on its concrete base --------------------------------
+color lightcyan
+rect 37, 62, 53, 88
+fn puff(x, y) {
+  color white
+  rect x, y, x + 3, y + 1
+  rect x + 1, y - 1, x + 2, y - 1
+  color lightgrey
+  stroke x, y + 2, x + 3, y + 2
+}
+puff 38, 66
+puff 49, 72
+# the far pines along the skyline
+let tops = [[37, 84], [38, 79], [40, 83], [41, 77], [43, 82], [49, 82], [50, 76], [52, 81], [53, 78],
+            [53, 90], [37, 90]]
+shape(tops, green, null)
+color black
+stroke 38, 82, 38, 88
+stroke 41, 80, 41, 88
+stroke 50, 79, 50, 88
+stroke 52, 83, 52, 88
+color darkgrey
+rect 37, 89, 53, 104
+color black
+stroke 37, 89, 53, 89
+color lightgrey
+rect 37, 104, 53, 111
+color darkgrey
+stroke 37, 104, 53, 104
+# the tree trunk, rising out of the top of the window, on a concrete collar
+shape([[42, 62], [48, 62], [48, 104], [42, 104]], red)
+color brown
+stroke 43, 64, 43, 80
+stroke 44, 84, 44, 100
+color black
+stroke 46, 66, 46, 74
+stroke 46, 88, 46, 98
+shape([[40, 103], [50, 103], [52, 110], [39, 110]], lightgrey)
+color darkgrey
+stroke 47, 105, 49, 109
+color black
+stroke 37, 62, 53, 62
+# the lintel over the window and the sill under it
+shape([[35, 55], [56, 55], [56, 61], [35, 61]], brown)
+color yellow
+stroke 37, 56, 53, 56
+shape([[35, 111], [56, 111], [56, 115], [35, 115]], brown)
+color yellow
+stroke 37, 112, 53, 112
+
+# ---- the boiler alcove ---------------------------------------------------------------------
+color black
+rect 61, 44, 98, 141
+color darkgrey
+for y in [62, 70, 79, 93, 104, 117] {
+  stroke 94, y, 97, y
+}
+stroke 62, 66, 63, 66
+stroke 62, 98, 63, 98
+
+# ---- the boiler ----------------------------------------------------------------------------
+let body = [[64, 65], [64, 62], [65, 60], [67, 58.5], [70, 57.5], [88, 57.5], [91, 58.5], [93, 60], [94, 62], [94, 65],
+            [94, 116], [64, 116]]
+shape(body, brown)
+# the lit face of the cylinder
+shape([[68, 59], [70, 58], [79, 58], [79, 115], [68, 115]], yellow, null)
+color brown
+stroke 65, 61, 65, 115
+# seams: the top band, the middle band, a vertical seam, the foot
+color black
+stroke 65, 63, 93, 63
+stroke 65, 88, 93, 88
+stroke 65, 113, 93, 113
+stroke 75, 89, 75, 112
+# rivets
+fn rivets(x1, x2, y, step) {
+  for x in range(x1, x2 + 1, step) {
+    color x > 79 || x < 68 ? yellow : brown
+    stroke x, y, x, y
+  }
+}
+rivets 67, 92, 61, 4
+rivets 67, 92, 86, 4
+rivets 67, 92, 111, 4
+color brown
+for y in range(92, 110, 5) {
+  stroke 77, y, 77, y
+}
+# the round gauge
+ellipse 80, 74, 6, 9
+color black
+ellipse 80, 74, 6, 9
+color darkgrey
+ellipse 80, 74, 5, 8
+color lightgrey
+ellipse 80, 74, 3, 5
+color black
+stroke 80, 74, 82, 71
+color white
+stroke 78, 71, 78, 71
+color red
+stroke 77, 76, 79, 76
+# the firebox, its door and the little control panel
+shape([[65, 116], [93, 116], [93, 138], [65, 138]], darkgrey)
+color lightgrey
+stroke 66, 117, 92, 117
+stroke 66, 117, 66, 137
+shape([[74, 122], [90, 122], [90, 132], [74, 132]], black)
+color darkgrey
+for x in [77, 81, 85] {
+  stroke x, 124, x, 131
+}
+color lightgrey
+stroke 74, 133, 90, 133
+shape([[67, 126], [70, 126], [70, 134], [67, 134]], lightgrey)
+color black
+stroke 68, 128, 68, 131
+# its plinth
+shape([[63, 138], [95, 138], [95, 141], [63, 141]], darkgrey)
+
+# ---- the valve wheel and its pipe ----------------------------------------------------------
+let wx = 114
+let wy = 91
+# the pipe down the back wall to the floor
+shape([[113, 102], [116, 102], [116, 140], [113, 140]], darkgrey)
+color lightgrey
+stroke 113, 104, 113, 139
+# thick spokes, then the ring in two halves over them, then the hub
+for a in [20, 92, 164, 236, 308] {
+  shape(band([[wx, wy], [wx + sin(a) * 9.5, wy - cos(a) * 14]], 4), lightred)
+}
+shape(band(arc(wx, wy, 9.5, 14, 0, 180, 10), 6), lightred)
+shape(band(arc(wx, wy, 9.5, 14, 180, 360, 10), 6), lightred)
+color red
+stroke arc(wx, wy, 9.5, 14, 110, 170, 15)
+# the hub on its stem
+color black
+ellipse wx - 1, wy - 2, 3, 4
+color lightgrey
+ellipse wx - 1, wy - 2, 2, 3
+color darkgrey
+stroke wx, wy - 1, wx + 1, wy
+color white
+stroke wx - 2, wy - 4, wx - 2, wy - 4
+
+# ---- the floor -----------------------------------------------------------------------------
+let fl = [[31, 140], [128, 140], [146, 167], [13, 167]]
+shape(fl, brown, null)
+let fleft = [[140, 31], [167, 13]]
+let fright = [[140, 128], [167, 146]]
+let seams = [143, 147, 153, 161]
+let i = 0
+for y in seams {
+  let xa = interp(fleft, y)
+  let xb = interp(fright, y)
+  color black
+  stroke xa, y, xb, y
+  color yellow
+  stroke xa + 6, y + 1, xa + 20, y + 1
+  stroke xb - 30, y + 1, xb - 18, y + 1
+  # staggered board ends
+  color black
+  let nxt = i < 3 ? seams[i + 1] : 167
+  stroke 50 + i * 23, y, 50 + i * 23, nxt
+  stroke 108 - i * 17, y, 108 - i * 17, nxt
+  i += 1
+}
+color black
+stroke 34, 157, 46, 157
+stroke 98, 164, 112, 164
+color black
+stroke 31, 140, 128, 140
+
+# ---- the posts ----------------------------------------------------------------------------
+# a squared post: brown face, a yellow lit edge on the left in broken runs, black grooves
+# down its shaded right side
+fn post(x1, x2, y1, y2) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], brown)
+  color yellow
+  stroke x1 + 1, y1 + 2, x1 + 1, y1 + (y2 - y1) * 0.4
+  stroke x1 + 1, y1 + (y2 - y1) * 0.55, x1 + 1, y2 - 6
+  color black
+  stroke x2 - 2, y1 + 4, x2 - 2, y1 + 30
+  stroke x2 - 2, y1 + 44, x2 - 2, y1 + 60
+  stroke x2 - 3, y1 + 70, x2 - 3, y2 - 8
+  stroke x1 + 3, y1 + 18, x1 + 3, y1 + 26
+}
+# the mid posts where the side walls meet the back wall
+post 30, 36, 44, 141
+post 124, 130, 44, 141
+# the posts either side of the boiler alcove
+post 55, 61, 44, 143
+post 98, 104, 44, 143
+color yellow
+for x in [57, 100] {
+  stroke x, 47, x, 80
+  stroke x, 92, x, 128
+}
+
+# ---- iron brackets -------------------------------------------------------------------------
+fn plate(pts, bolts) {
+  shape(pts, darkgrey)
+  color lightgrey
+  stroke pts[0], pts[1]
+  color black
+  for b in bolts {
+    rect b[0], b[1], b[0] + 1, b[1]
+  }
+}
+plate([[28, 34], [37, 34], [37, 46], [33, 49], [28, 46]], [[30, 37], [34, 42]])
+plate([[123, 34], [132, 34], [132, 46], [127, 49], [123, 46]], [[125, 37], [129, 42]])
+plate([[75, 29], [85, 29], [85, 38], [80, 45], [75, 38]], [[77, 32], [82, 32], [79, 39]])
+plate([[72, 0], [87, 0], [87, 13], [80, 22], [73, 13]], [[75, 3], [83, 3], [75, 11], [83, 11], [79, 16]])
+
+# ---- the near corner posts and their plates -------------------------------------------------
+# each a brown post, lit on the left in broken runs, dense black grooves on its shaded right part
+shape([[-1, 21], [14, 21], [14, 168], [-1, 168]], brown)
+color yellow
+stroke 2, 30, 2, 70
+stroke 3, 84, 3, 120
+stroke 2, 132, 2, 160
+color black
+for g in [[10, 24, 70], [12, 30, 96], [11, 80, 130], [10, 110, 160], [12, 120, 166], [6, 40, 58], [7, 96, 112]] {
+  stroke g[0], g[1], g[0], g[2]
+}
+shape([[145, 21], [160, 21], [160, 168], [145, 168]], brown)
+color yellow
+stroke 146, 30, 146, 64
+stroke 147, 80, 147, 124
+stroke 146, 136, 146, 162
+color black
+for g in [[152, 24, 80], [154, 40, 110], [156, 70, 150], [153, 100, 166], [157, 26, 50], [149, 92, 108]] {
+  stroke g[0], g[1], g[0], g[2]
+}
+plate([[-1, 0], [8, 0], [11, 6], [11, 22], [6, 28], [-1, 28]], [[2, 3], [7, 7], [7, 16], [2, 22]])
+plate([[148, 0], [160, 0], [160, 28], [153, 28], [148, 22]], [[151, 4], [156, 9], [151, 18], [156, 23]])
+
+frame()

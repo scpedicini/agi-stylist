@@ -1,0 +1,327 @@
+# The Clock Tower
+# Source: Myst (1993) render, reference/myst/r01-c00.png; reframed with:
+#   pnpm grid reference/myst/r01-c00.png --crop 0,0,544,333 --name myst-r01-c00
+# Method: translated by eye. Kept: the pale sky, the sea and its ripple flecks, the marble clock
+#   tower with its cornice, clock face and arched wooden door, the stone landing round its foot
+#   and the little post beside it, the tower's dark reflection, the six gear stepping-stones, the
+#   shore, the control box with its two brass handwheels and red button, three pine trunks and
+#   the boughs hanging against the sky. Dropped: the green roof tip over the cornice, the paler
+#   band of water on the left, the numerals' detail, most of the marble veining and the blur of
+#   the boughs. Moved: nothing.
+# Colours: hazy sky → lightcyan, green sea → cyan with blue flecks, reflection → blue,
+#   marble tower → darkgrey with lightgrey veins and corner, cornice → lightgrey/white/darkgrey,
+#   clock → white face, yellow/brown brass ring, black hands; door → brown planks in a lightgrey
+#   arch; gears → lightgrey tops, darkgrey sides; khaki shore → yellow sand with a brown
+#   shaded band, waterline and ripple ticks; box → darkgrey/lightgrey with a brown top, yellow rim and black studs;
+#   trunks → red with a black shade edge and broken black grooves; boughs → green, black shade, lightgreen.
+scene "The Clock Tower"
+variants day
+
+let hz = 78
+
+# ---- sky and sea -----------------------------------------------------------------------------
+# Painted first, so everything else stands on them, but held back with delay: over the original
+# the viewer paints them last, filling in behind what's already there (the sea, then the sky).
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, hz
+}
+delay {
+  color cyan
+  rect 0, hz + 1, 159, 167
+}
+
+# ripple flecks: short and sparse at the horizon, longer and wider apart nearer
+color blue
+let y = hz + 3
+let row = 0
+while y < 168 {
+  let t = (y - hz) / (167 - hz)
+  let gap = 9 + t * 12
+  let x = noise(3, row) * gap
+  while x < 160 {
+    let l = round(t * 3 + noise(5, row * 37 + x) * (1 + t * 2))
+    stroke x, y, x + l, y
+    x += gap * (0.6 + noise(7, row * 13 + x) * 0.8)
+  }
+  y += 2 + round(t * 4)
+  row += 1
+}
+
+# the tower's dark reflection: ragged streaks, broken by ripples
+color blue
+for ry in 112..162 {
+  let k = (ry - 112) / 50
+  let l = 81 + k * 6 + noise(41, ry) * 5
+  let r = 124 - k * 10 - noise(42, ry) * 6
+  stroke l, ry, r, ry
+  if noise(43, ry) < 0.5 {
+    stroke l - 3 - noise(44, ry) * 4, ry, l - 1, ry
+  }
+  if noise(45, ry) < 0.5 {
+    stroke r + 1, ry, r + 2 + noise(46, ry) * 5, ry
+  }
+}
+# ripple breaks in it, kept clear of the gear stepping-stones
+color cyan
+for i in 0..22 {
+  let ry = 116 + i * 2
+  let rx = 82 + noise(11, i) * 40
+  let chain = 106 - max(0, ry - 128) * 0.45
+  if abs(rx - chain) < 13 { continue }
+  stroke rx, ry, rx + 1 + noise(12, i) * 3, ry
+}
+
+# ---- the stone landing round the tower's foot ------------------------------------------------
+shape([[79, 106], [86, 103], [124, 103], [134, 106], [134, 109], [122, 112], [92, 114],
+       [79, 109]], lightgrey)
+shape([[79, 109], [92, 114], [122, 112], [134, 109], [134, 112], [122, 115], [92, 117],
+       [79, 112]], darkgrey)
+
+# the little post on the landing
+shape([[81, 92], [87, 92], [87, 106], [81, 106]], brown)
+shape([[80, 92], [84, 86], [88, 92]], darkgrey)
+color black
+line 85, 93, 85, 105
+
+# ---- the clock tower -------------------------------------------------------------------------
+# shaft: front face and narrow right side
+shape([[89, 16], [117, 16], [117, 108], [89, 108]], darkgrey)
+shape([[117, 16], [122, 16], [122, 106], [117, 108]], darkgrey)
+# marble veins
+color lightgrey
+line 91, 62, 95, 70, 94, 78
+line 112, 60, 110, 68, 113, 76, 111, 84
+line 92, 28, 94, 34
+line 111, 88, 114, 96, 112, 104
+line 119, 30, 120, 44
+line 120, 70, 119, 84
+color black
+line 90, 86, 93, 92, 92, 100
+line 114, 24, 112, 30
+# the lit corner between the faces, in broken runs
+color lightgrey
+line 117, 24, 117, 46
+line 117, 52, 117, 80
+line 117, 86, 117, 106
+# shadow under the cornice
+color black
+rect 89, 16, 122, 19
+
+# cornice: a deep slab with a lit lip and a shaded frieze
+shape([[83, 7], [89, 0], [126, 0], [126, 15], [83, 15]], lightgrey)
+color darkgrey
+line 84, 7, 89, 2, 125, 2
+color white
+line 88, 10, 125, 10
+color darkgrey
+rect 86, 12, 125, 14
+color black
+line 87, 11, 125, 11
+line 84, 15, 126, 15
+
+# the clock
+ellipse 102, 42, 10, 16
+color yellow
+ellipse 102, 42, 9, 15
+color brown
+line arc(102, 42, 9, 15, 100, 260)
+color black
+ellipse 102, 42, 8, 14
+color white
+ellipse 102, 42, 7, 13
+# hour marks round the dial
+color black
+for i in 0..12 {
+  let a = i * 30
+  stroke 102 + sin(a) * 6, 42 - cos(a) * 11, 102 + sin(a) * 7, 42 - cos(a) * 12
+}
+# hands
+line 102, 42, 107, 34
+line 102, 42, 97, 48
+rect 101, 41, 102, 42
+# carved boss over the clock
+color lightgrey
+rect 101, 24, 103, 25
+
+# the door in its stone arch
+shape(archway(102, 72, 8, 8, 107), lightgrey)
+color darkgrey
+line 109, 80, 109, 106
+color white
+line 95, 80, 95, 106
+shape(archway(102, 78, 5, 6, 106), brown)
+color black
+line 100, 79, 100, 105
+line 102, 77, 102, 105
+line 104, 79, 104, 105
+color yellow
+line 98, 82, 98, 104
+color black
+rect 105, 92, 105, 93
+# keystone
+shape([[101, 70], [104, 70], [103, 74], [102, 74]], lightgrey)
+# doorstep
+color lightgrey
+rect 94, 107, 110, 108
+color black
+line 94, 109, 110, 109
+
+# ---- the gear stepping-stones, far to near ---------------------------------------------------
+fn gear(cx, cy, rx, h = 2, phase = 0) {
+  # a flat gear seen from above: ry = rx / 2 for the 2:1 pixels, 8 square teeth
+  let ry = rx / 2
+  let pts = []
+  for i in 0..32 {
+    let a = phase + i * 360 / 32
+    let k = (i % 4 < 2) ? 1 : 0.68
+    push(pts, [cx + sin(a) * rx * k, cy - cos(a) * ry * k])
+  }
+  # side band, then black filling the gaps between the teeth, then the top
+  shape(shift(pts, 0, h), darkgrey)
+  color black
+  ellipse cx, cy, rx * 0.84, ry * 0.84 + 0.5
+  shape(pts, lightgrey)
+  # hub ring and hub
+  color darkgrey
+  stroke arc(cx, cy, rx * 0.45, ry * 0.45 + 0.3, 0, 360, 30)
+  rect cx, cy, cx + max(0, round(rx / 6)), cy
+}
+gear(105, 117, 5.5, 1, 10)
+gear(108, 122, 6.5, 2, 20)
+gear(109, 128, 7.5, 2, 5)
+gear(105, 135, 8.5, 2, 30)
+gear(100, 143, 9.5, 2, 12)
+gear(94, 151, 11, 3, 0)
+
+# ---- the sandy shore -------------------------------------------------------------------------
+let shore = [[-1, 136], [10, 140], [22, 146], [35, 149], [50, 150], [68, 148], [80, 151],
+             [92, 156], [105, 161], [119, 168]]
+shape(shore + [[-1, 168]], yellow)
+# shaded sand under the trees, and the wet waterline
+shape([[-1, 149], [10, 153], [24, 158], [38, 162], [50, 168], [-1, 168]], brown, null)
+color brown
+stroke shift(shore, 0, 1)
+stroke slice(shift(shore, 0, 2), 5, 10)
+# cast shadows of the trunks
+shape([[47, 166], [36, 161], [26, 160], [32, 164], [40, 168]], black, null)
+shape([[22, 156], [12, 153], [6, 153], [14, 158]], black, null)
+# a few ripples in the sand
+color brown
+line 62, 155, 67, 155
+line 76, 158, 81, 158
+line 86, 162, 90, 162
+line 54, 161, 58, 161
+line 98, 165, 101, 165
+
+# ---- the control box -------------------------------------------------------------------------
+# front face, right face, then the brass-rimmed top
+shape([[35, 133], [59, 137], [59, 151], [35, 148]], darkgrey)
+shape([[59, 137], [68, 132], [68, 147], [59, 151]], lightgrey)
+color darkgrey
+line 66, 134, 66, 147
+shape([[35, 133], [44, 129], [68, 132], [59, 137]], brown)
+color yellow
+line 35, 133, 59, 137, 68, 132
+line 36, 132, 44, 129
+color black
+line 35, 134, 59, 138, 68, 133
+for i in 0..6 {
+  rect 37 + i * 4, 133 + i * 0.7, 37 + i * 4, 133 + i * 0.7
+}
+rect 62, 135, 62, 135
+rect 65, 133, 65, 133
+# the shaft with its brass collar, and the red button
+shape([[48, 124], [53, 124], [53, 134], [48, 134]], darkgrey)
+color lightgrey
+line 49, 125, 49, 131
+shape([[47, 131], [55, 131], [55, 134], [47, 134]], yellow)
+color brown
+line 47, 133, 55, 133
+shape([[57, 132], [60, 132], [60, 134], [57, 134]], red)
+color lightred
+rect 58, 132, 58, 132
+# two brass handwheels, seen tilted
+fn wheel(cx, cy, rx, ry) {
+  color brown
+  stroke arc(cx, cy, rx, ry, 0, 360, 20)
+  color yellow
+  stroke arc(cx, cy, rx, ry, 270, 450, 20)
+  color brown
+  line cx - rx + 1, cy, cx + rx - 1, cy
+  line cx, cy - ry + 1, cx, cy + ry - 1
+  color black
+  rect cx, cy, cx, cy
+}
+wheel(48, 120, 3.5, 2.5)
+wheel(54, 124, 4, 2.5)
+
+# ---- pine boughs against the sky -------------------------------------------------------------
+fn bough(top, x1, y1, x2, y2, depth, seed) {
+  # top: the upper edge, left to right, ending at (x2, y2); the saw-toothed underside runs
+  # back from (x2, y2) to (x1, y1), tips hanging `depth` rows below it
+  let under = []
+  let n = round((x2 - x1) / 2)
+  for i in 0..=n {
+    let t = i / n
+    let x = x2 - (x2 - x1) * t
+    let y = y2 + (y1 - y2) * t
+    let d = (i % 2 == 0) ? 0 : depth * (0.6 + noise(seed, i) * 0.8)
+    push(under, [x, y + d])
+  }
+  shape(top + under, green)
+  # the shade under the needles, in broken runs
+  color black
+  for i in 0..n {
+    if noise(seed + 1, i) < 0.55 {
+      let p = under[i]
+      let q = under[i + 1]
+      stroke p[0], p[1] - 2 - (i % 2), q[0], q[1] - 2 - (i % 2)
+    }
+    if noise(seed + 2, i) < 0.3 {
+      let p = under[i]
+      stroke p[0], p[1] - 5, p[0] + 3, p[1] - 6
+    }
+  }
+  color lightgreen
+  stroke slice(top, 1, len(top) - 1)
+}
+# off the middle trunk, right
+bough([[33, -1], [57, -1], [58, 8], [59, 18]], 33, 20, 59, 18, 6, 21)
+bough([[43, 26], [50, 23], [56, 27], [59, 32]], 43, 33, 59, 36, 5, 23)
+# between the near trunks
+bough([[8, -1], [37, -1], [38, 14]], 8, 22, 38, 16, 7, 25)
+bough([[9, 31], [20, 28], [30, 31], [34, 35]], 9, 39, 34, 40, 6, 27)
+bough([[11, 47], [24, 44], [32, 48], [36, 54]], 11, 58, 36, 60, 8, 29)
+
+# ---- the pine trunks -------------------------------------------------------------------------
+fn pinetrunk(left, right, seed) {
+  # left, right: the trunk's edges, top to bottom (same rows)
+  shape(left + reverse(right), red)
+  color black
+  stroke shift(right, -1, 0)
+  # broken bark grooves, more on the shaded right side
+  let top = left[0][1]
+  let bot = left[len(left) - 1][1]
+  for g in 0..9 {
+    let f = 0.3 + noise(seed, g) * 0.5
+    let ya = top + noise(seed + 1, g) * (bot - top)
+    let yb = min(bot - 1, ya + 8 + noise(seed + 2, g) * 22)
+    let xa = interp(trunkedge(left, right, f), ya)
+    let xb = interp(trunkedge(left, right, f), yb)
+    stroke xa, ya, xb, yb
+  }
+}
+fn trunkedge(left, right, f) {
+  # a line down the trunk, fraction f of the way across, as [y, x] points for interp
+  let pts = []
+  for i in 0..len(left) {
+    push(pts, [left[i][1], left[i][0] + (right[i][0] - left[i][0]) * f])
+  }
+  return pts
+}
+pinetrunk([[12, -1], [14, 84], [15, 153]], [[15, -1], [19, 84], [22, 153]], 31)
+pinetrunk([[-3, -1], [-3, 80], [-3, 168]], [[9, -1], [12, 80], [16, 168]], 33)
+pinetrunk([[38, -1], [38, 84], [39, 165]], [[42, -1], [44, 84], [47, 165]], 35)
+
+frame()

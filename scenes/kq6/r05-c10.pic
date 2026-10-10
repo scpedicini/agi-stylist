@@ -1,0 +1,300 @@
+# Redwood Forest Pool
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c10.png; reframed with:
+#   pnpm grid reference/kq6/r05-c10.png --name kq6-r05-c10
+# Method: translated by eye. Kept: the two giant redwoods framing left and right, the hazy
+#   far forest of thin trunks with pale sky between, the mossy branch with hanging moss, the
+#   dirt path running back between two grass-capped earth banks, the blue pool, four grey
+#   boulders, the bright fern bank and pale trunk on the far right, the foreground path,
+#   fallen sticks and a few white mushrooms. Dropped: individual needles and pine boughs (a
+#   few green clumps stand in), most hanging moss, bark texture, small roots on the left
+#   bank, grass blades.
+# Colours: pale sky → lightcyan, far trunks → lightgrey with darkgrey sides, far canopy →
+#   green, redwood bark → brown lit half / red shadowed half with black grooves and yellow
+#   highlights, cream earth banks → lightgrey with white hanging lobes and a darkgrey
+#   shadowed base (kept off yellow so they stay apart from the path), moss caps →
+#   lightgreen, tan path → yellow with brown edges, pool → blue with lightblue ripples, boulders →
+#   lightgrey/darkgrey, mushrooms → white with lightgrey gills.
+scene "Redwood Forest Pool"
+variants day
+
+# ---- sky and the far forest --------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightcyan
+  rect 0, 0, 159, 70
+}
+
+# thin far trunks, irregular widths and spacing
+fn ftrunk(x, w, top, bot) {
+  color lightgrey
+  rect x, top, x + w, bot
+  color darkgrey
+  line x + w, top, x + w, bot
+}
+let far = [[33, 3], [46, 1], [55, 2], [62, 1], [73, 2], [86, 3], [95, 1], [101, 3]]
+for t in far {
+  ftrunk(t[0], t[1], 0, 64)
+}
+# far canopy: pine boughs in front of the trunks
+blobs([[34, 2, 12, 6], [50, 0, 10, 5], [64, 3, 10, 6], [92, 2, 12, 5], [104, 6, 8, 6]], green)
+# pine boughs: a flat top and a saw-toothed underside
+fn bough(x, y, w, seed) {
+  let pts = [[x - w / 2, y + 1], [x - w / 4, y - 1], [x + w / 4, y - 2], [x + w / 2, y]]
+  let n = floor(w / 3)
+  for i in 0..n {
+    let bx = x + w / 2 - (i + 0.5) * w / n
+    push(pts, [bx, y + 3 + noise(seed, i) * 2])
+    push(pts, [bx - w / n / 2, y + 1])
+  }
+  shape(pts, green)
+  color lightgreen
+  line x - w / 4, y, x + w / 4, y - 1
+}
+bough 76, 18, 18, 1
+bough 92, 23, 16, 2
+bough 68, 26, 10, 3
+bough 42, 22, 12, 4
+bough 54, 29, 10, 5
+bough 86, 35, 12, 6
+bough 99, 41, 10, 7
+
+# far forest floor and undergrowth
+shape([[20, 56], [30, 52], [44, 54], [56, 58], [70, 58], [90, 56], [110, 54], [110, 72],
+       [20, 72]], green)
+blobs([[32, 58, 8, 7], [44, 60, 7, 6], [92, 56, 8, 4]], green)
+color lightgreen
+line 30, 56, 34, 53, 37, 56
+line 42, 59, 46, 57
+color black
+line 36, 62, 40, 60
+
+# ---- the far path ------------------------------------------------------------------------
+shape([[58, 59], [66, 59], [70, 66], [75, 76], [80, 86], [84, 94], [48, 94], [50, 84],
+       [53, 74], [56, 66]], yellow)
+color brown
+line 66, 60, 70, 68, 74, 78, 79, 88
+line 60, 70, 59, 76
+line 64, 80, 66, 86
+
+# ---- the second-left trunks and the mossy branch -----------------------------------------
+shape([[10, 0], [17, 0], [17, 68], [10, 68]], darkgrey)
+color lightgrey
+line 12, 0, 12, 66
+shape([[18, 0], [29, 0], [30, 50], [31, 68], [18, 68]], brown)
+shape([[18, 0], [23, 0], [23, 68], [18, 68]], red, null)
+color black
+line 20, 4, 20, 30, 19, 60
+line 22, 10, 22, 50
+line 26, 20, 27, 44
+color yellow
+line 28, 6, 28, 30
+line 29, 40, 29, 56
+
+shape(band([[20, 35], [32, 38], [44, 40], [56, 40], [66, 39]], 5, 2), brown)
+color yellow
+line 26, 35, 36, 37, 46, 38
+# hanging moss
+fn moss(x, y, len) {
+  shape(band([[x, y], [x, y + len / 2], [x + 1, y + len]], 3, 1), darkgrey)
+}
+moss 44, 41, 9
+moss 51, 41, 7
+moss 59, 41, 10
+moss 62, 40, 6
+
+# ---- right bank: grass cap and cream earth cliff ------------------------------------------
+let rcap_bot = [[70, 68], [80, 66], [90, 63], [100, 60], [114, 57]]
+shape([[68, 66], [76, 61], [86, 57], [96, 52], [106, 48], [116, 46], [116, 58]] +
+      [[100, 61], [90, 64], [80, 67], [72, 70]], lightgreen)
+shape([[72, 69], [80, 67], [90, 64], [100, 61], [114, 58], [114, 122], [100, 120],
+       [98, 110], [94, 102], [88, 96], [82, 92], [78, 84], [74, 76]], lightgrey)
+# shadowed lower part
+shape([[78, 92], [86, 90], [94, 90], [104, 88], [114, 90], [114, 122], [100, 120], [98, 110],
+       [94, 102], [88, 96], [82, 92]], darkgrey, null)
+# white lit lobes hanging off the cap, with dark gaps between
+fn lobes(edge, x1, x2, seed, lo, hi) {
+  let x = x1
+  let i = 0
+  while x < x2 {
+    let w = 3 + noise(seed, i) * 5
+    let top = interp(edge, x + w / 2) + 1
+    let len = lo + noise(seed + 1, i) * (hi - lo)
+    shape([[x + 1, top], [x + w, top], [x + w, top + len * 0.6], [x + w - 1, top + len - 2],
+           [x + w / 2 + 0.5, top + len], [x + 1, top + len - 2]], white, null)
+    color darkgrey
+    line x, top + len * 0.4, x, top + len + 2
+    x = x + w + 1 + noise(seed + 2, i) * 3
+    i += 1
+  }
+}
+lobes(rcap_bot, 75, 112, 3, 12, 26)
+color black
+line 72, 69, 74, 76, 78, 84, 82, 92
+# grass tufts on the cap
+color green
+line 80, 63, 84, 61, 87, 63
+line 94, 58, 98, 55, 101, 57
+line 106, 52, 110, 50
+
+# ---- left bank: grass cap and cream earth cliff -------------------------------------------
+let lcap_bot = [[8, 86], [20, 84], [32, 82], [44, 80], [58, 78]]
+shape([[8, 72], [16, 69], [28, 68], [40, 70], [50, 72], [58, 75], [60, 78], [44, 81],
+       [32, 83], [20, 85], [8, 87]], lightgreen)
+shape([[8, 86], [20, 84], [32, 82], [44, 80], [58, 78], [57, 88], [52, 95], [44, 98],
+       [32, 101], [20, 104], [8, 106]], lightgrey)
+shape([[8, 98], [20, 97], [32, 95], [44, 93], [54, 90], [52, 95], [44, 98], [32, 101],
+       [20, 104], [8, 106]], darkgrey, null)
+lobes(lcap_bot, 12, 54, 6, 8, 14)
+color green
+line 18, 73, 22, 71, 25, 73
+line 36, 74, 40, 72, 44, 75
+# dark undergrowth below the left bank
+shape([[8, 103], [20, 101], [32, 99], [40, 98], [36, 106], [30, 110], [20, 114], [8, 118]], green)
+color black
+line 12, 104, 16, 108
+line 22, 102, 26, 106
+
+# ---- foreground ground ---------------------------------------------------------------------
+shape([[0, 120], [30, 112], [60, 122], [100, 122], [159, 118], [159, 167], [0, 167]],
+      lightgreen, null)
+
+# ---- the pool ------------------------------------------------------------------------------
+shape([[30, 106], [38, 98], [48, 94], [58, 92], [72, 92], [82, 93], [88, 97], [94, 103],
+       [97, 111], [100, 120], [96, 126], [80, 127], [60, 128], [45, 128], [36, 124],
+       [30, 116]], blue)
+color lightblue
+line 52, 98, 60, 98
+line 66, 96, 76, 96
+line 44, 108, 52, 108
+line 70, 106, 82, 106
+line 58, 116, 66, 116
+line 78, 120, 88, 120
+color black
+line 48, 94, 58, 92, 72, 92, 82, 93
+# roots dipping into the water
+shape(band([[38, 94], [42, 100], [44, 106]], 3, 1), brown)
+shape(band([[44, 92], [48, 98], [50, 102]], 2, 1), brown)
+
+# ---- boulders ------------------------------------------------------------------------------
+boulder([[50, 98], [51, 92], [55, 88], [59, 91], [60, 97], [55, 99]])
+boulder([[16, 120], [19, 110], [25, 104], [32, 104], [38, 110], [40, 118], [36, 125],
+         [22, 126]])
+boulder([[99, 120], [100, 110], [104, 104], [111, 102], [114, 106], [114, 124], [102, 125]])
+
+# ---- foreground path -----------------------------------------------------------------------
+shape([[30, 128], [44, 127], [60, 128], [70, 129], [64, 133], [54, 136], [46, 141],
+       [44, 150], [48, 158], [58, 167], [22, 167], [19, 158], [23, 148], [28, 138]], yellow)
+color brown
+line 32, 134, 40, 132
+line 28, 146, 34, 143
+line 26, 158, 32, 155
+line 40, 162, 46, 160
+color brown
+line 57, 167, 46, 158, 42, 150, 44, 141, 52, 135, 62, 132
+line 22, 165, 20, 158, 24, 148
+color black
+line 60, 167, 48, 158, 44, 150, 46, 141, 54, 136, 64, 133, 70, 129
+
+boulder([[55, 148], [58, 142], [64, 138], [71, 140], [75, 146], [70, 150], [58, 150]])
+
+# grass tufts in the foreground
+color green
+for i in 0..14 {
+  let x = 4 + noise(11, i) * 150
+  let y = 132 + noise(12, i) * 32
+  if x > 18 && x < 60 { continue }
+  line x - 2, y + 1, x, y - 2, x + 2, y + 1
+}
+
+# ---- far right: dark forest, bright fern bank, pale trunk ----------------------------------
+shape([[138, 0], [159, 0], [159, 124], [138, 124]], green)
+color darkgrey
+rect 145, 0, 147, 40
+rect 154, 0, 155, 30
+color black
+line 148, 0, 148, 40
+line 143, 60, 144, 80, 143, 112
+blobs([[152, 10, 7, 6], [142, 22, 5, 4]], green)
+blobs([[152, 44, 8, 11], [156, 62, 6, 12], [150, 80, 8, 9], [158, 36, 4, 6]], lightgreen)
+color green
+line 148, 44, 151, 40, 154, 43
+line 152, 52, 155, 49, 158, 52
+line 153, 64, 156, 60
+line 147, 80, 150, 77, 153, 80
+shape([[152, 88], [159, 86], [159, 167], [144, 167], [148, 140], [150, 112]], lightgrey)
+color darkgrey
+line 152, 88, 150, 112, 148, 140, 144, 167
+line 156, 100, 155, 130
+
+# ---- the big right redwood -----------------------------------------------------------------
+shape([[110, 0], [113, 0], [113, 112], [110, 112]], darkgrey)
+shape([[113, 0], [140, 0], [140, 60], [139, 110], [141, 122], [146, 130], [140, 134],
+       [134, 138], [126, 140], [120, 148], [116, 142], [110, 146], [111, 136], [113, 120]],
+      brown)
+# shadowed left half: dense dark grooves, some red
+color black
+line 114, 0, 114, 60, 113, 120
+line 116, 2, 116, 60, 115, 120, 112, 140
+line 118, 0, 118, 90, 117, 130, 115, 144
+line 120, 0, 120, 80, 119, 130, 118, 146
+line 122, 6, 122, 70, 122, 120, 121, 140
+line 124, 40, 124, 110, 123, 132
+color red
+line 115, 10, 115, 100
+line 119, 20, 119, 110
+line 121, 0, 121, 50
+line 123, 60, 123, 126
+# lit half: a pale stripe and a few highlight strokes
+color yellow
+line 131, 0, 131, 50, 132, 100, 133, 126
+line 132, 10, 132, 60
+line 137, 30, 137, 90, 138, 116, 142, 126
+color black
+line 128, 20, 128, 70, 127, 120, 128, 136
+line 134, 60, 135, 110, 136, 130
+line 140, 0, 140, 60, 139, 110, 141, 122, 146, 130
+
+# branches out of the right redwood
+shape(band([[116, 28], [106, 21], [96, 15], [86, 11], [76, 8]], 9, 3), brown)
+color yellow
+line 112, 22, 102, 16, 92, 12
+shape(band([[126, 30], [134, 34], [142, 40], [152, 42]], 5, 2), brown)
+moss 136, 36, 8
+moss 144, 41, 10
+moss 104, 22, 10
+moss 110, 25, 8
+blobs([[82, 14, 6, 3], [96, 18, 6, 3]], green)
+
+# ---- the big left redwood ------------------------------------------------------------------
+shape([[0, 0], [9, 0], [9, 60], [10, 100], [11, 114], [14, 124], [18, 131], [10, 131],
+       [5, 128], [0, 132]], brown)
+color black
+line 1, 0, 1, 124
+line 2, 0, 2, 120
+line 3, 10, 3, 118
+line 5, 10, 5, 110, 6, 124
+color yellow
+line 7, 0, 7, 70, 8, 110, 12, 124
+
+# ---- sticks, mushrooms ---------------------------------------------------------------------
+shape(band([[18, 136], [24, 131], [30, 131], [36, 135]], 3, 2), brown)
+shape(band([[80, 148], [90, 145], [100, 142], [110, 141]], 3, 2), brown)
+shape(band([[92, 145], [96, 150], [100, 153]], 2, 1), brown)
+shape(band([[0, 150], [4, 146], [7, 152], [8, 158]], 3, 2), brown)
+
+fn mushroom(x, y) {
+  color lightgrey
+  rect x, y, x + 1, y + 3
+  shape([[x - 2, y + 1], [x - 2, y], [x - 1, y - 2], [x + 2, y - 2], [x + 3, y], [x + 3, y + 1]],
+        white)
+  color lightgrey
+  line x - 1, y + 1, x + 2, y + 1
+}
+mushroom 12, 146
+mushroom 56, 155
+mushroom 59, 157
+mushroom 76, 161
+mushroom 101, 133
+
+frame()

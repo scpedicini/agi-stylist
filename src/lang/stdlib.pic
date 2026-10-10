@@ -1,0 +1,1410 @@
+# PicScript standard library - loaded before every scene.
+#
+# Conventions
+#   * The picture is 160 × 168 logical pixels. Logical pixels are TWICE AS WIDE as they are
+#     tall on screen, so a shape that looks round has rx ≈ ry / 2.
+#   * (x, y) for objects is where they meet the ground (trunk base, rock bottom) unless noted.
+#   * Every function paints with solid scanline shapes (polygon / rect / ellipse), so they
+#     can be layered back-to-front in any order. `fill` is still available for big areas
+#     painted on the white canvas.
+#   * KQ1 look: objects get a 1-px black outline; foliage is green with cyan detail lines;
+#     rocks are light grey with dark grey shading; water is blue with light-blue/white
+#     ripples; dirt is brown.
+#   * `seed` makes each object's irregular shape repeatable - change it to get a different
+#     but stable variation. Functions never touch the global random stream.
+
+# ---------------------------------------------------------------------------
+# geometry helpers
+
+# Solid polygon in `fill_color` with an optional outline colour (null for none). The outline is
+# clipped at the picture edge, so shapes may run off-screen. fill_color null draws just the edge.
+fn shape(pts, fill_color, edge = black) {
+  if fill_color != null {
+    color fill_color
+    polygon pts
+  }
+  if edge != null {
+    color edge
+    outline(pts)
+  }
+}
+
+# Irregular closed shape around (cx, cy): returns a list of n [x, y] points.
+# jag = how lumpy (0 = perfect ellipse, 0.3 = very lumpy). Below about 3 pixels across a blob
+# turns into odd slivers; use `ellipse` or a hand-made polygon for tiny shapes. Keep centres
+# on the picture: a blob mostly off the edge is cut by long straight chords.
+fn blob(cx, cy, rx, ry, seed = 1, jag = 0.2, n = 16) {
+  let pts = []
+  for i in 0..n {
+    let a = i * 360 / n
+    let r = 1 + (noise(seed, i) * 2 - 1) * jag
+    push(pts, [cx + rx * r * sin(a), cy - ry * r * cos(a)])
+  }
+  return pts
+}
+
+# Points along part of an ellipse, for rims, arches and curved edges: draw with `line arc(...)`.
+# Angles are in degrees like turtle headings: 0 is up (12 o'clock), 90 is right, 180 is down.
+# Goes from `from` to `to` (to < from goes anticlockwise), one point every `step` degrees.
+# step is always positive; the direction comes only from the order of from and to. E.g.
+# arc(cx, cy, rx, ry, 270, 90) is the lower half from left to right, which interp() can read.
+fn arc(cx, cy, rx, ry, from = 0, to = 360, step = 10) {
+  if step <= 0 { error "arc: step must be more than 0 degrees" }
+  let pts = []
+  let n = max(1, ceil(abs(to - from) / step))
+  for i in 0..=n {
+    let a = from + (to - from) * i / n
+    push(pts, [cx + rx * sin(a), cy - ry * cos(a)])
+  }
+  return pts
+}
+
+# A copy of a list of [x, y] points moved by (dx, dy), e.g. `stroke shift(pts, 1, 0)` to draw a
+# stroke again one pixel over (stroke, so a copy pushed off the picture is clipped, not clamped).
+# Extra fields after x and y are kept, so it also moves `blobs` entries [cx, cy, rx, ry].
+fn shift(pts, dx, dy) {
+  let out = []
+  for p in pts {
+    let q = [p[0] + dx, p[1] + dy]
+    for i in 2..len(p) { push(q, p[i]) }
+    push(out, q)
+  }
+  return out
+}
+
+# A road or path seen in perspective, winding toward the viewer: its centre line `pts` runs from
+# far (top) to near (bottom), and its half-width grows from w_top columns at the first point to
+# w_bottom at the last (in step with the distance along the path), offset straight sideways, so
+# unlike `band` it never folds over itself on a bend. Keep the points heading down the screen:
+# a stretch that runs sideways comes out thin. Returns the outline for shape(...).
+fn road(pts, w_top, w_bottom) {
+  let n = len(pts)
+  if n < 2 { error "road: needs at least 2 points" }
+  let along = [0]
+  for i in 1..n {
+    let dx = (pts[i][0] - pts[i - 1][0]) * 2
+    let dy = pts[i][1] - pts[i - 1][1]
+    push(along, along[-1] + sqrt(dx * dx + dy * dy))
+  }
+  let total = max(0.001, along[-1])
+  let left = []
+  let right = []
+  for i in 0..n {
+    let hw = w_top + (w_bottom - w_top) * along[i] / total
+    push(left, [pts[i][0] - hw, pts[i][1]])
+    push(right, [pts[i][0] + hw, pts[i][1]])
+  }
+  return left + reverse(right)
+}
+
+# The stage (see the style guide's "The stage"): the screen looks down a little onto flat ground
+# that vanishes at row `horizon`, so up the screen is away. groundscale(y, horizon) is the size
+# factor for something whose base is on row y: 1 on the bottom row, falling in step towards 0 at
+# the horizon (never below 0.05). A tree whose base is halfway from the horizon to the bottom is
+# drawn at about half its near size.
+fn groundscale(y, horizon = 40) {
+  if horizon >= 167 { error "groundscale: the horizon must be above the bottom row (< 167), got " + str(horizon) }
+  return max(0.05, (y - horizon) / (167 - horizon))
+}
+
+# A path, river or road lying on the ground of the stage, along the centre line `pts` (screen
+# points below the horizon, in any order of near and far). w_near is its half-width in columns
+# at the bottom row for a stretch heading straight away (as `road`'s w_bottom). Unlike `road`, the
+# width is worked out on the ground: it narrows towards the horizon, and a far stretch running
+# across the screen comes out as a thin, flat strip. `flat` is how much the ground is
+# foreshortened (a small square on the bottom row shows flat times as tall as wide; lower looks
+# from higher up). Returns the outline for shape(...).
+fn trail(pts, w_near, horizon = 40, flat = 0.45) {
+  if horizon >= 167 { error "trail: the horizon must be above the bottom row (< 167), got " + str(horizon) }
+  if flat <= 0 { error "trail: flat must be more than 0, got " + str(flat) }
+  if w_near < 0 { error "trail: w_near must not be negative, got " + str(w_near) }
+  # camera: display x (columns doubled) u = 2x - 160, v = y - horizon; ground X = u·Z/f, Z = f/v
+  let f = (167 - horizon) / flat
+  let near_v = max(1, 0.05 * (167 - horizon))
+  let g = []
+  for i in 0..len(pts) {
+    let p = pts[i]
+    if p[1] <= horizon { error "trail: point " + str(i) + " (" + str(p[0]) + ", " + str(p[1]) + ") is at or above the horizon (" + str(horizon) + ")" }
+    let z = f / max(near_v, p[1] - horizon)
+    let q = [(2 * p[0] - 160) * z / f, z]
+    if len(g) == 0 || abs(q[0] - g[-1][0]) + abs(q[1] - g[-1][1]) > 0.000001 { push(g, q) }
+  }
+  let n = len(g)
+  if n < 2 { error "trail: needs at least 2 distinct points" }
+  # half the width on the ground: w_near columns on the bottom row
+  let hw = 2 * w_near / (167 - horizon)
+  let left = []
+  let right = []
+  for i in 0..n {
+    # the unit directions of the segments either side, averaged (one-sided at the ends)
+    let tx = 0
+    let tz = 0
+    let sx = 0
+    let sz = 0
+    if i > 0 {
+      let dx = g[i][0] - g[i - 1][0]
+      let dz = g[i][1] - g[i - 1][1]
+      let l = sqrt(dx * dx + dz * dz)
+      tx += dx / l
+      tz += dz / l
+      sx = dx / l
+      sz = dz / l
+    }
+    if i < n - 1 {
+      let dx = g[i + 1][0] - g[i][0]
+      let dz = g[i + 1][1] - g[i][1]
+      let l = sqrt(dx * dx + dz * dz)
+      tx += dx / l
+      tz += dz / l
+      sx = dx / l
+      sz = dz / l
+    }
+    let tl = sqrt(tx * tx + tz * tz)
+    if tl < 0.000001 {
+      # a full U-turn: average to nothing, so take the outgoing segment (a bevel follows)
+      tx = sx
+      tz = sz
+      tl = 1
+    }
+    tx = tx / tl
+    tz = tz / tl
+    # a mitre (the edges stay hw from both segments), or on a turn sharper than 120° a bevel
+    let turn = 1
+    let ax = 0
+    let az = 0
+    if i > 0 && i < n - 1 {
+      ax = g[i][0] - g[i - 1][0]
+      az = g[i][1] - g[i - 1][1]
+      let al = sqrt(ax * ax + az * az)
+      ax = ax / al
+      az = az / al
+      turn = ax * sx + az * sz
+    }
+    if turn < -0.9995 { error "trail: the path doubles straight back on itself at point " + str(i) + "; leave a gap between the way out and the way back" }
+    # a point on the ground, seen on screen
+    if turn < -0.5 {
+      # sharper than 120°: a bevel on the outside of the turn, the centre point on the inside
+      let outer = ax * sz - az * sx > 0 ? -1 : 1
+      for o in [[-az, ax], [-sz, sx]] {
+        let ex = g[i][0] + o[0] * hw * outer
+        let ez = max(0.01, g[i][1] + o[1] * hw * outer)
+        let q = [(ex * f / ez + 160) / 2, horizon + f / ez]
+        if outer == 1 { push(left, q) } else { push(right, q) }
+      }
+      let q = [(g[i][0] * f / g[i][1] + 160) / 2, horizon + f / g[i][1]]
+      if outer == 1 { push(right, q) } else { push(left, q) }
+    } else {
+      let c = tx * sx + tz * sz
+      for side in [1, -1] {
+        let ex = g[i][0] - tz / c * hw * side
+        let ez = max(0.01, g[i][1] + tx / c * hw * side)
+        let q = [(ex * f / ez + 160) / 2, horizon + f / ez]
+        if side == 1 { push(left, q) } else { push(right, q) }
+      }
+    }
+  }
+  return left + reverse(right)
+}
+
+# Is (x, y) inside the closed outline pts? (even-odd rule, so a point in a hole is outside)
+fn inside(pts, x, y) {
+  let n = len(pts)
+  let c = false
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[(i + 1) % n]
+    if (a[1] > y) != (b[1] > y) {
+      if x < a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) { c = !c }
+    }
+  }
+  return c
+}
+
+# A tiny picture from strings, one per row, for icons and signs too small for shapes (a pretzel,
+# a face, a key): each character of `chars` paints the colour at the same position in `colors`,
+# and any other character (e.g. "." or " ") is left alone. (x, y) is the top-left pixel. Use
+# plain ASCII characters.
+# pixmap(70, 40, [".yy.", "y..y", ".yy."], "y", [yellow])
+fn pixmap(x, y, rows, chars, colors) {
+  if len(chars) != len(colors) { error "pixmap: give one colour per key character (" + str(len(chars)) + " keys, " + str(len(colors)) + " colours)" }
+  for k in 0..len(chars) {
+    for j in 0..k {
+      if chars[j] == chars[k] { error "pixmap: key character '" + chars[k] + "' is listed twice" }
+    }
+  }
+  for r in 0..len(rows) {
+    let row = rows[r]
+    for c in 0..len(row) {
+      for k in 0..len(chars) {
+        if row[c] == chars[k] {
+          color colors[k]
+          stroke x + c, y + r
+        }
+      }
+    }
+  }
+}
+
+# The [left, right] columns a closed outline covers on row y (null if it misses that row): its
+# leftmost to rightmost point there, so for a concave outline that is two pieces on a row it
+# includes the gap between them. For keeping a pattern inside a shape, e.g. brick courses in a
+# torn plaster patch.
+fn spanx(pts, y) {
+  let lo = 999
+  let hi = -999
+  let n = len(pts)
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[(i + 1) % n]
+    if (a[1] <= y && y <= b[1]) || (b[1] <= y && y <= a[1]) {
+      let x = a[1] == b[1] ? min(a[0], b[0]) : a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1])
+      let x2 = a[1] == b[1] ? max(a[0], b[0]) : x
+      lo = min(lo, x)
+      hi = max(hi, x2)
+    }
+  }
+  return lo > hi ? null : [lo, hi]
+}
+
+# A copy of a list of [x, y] points scaled by k (> 0) about their average point: k < 1 insets
+# a shape (a lit core inside a shadow, a pane inside a frame), k > 1 enlarges it.
+fn scale(pts, k) {
+  if len(pts) == 0 { return [] }
+  let cx = 0
+  let cy = 0
+  for p in pts {
+    cx += p[0]
+    cy += p[1]
+  }
+  cx /= len(pts)
+  cy /= len(pts)
+  let out = []
+  for p in pts { push(out, [cx + (p[0] - cx) * k, cy + (p[1] - cy) * k]) }
+  return out
+}
+
+# A reversed copy of a list, e.g. to join a curve and a shifted copy of it into one outline:
+# shape(edge + reverse(shift(edge, 0, 6)), c). (For a band of even thickness, band() does it.)
+fn reverse(xs) {
+  let out = []
+  for i in 0..len(xs) { push(out, xs[len(xs) - 1 - i]) }
+  return out
+}
+
+# Items a to b - 1 of a list (negative indexes count from the end; out-of-range bounds are
+# clamped, and b ≤ a gives []), e.g. part of a measured edge.
+fn slice(xs, a, b = len(xs)) {
+  if a < 0 { a += len(xs) }
+  if b < 0 { b += len(xs) }
+  a = clamp(a, 0, len(xs))
+  b = clamp(b, 0, len(xs))
+  let out = []
+  if a < b {
+    for i in a..b { push(out, xs[i]) }
+  }
+  return out
+}
+
+# The y of a polyline (points ordered left to right) at column x; past either end it holds the
+# end value. Handy for hanging things off an edge you measured, e.g. grooves under a cliff top.
+# For a near-vertical edge, give the points as [y, x] (ordered top to bottom) and ask with a row:
+# interp(edge_yx, y) is then the edge's x at row y.
+fn interp(pts, x) {
+  if x <= pts[0][0] { return pts[0][1] }
+  for i in 0..len(pts) - 1 {
+    let a = pts[i]
+    let b = pts[i + 1]
+    if x <= b[0] {
+      if b[0] == a[0] { return b[1] }
+      return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
+    }
+  }
+  return pts[-1][1]
+}
+
+# A thick band along a path (roots, branches, tentacles, rivers, trunks): returns the outline
+# points to draw with `shape(...)`. w is the thickness at the first point, w2 at the last, in
+# rows as they look on screen (it allows for the 2:1 pixels), so a limb N columns wide needs
+# w ≈ 2·N. A band centred on the picture edge loses half its width off-picture: put a framing
+# tube's path w/4 columns inside the edge. The points go out along the
+# right-hand side (walking from the first point to the last) and come back along the left.
+fn band(pts, w, w2 = w) {
+  let n = len(pts)
+  if n < 2 { error "band: needs at least 2 points" }
+  let right = []
+  let left = []
+  for i in 0..n {
+    let a = pts[max(0, i - 1)]
+    let b = pts[min(n - 1, i + 1)]
+    let dx = (b[0] - a[0]) * 2
+    let dy = b[1] - a[1]
+    let l = max(0.001, sqrt(dx * dx + dy * dy))
+    let half = (w + (w2 - w) * i / (n - 1)) / 2
+    let nx = -dy / l * half / 2
+    let ny = dx / l * half
+    push(right, [pts[i][0] + nx, pts[i][1] + ny])
+    push(left, [pts[i][0] - nx, pts[i][1] - ny])
+  }
+  let out = right
+  for i in 0..n { push(out, left[n - 1 - i]) }
+  return out
+}
+
+# A copy of a path moved sideways by d rows (as seen on screen) at every point: positive d to
+# the right-hand side walking from the first point to the last, negative to the left (walking
+# right, +d is down; walking down, +d is left). For a highlight or shadow line along a band.
+fn offset(pts, d) {
+  let n = len(pts)
+  let out = []
+  for i in 0..n {
+    # the nearest points before and after that are not on top of this one (repeats are kept)
+    let ia = i
+    while ia > 0 && pts[ia][0] == pts[i][0] && pts[ia][1] == pts[i][1] { ia -= 1 }
+    let ib = i
+    while ib < n - 1 && pts[ib][0] == pts[i][0] && pts[ib][1] == pts[i][1] { ib += 1 }
+    let a = pts[ia]
+    let b = pts[ib]
+    let dx = (b[0] - a[0]) * 2
+    let dy = b[1] - a[1]
+    if dx == 0 && dy == 0 {
+      push(out, [pts[i][0], pts[i][1]])
+      continue
+    }
+    let l = max(0.001, sqrt(dx * dx + dy * dy))
+    push(out, [pts[i][0] - dy / l * d / 2, pts[i][1] + dx / l * d])
+  }
+  return out
+}
+
+# Points every `step` rows (as seen on screen) along a path, each as [x, y, tx, ty, t] where
+# (tx, ty) is the path's direction there as a unit vector in picture coordinates and t is how
+# far along the path it is (0 at the start, 1 at the end): for vertebrae, fence posts, ribs or
+# leaves along a curve, and for tapering widths. `band` accepts these points as they are; for
+# `line` or `stroke` take [p[0], p[1]] of each.
+fn along(pts, step) {
+  if step <= 0 { error "along: step must be more than 0" }
+  let out = []
+  if len(pts) == 0 { return out }
+  let total = 0
+  for i in 0..len(pts) - 1 {
+    total += sqrt((pts[i + 1][0] - pts[i][0]) * (pts[i + 1][0] - pts[i][0]) * 4 + (pts[i + 1][1] - pts[i][1]) * (pts[i + 1][1] - pts[i][1]))
+  }
+  let done = 0
+  let carry = 0
+  for i in 0..len(pts) - 1 {
+    let a = pts[i]
+    let b = pts[i + 1]
+    let dx = b[0] - a[0]
+    let dy = b[1] - a[1]
+    let l = sqrt(dx * dx * 4 + dy * dy)
+    let lp = sqrt(dx * dx + dy * dy)
+    if l > 0 {
+      let t = carry
+      while t <= l {
+        push(out, [a[0] + dx * t / l, a[1] + dy * t / l, dx / lp, dy / lp, total > 0 ? (done + t) / total : 0])
+        t += step
+      }
+      carry = t - l
+      done += l
+    }
+  }
+  return out
+}
+
+# Short segments straight across a path, every `step` rows along it, each `half` rows to either
+# side as seen on screen (allowing for the 2:1 pixels): [[x1, y1], [x2, y2]] pairs, for ribs,
+# rungs, stitches or ticks. half may be a number or fn(t) of the distance along (0 … 1).
+fn across(path, step, half) {
+  let out = []
+  for p in along(path, step) {
+    let h = type(half) == "number" ? half : half(p[4])
+    # the screen-space normal of the direction (tx, ty), back in picture units
+    let sx = p[2] * 2
+    let sy = p[3]
+    let l = max(0.001, sqrt(sx * sx + sy * sy))
+    let nx = -sy / l * h / 2
+    let ny = sx / l * h
+    push(out, [[p[0] + nx, p[1] + ny], [p[0] - nx, p[1] - ny]])
+  }
+  return out
+}
+
+# A ribbed tube along a path (roots, tentacles, ropes, the Realm of the Dead): a `band` body w
+# rows thick tapering to w2, short ribs straight across it every `step` rows along it that stop
+# short of the edges, and an optional rim line along the left-hand side, inside the tube.
+# Ribs touching the outline, ribs closer than ~6 columns on a horizontal tube (the default 12
+# rows), or long strokes crossing the ribs read as chain links, a saw blade or brickwork.
+fn ribbed(path, w, w2 = w, body = darkgrey, rib = black, rim = null, step = 12, edge = black) {
+  # resample evenly, so the band's taper (by point) and the ribs' (by distance) agree
+  let even = []
+  for p in along(path, 3) { push(even, [p[0], p[1]]) }
+  if len(even) < 2 { return null }
+  if even[-1][0] != path[-1][0] || even[-1][1] != path[-1][1] { push(even, path[-1]) }
+  path = even
+  shape(band(path, w, w2), body, edge)
+  color rib
+  fn half(t) { return (w + (w2 - w) * t) * 0.32 }
+  for seg in across(path, step, half) {
+    if abs(seg[0][1] - seg[1][1]) + abs(seg[0][0] - seg[1][0]) >= 1 { stroke seg }
+  }
+  if rim != null {
+    # the left-hand side of a slightly thinner band, so the rim follows the taper inside the tube
+    let inner = band(path, max(1, w - 3), max(1, w2 - 3))
+    color rim
+    stroke reverse(slice(inner, len(path)))
+  }
+}
+
+# A chain hanging or running along a path: links every `step` rows, alternating face-on rings
+# (a black oval with a light inside and a dark slot) and side-on links (short thick bars along
+# the path). Too-small links read as beads; keep step about 8-10.
+fn chain(path, step = 9, c = lightgrey) {
+  let k = 0
+  for p in along(path, step) {
+    if k % 2 == 0 {
+      shape(blob(p[0], p[1], 2, 3, 1, 0, 10), black, null)
+      shape(blob(p[0], p[1], 1, 2, 1, 0, 8), c, null)
+      color black
+      line p[0], p[1] - 1, p[0], p[1] + 1
+    } else {
+      # a bar 6 rows long as seen on screen, whatever its direction
+      let l = max(0.001, sqrt(p[2] * p[2] * 4 + p[3] * p[3]))
+      let a = [p[0] - p[2] * 3 / l, p[1] - p[3] * 3 / l]
+      let b = [p[0] + p[2] * 3 / l, p[1] + p[3] * 3 / l]
+      shape(band([a, b], 4), c)
+    }
+    k += 1
+  }
+}
+
+# Several lumpy blobs merged into ONE mass with a single outer outline (foliage, bushes, clouds,
+# rock piles). `list` holds [cx, cy, rx, ry] entries. Overlapping `shape(blob(...))` calls would
+# leave black outlines inside the mass; this paints every blob a pixel bigger in the edge colour
+# first, then all of them in the fill colour.
+fn blobs(list, c, edge = black, jag = 0.25, seed = 1) {
+  if edge != null {
+    for i in 0..len(list) {
+      let b = list[i]
+      shape(blob(b[0], b[1], b[2] + 1, b[3] + 1, seed + i, jag), edge, null)
+    }
+  }
+  for i in 0..len(list) {
+    let b = list[i]
+    shape(blob(b[0], b[1], b[2], b[3], seed + i, jag), c, null)
+  }
+}
+
+# Paint everything OUTSIDE the closed outline `hole` in colour c, with an `edge` line round the
+# hole: a frame you look through (knothole, porthole, cave mouth, window). Draw what is seen
+# through the hole first; this paints the frame around it. box = [x1, y1, x2, y2] limits it to
+# that box instead of the whole picture, e.g. plaster broken away to show brick: stones() in the
+# box, then surround(ragged_hole, yellow, black, [x1, y1, x2, y2]) puts the plaster back.
+fn surround(hole, c, edge = black, box = null) {
+  let b = box == null ? [0, 0, 159, 167] : box
+  if box != null {
+    for p in hole {
+      if p[0] < b[0] || p[0] > b[2] || p[1] < b[1] || p[1] > b[3] { error "surround: with a box, the hole must lie inside it" }
+    }
+  }
+  # join the box's left side to the hole's leftmost point with a horizontal cut
+  let k = 0
+  for i in 0..len(hole) {
+    if hole[i][0] < hole[k][0] { k = i }
+  }
+  let y = hole[k][1]
+  let pts = [[b[0], y], [b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], y]]
+  for i in 0..=len(hole) { push(pts, hole[(k + i) % len(hole)]) }
+  color c
+  polygon pts
+  if edge != null {
+    color edge
+    outline hole
+  }
+}
+
+# A room seen head-on in one-point perspective: the back wall is the box (x1, y1)-(x2, y2) and
+# the walls, ceiling and floor run from it out to the picture's edges. Returns the outlines
+# [back, left, right, ceiling, floor] to fill with shape(...).
+fn room(x1, y1, x2, y2) {
+  return [
+    [[x1, y1], [x2, y1], [x2, y2], [x1, y2]],
+    [[0, 0], [x1, y1], [x1, y2], [0, 167]],
+    [[159, 0], [159, 167], [x2, y2], [x2, y1]],
+    [[0, 0], [159, 0], [x2, y1], [x1, y1]],
+    [[x1, y2], [x2, y2], [159, 167], [0, 167]]
+  ]
+}
+
+# The box [left, top, right, bottom] at depth t in the room(x1, y1, x2, y2): t = 0 is the back
+# wall, t = 1 the picture's edges. A floor row at depth t runs from [left, bottom] to [right,
+# bottom]; a course on the left wall goes from the back corner out along the same t. Use
+# t = s * sqrt(s) (or similar) for rows that spread out towards the viewer.
+fn depth(x1, y1, x2, y2, t) {
+  return [x1 * (1 - t), y1 * (1 - t), x2 + (159 - x2) * t, y2 + (167 - y2) * t]
+}
+
+# Outline points of an arched opening (door, window, arcade): a round top of radius rx × ry whose
+# highest point is at row `top`, with straight sides down to row `bottom`. spread = 180 is a
+# round arch; more (e.g. 240) makes a horseshoe arch that narrows at its foot.
+fn archway(cx, top, rx, ry, bottom, spread = 180) {
+  let pts = arc(cx, top + ry, rx, ry, 360 - spread / 2, 360 + spread / 2)
+  return [[pts[0][0], bottom]] + pts + [[pts[-1][0], bottom]]
+}
+
+# Outline points of a pointed (gothic) arch: straight sides from row `bottom` up to where the
+# point begins, then two arcs meeting at (cx, top). hw is the half-width in columns; rise is the
+# height of the pointed part in rows (default ≈ an equilateral arch as seen on screen).
+fn lancet(cx, top, hw, bottom, rise = hw * 3.5) {
+  if hw <= 0 || rise <= 0 || top + rise > bottom { error "lancet: needs hw > 0, rise > 0 and top + rise <= bottom" }
+  let ys = top + rise
+  let ry = rise / cos(30)
+  let pts = [[cx - hw, bottom]]
+  for p in arc(cx + hw, ys, 2 * hw, ry, 270, 330, 6) { push(pts, p) }
+  for p in arc(cx - hw, ys, 2 * hw, ry, 30, 90, 6) { push(pts, p) }
+  push(pts, [cx + hw, bottom])
+  return pts
+}
+
+# Points along a wavy horizontal edge from x1 to x2 around y (used for hills and treelines).
+fn wavy(x1, x2, y, amp, seed = 1, step = 8) {
+  let pts = []
+  let x = x1
+  let i = 0
+  while x < x2 {
+    push(pts, [x, y - noise(seed, i) * amp])
+    x += step * (0.6 + noise(seed + 77, i) * 0.8)
+    i += 1
+  }
+  push(pts, [x2, y - noise(seed, i) * amp])
+  return pts
+}
+
+# Short wobbly line (veins, ripples, cracks) starting at (x, y), heading in degrees.
+fn squiggle(x, y, len, heading_deg = 90, seed = 1, wobble = 40) {
+  let pts = [[x, y]]
+  let h = heading_deg
+  let cx = x
+  let cy = y
+  for i in 0..max(1, round(len / 3)) {
+    h += (noise(seed, i) * 2 - 1) * wobble
+    cx += 3 * sin(h)
+    cy -= 1.5 * cos(h)
+    push(pts, [cx, cy])
+  }
+  line pts
+}
+
+# ---------------------------------------------------------------------------
+# scene layout
+
+# 1-px black border that frames every KQ1 picture. Call it last so nothing paints over it.
+fn frame(c = black) {
+  color c
+  line 0,0 159,0 159,167 0,167 0,0
+}
+
+# Sky from the top down to row `bottom`.
+fn sky(bottom = 14, c = blue) {
+  color c
+  rect 0,0 159,bottom
+}
+
+# Jagged distant mountains between rows `top` and `bottom` (KQ1: light blue, sometimes grey).
+# The band behind the peaks is painted `behind` (the sky colour) so no canvas shows through;
+# pass behind: null if you already painted something there.
+fn hills(top = 12, bottom = 26, c = lightblue, seed = 3, behind = blue) {
+  if behind != null {
+    color behind
+    rect 0, top, 159, bottom
+  }
+  let pts = wavy(0, 159, bottom, bottom - top, seed, 14)
+  push(pts, [159, bottom])
+  push(pts, [0, bottom])
+  color c
+  polygon pts
+}
+
+# Bumpy far-off forest band (KQ1: dark green). Its bumpy top edge stays between top - 5 and
+# `top`, so everything from row `top` down to `bottom` is covered - let `hills` reach down to
+# at least `top` and no canvas shows between them.
+fn treeline(top = 20, bottom = 30, c = green, seed = 5) {
+  let pts = wavy(0, 159, top, 5, seed, 6)
+  push(pts, [159, bottom])
+  push(pts, [0, bottom])
+  shape(pts, c, null)
+}
+
+# Ground from row `top` to the bottom of the picture.
+fn ground(top = 27, c = lightgreen) {
+  color c
+  rect 0,top 159,167
+}
+
+# The whole standard outdoor backdrop in one call, with the bands overlapping so no canvas
+# shows: sky, light-blue mountains, a dark-green treeline, the meadow from row `y` down, and a
+# brown ridge line at `y`. KQ1's median horizon is about row 30. sky_c and hills_c recolour the
+# sky and the mountains (keep them different, e.g. a lightcyan sky with lightblue hills).
+fn horizon(y = 30, seed = 3, grass = lightgreen, sky_c = blue, hills_c = lightblue) {
+  sky(y - 12, sky_c)
+  hills(y - 24, y - 8, hills_c, seed, sky_c)
+  treeline(y - 8, y, green, seed + 2)
+  ground(y, grass)
+  ridge(y, brown, seed + 6)
+}
+
+# Thin uneven line where the ground meets the hills (KQ1: brown).
+fn ridge(y, c = brown, seed = 9) {
+  let pts = wavy(0, 159, y, 2, seed, 10)
+  color c
+  line pts
+}
+
+# ---------------------------------------------------------------------------
+# plants
+
+# Deciduous KQ1 tree: brown trunk with flared roots, lumpy dark-green canopy with cyan veins.
+# (x, y) = trunk base. size ≈ 1 for a medium tree (about 60 rows tall, canopy ~30 columns wide).
+# spread widens (> 1) or narrows (< 1) the canopy; try a few seeds - see references/stdlib/tree-seeds.png.
+fn tree(x, y, size = 1, seed = 1, leaves = green, trunk = brown, veins = cyan, spread = 1) {
+  let h = 60 * size
+  let tw = 2.5 * size
+  let top = y - h * 0.62
+  shape([[x - tw - 3 * size, y], [x - tw, y - 4 * size], [x - tw * 0.8, top], [x + tw * 0.8, top], [x + tw, y - 4 * size], [x + tw + 3 * size, y]], trunk)
+  let cy = y - h * 0.66
+  let canopy = blob(x, cy, 15 * size * spread, 24 * size, seed, 0.16, 18)
+  shape(canopy, leaves)
+  if veins != null {
+    color veins
+    for k in 0..5 {
+      let vx = x + (noise(seed + 3, k) * 2 - 1) * 8 * size * spread
+      let vy = cy + (noise(seed + 4, k) * 2 - 1) * 14 * size
+      squiggle(vx, vy, 7 * size, noise(seed + 5, k) * 360, seed + k, 70)
+    }
+  }
+}
+
+# A stand of trees filling a closed screen outline (as painted in a sketch: what you see, crowns
+# included, not the ground it covers). The outline is painted first in `shade` with an `edge`, so
+# the mass and its edge are exact; then `tree`s are placed in it from the back row to the front,
+# each sized by groundscale of its base row (never under 0.3; times `size`, and ±15% for
+# variety), shrunk if need be until the tree fits inside the outline (or left out), so far trees
+# are smaller and drawn first and near ones overlap them; the far ones (small) merge into one
+# canopy with a single outline. Gaps between crowns show the shade
+# colour. Each tree is checked against the outline with a ring just outside its crown and its
+# roots, so no tree pokes out, even into a notch of a concave outline. Try a few seeds; size
+# 0.6-0.8 fills a sketch's irregular loop better than 1. For a far backdrop of woods along the
+# horizon use treeline or blobs instead (far trees here all come out at the smallest size).
+fn forest(outline, horizon = 40, size = 1, seed = 1, leaves = green, shade = green, trunk = brown, veins = cyan, edge = black) {
+  if size <= 0 { error "forest: size must be more than 0, got " + str(size) }
+  shape(outline, shade, edge)
+  let top = 999
+  let bottom = -999
+  for i in 0..len(outline) {
+    top = min(top, outline[i][1])
+    bottom = max(bottom, outline[i][1])
+  }
+  let y = top + 4
+  let row = 0
+  let far = []
+  let near = false
+  while y <= bottom {
+    let s = size * max(0.3, groundscale(y, horizon))
+    let span = spanx(outline, y)
+    if span != null {
+      let step = max(3, 28 * s)
+      let x = span[0] + step * (0.3 + 0.4 * noise(seed, row))
+      let k = 0
+      while x <= span[1] {
+        let tx = x + (noise(seed + 2, row * 50 + k) - 0.5) * step * 0.4
+        # the biggest of a few sizes whose whole tree fits (tree()'s lumpy canopy reaches about
+        # 17.4·s either side and 67.5·s above the base; the roots ± 6·s)
+        let base = s * (0.85 + 0.3 * noise(seed + 1, row * 50 + k))
+        let sk = 0
+        for m in [1, 0.8, 0.65, 0.5, 0.4] {
+          let t = base * m
+          if sk == 0 && t >= 0.22 {
+            # a 16-sided ring just outside the crown, and the roots: every corner inside, and no
+            # side crossing the outline (so not even a narrow notch gets crossed)
+            let ring = []
+            # (plus 1.5 for blobs' one-pixel edge and the rasteriser)
+            for a in range(0, 360, 22.5) { push(ring, [tx + (18 * t + 1.5) * cos(a), y - 39.6 * t + (28.8 * t + 1.5) * sin(a)]) }
+            push(ring, [tx + 6 * t + 1, y])
+            push(ring, [tx - 6 * t - 1, y])
+            let fits = true
+            let m = len(ring)
+            let n = len(outline)
+            for i in 0..m {
+              if fits && !inside(outline, ring[i][0], ring[i][1]) { fits = false }
+            }
+            for i in 0..m {
+              let p = ring[i]
+              let q = ring[(i + 1) % m]
+              for j in 0..n {
+                if fits {
+                  let u = outline[j]
+                  let v = outline[(j + 1) % n]
+                  let d1 = (q[0] - p[0]) * (u[1] - p[1]) - (q[1] - p[1]) * (u[0] - p[0])
+                  let d2 = (q[0] - p[0]) * (v[1] - p[1]) - (q[1] - p[1]) * (v[0] - p[0])
+                  let d3 = (v[0] - u[0]) * (p[1] - u[1]) - (v[1] - u[1]) * (p[0] - u[0])
+                  let d4 = (v[0] - u[0]) * (q[1] - u[1]) - (v[1] - u[1]) * (q[0] - u[0])
+                  if d1 * d2 < 0 && d3 * d4 < 0 { fits = false }
+                }
+              }
+            }
+            if fits { sk = t }
+          }
+        }
+        # the back rows (small by depth, before any near tree) merge into one canopy with a single
+        # outline, drawn just before the first near tree (or at the end); a honeycomb of tiny
+        # outlined crowns reads as noise. Every later tree is drawn on its own, in depth order
+        if sk > 0 && !near && base < 0.45 { push(far, [tx, y - 39.6 * sk, 15 * sk, 24 * sk]) }
+        if sk > 0 && (near || base >= 0.45) {
+          near = true
+          if len(far) > 0 {
+            blobs(far, leaves, edge, 0.16, seed)
+            far = []
+          }
+          tree(tx, y, sk, seed + row * 50 + k, leaves, trunk, sk >= 0.5 ? veins : null)
+        }
+        x += step
+        k += 1
+      }
+    }
+    y += max(6, 18 * s)
+    row += 1
+  }
+  if len(far) > 0 { blobs(far, leaves, edge, 0.16, seed) }
+}
+
+# A Lombardy poplar: a tall narrow column of leaves on a short trunk, (x, y) its base, h rows tall
+# (about a fifth as wide as it is tall on screen). light: the side the light comes from (-1 left,
+# 1 right) gets a few flecks of `highlight` if it's big enough. Rows of them line avenues.
+fn poplar(x, y, h = 40, c = green, highlight = lightgreen, trunk = brown, light = -1, edge = black) {
+  # half-width in columns: on screen (a column is two wide) the whole tree is h/5 across
+  let w = max(1, h * 0.05)
+  let t = max(1, h * 0.12)
+  color trunk
+  rect x - max(0, w * 0.15), y - t, x + max(0, w * 0.15), y
+  shape([[x, y - h], [x + w * 0.5, y - h * 0.82], [x + w, y - h * 0.5], [x + w * 0.85, y - h * 0.25],
+    [x + w * 0.35, y - t * 0.8], [x - w * 0.35, y - t * 0.8], [x - w * 0.85, y - h * 0.25],
+    [x - w, y - h * 0.5], [x - w * 0.5, y - h * 0.82]], c, edge)
+  if h >= 20 && highlight != null {
+    color highlight
+    for k in 0..3 {
+      let fy = y - h * (0.35 + 0.17 * k)
+      stroke x + light * w * 0.45, fy, x + light * w * 0.2, fy - h * 0.06
+    }
+  }
+}
+
+# n pieces of fruit (apples, oranges, berries…) scattered inside the ellipse (cx, cy, rx, ry) -
+# e.g. a tree's canopy, which for tree(x, y, size) is centred near (x, y - 40·size) with
+# rx ≈ 12·size and ry ≈ 20·size. Each fruit is 2 columns × 3 rows so it reads as round.
+fn fruit(cx, cy, rx, ry, n = 6, c = red, seed = 11) {
+  color c
+  for k in 0..n {
+    let a = noise(seed, k) * 360
+    let r = sqrt(noise(seed + 1, k))
+    let fx = cx + rx * r * sin(a)
+    let fy = cy + ry * r * cos(a)
+    rect fx, fy, fx + 1, fy + 2
+  }
+}
+
+# Four-point twinkle around (x, y) - for magic items, stars, a glint on water.
+fn sparkle(x, y, c = white, r = 3) {
+  color c
+  line x - r, y
+  line x + r, y
+  line x, y - r
+  line x, y + r
+}
+
+# KQ1 pine / fir: stacked cyan tiers with light-cyan zigzag highlights and a black edge.
+# (x, y) = base. size ≈ 1 for about 40 rows tall.
+fn pine(x, y, size = 1, seed = 1, c = cyan, highlight = lightcyan, trunk = brown) {
+  let h = 40 * size
+  color trunk
+  rect x - 1, y - 4 * size, x + 1, y
+  let tiers = 4
+  for t in 0..tiers {
+    let ty = y - 4 * size - t * h * 0.21
+    let w = 9 * size * (1 - t * 0.2)
+    let tip = ty - h * 0.36
+    let pts = [[x - w, ty], [x - w * 0.55, ty - h * 0.08], [x - w * 0.45, ty - h * 0.1], [x, tip], [x + w * 0.45, ty - h * 0.1], [x + w * 0.55, ty - h * 0.08], [x + w, ty], [x, ty - 2 * size]]
+    shape(pts, c)
+    color highlight
+    stroke x - w * 0.2, ty - h * 0.12  x + w * 0.25, ty - h * 0.18  x - w * 0.1, ty - h * 0.24
+  }
+}
+
+# Leafy bush: a lumpy green mound with a black outline and lighter leaf marks.
+fn bush(x, y, w = 12, h = 8, seed = 1, c = green, detail = lightgreen) {
+  let pts = blob(x, y - h / 2, w / 2, h / 2, seed, 0.25, 14)
+  shape(pts, c)
+  color detail
+  for k in 0..3 {
+    squiggle(x - w / 4 + noise(seed + 9, k) * w / 2, y - h * 0.7 + noise(seed + 8, k) * h * 0.4, w / 3, 90, seed + k, 30)
+  }
+}
+
+# Clump of reeds / cattails at (x, y).
+fn reeds(x, y, h = 18, n = 4, c = green, heads = brown, seed = 2) {
+  for k in 0..n {
+    let rx = x + k * 3 + noise(seed, k) * 2
+    let lean = (noise(seed + 1, k) * 2 - 1) * 3
+    color c
+    line rx, y  rx + lean, y - h + noise(seed + 2, k) * 5
+    color heads
+    rect rx + lean, y - h * 0.8, rx + lean + 1, y - h * 0.6
+  }
+}
+
+# Scatter of tiny flowers in the box (x1,y1)-(x2,y2).
+fn flowers(x1, y1, x2, y2, n = 20, seed = 4, colors = [red, yellow, lightmagenta, blue, lightred]) {
+  for k in 0..n {
+    color colors[floor(noise(seed + 2, k) * len(colors))]
+    line x1 + noise(seed, k) * (x2 - x1), y1 + noise(seed + 1, k) * (y2 - y1)
+  }
+}
+
+# Tree stump at (x, y).
+fn stump(x, y, w = 6, h = 6, c = brown) {
+  shape([[x - w / 2 - 1, y], [x - w / 2, y - h], [x + w / 2, y - h], [x + w / 2 + 1, y]], c)
+  color black
+  line x - w / 2 + 1, y - h + 1  x + w / 2 - 1, y - h + 1
+}
+
+# One leaf of a palm or fern: a saw-edged leaf along a curving spine from (x, y), `len` rows
+# long as seen on screen, setting off at `heading` (degrees, 0 = up, 90 = right) and bending
+# `droop` degrees downward along its length. Light midrib, black edge. width is the leaf's
+# widest half-width as a fraction of len: 0.2 for broad tropical leaves, about 0.07 for the
+# needle-like fronds of a date palm.
+fn frond(x, y, len, heading = 60, droop = 50, c = green, rib = lightgreen, edge = black, width = 0.2) {
+  if len < 1 { return null }
+  let n = max(3, round(len / 3))
+  let side = heading % 360 < 180 ? 1 : -1
+  let spine = [[x, y]]
+  let px = x
+  let py = y
+  for i in 1..=n {
+    let hh = heading + side * droop * i / n
+    px += 1.5 * sin(hh)
+    py -= 3 * cos(hh)
+    push(spine, [px, py])
+  }
+  let right = []
+  let left = []
+  for i in 0..=n {
+    let a = spine[max(0, i - 1)]
+    let b = spine[min(n, i + 1)]
+    let dx = (b[0] - a[0]) * 2
+    let dy = b[1] - a[1]
+    let l = max(0.001, sqrt(dx * dx + dy * dy))
+    let half = len * width * sin(180 * i / n) * (i % 2 == 1 ? 0.5 : 1)
+    push(right, [spine[i][0] - dy / l * half / 2, spine[i][1] + dx / l * half])
+    push(left, [spine[i][0] + dy / l * half / 2, spine[i][1] - dx / l * half])
+  }
+  let poly = right
+  for i in 0..=n { push(poly, left[n - i]) }
+  shape(poly, c, edge)
+  color rib
+  stroke spine
+}
+
+# A bird in flight, side-on, centred on (x, y): body, fanned tail, two raised wings, a beak.
+# facing = 1 (right) or -1 (left). size ≈ 1 is about 16 columns × 12 rows; flap = 1 wings up,
+# 0 level (gliding), -1 down. Below size 0.6 it becomes the distant gull "m" KQ uses for far
+# birds (facing doesn't matter then).
+# c is the body, beak the bill (null for none), edge the outline (on a dark sky give a light
+# body an edge of null or lightgrey, or it shrinks to slivers).
+fn bird(x, y, facing = 1, size = 1, flap = 1, c = black, beak = yellow, edge = black) {
+  let f = facing < 0 ? -1 : 1
+  if size < 0.6 {
+    # a far bird: the gull "m", two arched wings
+    color c
+    let w = max(2, round(5 * size + 1))
+    let up = max(1, round(w / 2)) * flap
+    stroke x - w, y + up / 2, x - w / 2, y - up, x, y, x + w / 2, y - up, x + w, y + up / 2
+    return null
+  }
+  let s = size * 1.4
+  # gliding wings are drawn slightly raised, or they vanish behind the body
+  let u = flap == 0 ? 0.4 : flap
+  # [dx, dy] facing right at size 1: far wing (up and forward, behind the body), body with the
+  # head on the right, fanned tail, near wing (big, swept up and back)
+  let parts = [[[0.5, -1], [2.5, -1], [3, -1 - 3.5 * u], [1.5, -1 - 5 * u]], [[-3, 0], [-1, -1], [2.5, -1], [3.5, -1.8], [4.8, -1], [3.8, 0.4], [0.5, 1.2], [-2.5, 0.8]], [[-2.5, 0], [-5.5, -1.2], [-5, 0.3], [-5.5, 1.8]], [[-1, -0.8], [1.5, -0.8], [0, -1 - 2.5 * u], [-3.5, -1 - 6 * u], [-2.5, -1 - 3.5 * u]]]
+  for part in parts {
+    let pts = []
+    for p in part { push(pts, [x + p[0] * f * s, y + p[1] * s]) }
+    shape(pts, c, edge)
+  }
+  if beak != null {
+    color beak
+    stroke x + 5 * f * s, y - 0.8 * s, x + 6 * f * s, y - 0.5 * s
+  }
+}
+
+# Leafless tree (winter oak, dead tree): a trunk with root flares that forks into limbs, then
+# branches, then twigs, all with one merged black edge. (x, y) = trunk base; size ≈ 1 is about
+# 55 rows tall and 40 columns wide, centred on x. spread widens (> 1) or narrows (< 1) the crown;
+# try a few seeds.
+fn baretree(x, y, size = 1, seed = 1, c = brown, spread = 1) {
+  let h = 20 * size
+  # [path, width at start, width at end] in rows as seen on screen (band's units)
+  let wood = [[[[x, y - 1], [x, y - h]], 10 * size, 7 * size], [[[x - 1, y - 4 * size], [x - 5 * size, y - 1]], 5 * size, 2 * size], [[[x + 1, y - 4 * size], [x + 5 * size, y - 1]], 5 * size, 2 * size]]
+  let twigs = []
+  # limbs still to grow: [x, y, length (rows), heading (degrees, 90 = up), width (rows), depth]
+  let todo = [[x - size, y - h + 1, 20 * size, 90 + 38 * spread, 6 * size, 3], [x + size, y - h + 1, 20 * size, 90 - 38 * spread, 6 * size, 3], [x, y - h + 1, 18 * size, 90 + (noise(seed, 0) - 0.5) * 16, 5 * size, 3]]
+  let k = 0
+  while len(todo) > 0 {
+    let b = todo[-1]
+    todo = slice(todo, 0, -1)
+    k += 1
+    let bend = (noise(seed, k) - 0.5) * 18
+    let mid = [b[0] + cos(b[3] + bend) * b[2] * 0.25, b[1] - sin(b[3] + bend) * b[2] * 0.5]
+    let end = [b[0] + cos(b[3]) * b[2] * 0.5, b[1] - sin(b[3]) * b[2]]
+    if b[5] == 0 {
+      push(twigs, [[b[0], b[1]], mid, end])
+    } else {
+      push(wood, [[[b[0], b[1]], mid, end], b[4], b[4] * 0.62])
+      let fan = (22 + noise(seed + 1, k) * 18) * spread
+      push(todo, [end[0], end[1], b[2] * 0.72, b[3] + fan, b[4] * 0.62, b[5] - 1])
+      push(todo, [end[0], end[1], b[2] * 0.66, b[3] - fan, b[4] * 0.62, b[5] - 1])
+      if noise(seed + 2, k) < 0.6 { push(todo, [mid[0], mid[1], b[2] * 0.55, b[3] + (noise(seed + 3, k) < 0.5 ? 45 : -45), b[4] * 0.5, 0]) }
+    }
+  }
+  # one merged edge: all the wood a little fatter in black, then the wood on top, then twigs
+  for p in wood { shape(band(p[0], p[1] + 2, p[2] + 2), black, null) }
+  color black
+  for t in twigs { stroke t }
+  for p in wood { shape(band(p[0], p[1], p[2]), c, null) }
+}
+
+# A smooth broad leaf (not saw-edged): a pointed lens `len` rows long from (x, y) at `heading`
+# (degrees, 0 = up), about len / 4 rows wide as seen on screen, with a midrib. For leafy twigs in the foreground.
+fn leaf(x, y, len, heading = 45, c = green, rib = lightgreen, edge = black) {
+  if len < 2 { return null }
+  let ex = x + len / 2 * sin(heading)
+  let ey = y - len * cos(heading)
+  let half = len / 4
+  let mx = (x + ex) / 2
+  let my = (y + ey) / 2
+  let px = -cos(heading) * half / 2
+  let py = -sin(heading) * half
+  shape([[x, y], [mx + px, my + py], [ex, ey], [mx - px, my - py]], c, edge)
+  color rib
+  stroke x, y, ex, ey
+}
+
+# Straight forest trunk from column x1 to x2, standing on row `bottom` and running off the top
+# of the picture: a flared base, dark grooves, a black shadow edge on the right and a lit edge on
+# the left in broken runs (one continuous lit line reads as a stripe).
+fn trunk(x1, x2, bottom, flare = 3, c = brown, light = yellow, seed = 1) {
+  if x2 <= x1 { error "trunk: x2 must be right of x1" }
+  shape([[x1, -1], [x2, -1], [x2, bottom - 6], [x2 + flare, bottom], [x1 - flare, bottom], [x1, bottom - 6]], c)
+  color black
+  let w = x2 - x1
+  if w >= 5 {
+    for i in 0..max(1, round(w / 4)) {
+      let gx = x1 + 2 + noise(seed, i) * (w - 4)
+      let top = noise(seed + 1, i) * bottom * 0.5
+      stroke gx, top, clamp(gx + (noise(seed + 2, i) - 0.5) * 2, x1 + 2, x2 - 2), top + bottom * 0.4
+    }
+  }
+  stroke x2 - 1, 0, x2 - 1, bottom - 6
+  color light
+  let y = noise(seed + 3, 0) * 10
+  while y < bottom - 10 {
+    let run = 6 + noise(seed + 4, y) * 14
+    stroke x1 + 1, y, x1 + 1, min(bottom - 8, y + run)
+    y += run + 4 + noise(seed + 5, y) * 10
+  }
+}
+
+# Palm tree: a gently curving ringed trunk from its base (x, y), `h` rows tall, leaning `lean`
+# columns to the side, with a crown of drooping fronds. w is the trunk's thickness at the base
+# (rows as seen on screen; it narrows to 60% at the top), e.g. 10+ for a palm in the foreground.
+# crown sets the frond length (rows); by default it grows with h (about h/2), which is too big
+# for a tall, thin palm with a modest crown.
+fn palm(x, y, h = 40, lean = 6, seed = 1, trunk = brown, leaves = green, rib = lightgreen, w = 5, crown = null) {
+  if h < 2 { return null }
+  let spine = []
+  for i in 0..=5 {
+    let t = i / 5
+    push(spine, [x + lean * t * t, y - h * t])
+  }
+  shape(band(spine, w, w * 0.6), trunk)
+  color black
+  for i in range(1, round(h / 5)) {
+    let t = i * 5 / h
+    let cx = x + lean * t * t
+    stroke cx - w / 5, y - h * t, cx + w / 5, y - h * t + 1
+  }
+  let tx = x + lean
+  let ty = y - h
+  let n = 0
+  for hd in [235, 125, 290, 70, 330, 30] {
+    let flen = crown == null ? h * (0.45 + noise(seed, n) * 0.2) : crown * (0.85 + noise(seed, n) * 0.3)
+    frond(tx, ty, flen, hd, 40 + noise(seed + 1, n) * 30, leaves, rib)
+    n += 1
+  }
+  shape(blob(tx, ty, 2, 2, seed, 0.2), leaves)
+}
+
+# Fern clump: saw-edged fronds fanning up and out from its base (x, y), about w columns wide
+# and h rows tall.
+fn fern(x, y, w = 24, h = 14, seed = 1, c = green, rib = lightgreen) {
+  if w <= 0 || h <= 0 { return null }
+  shape(blob(x, y - h * 0.2, w * 0.3, h * 0.3, seed, 0.3), c)
+  let n = 0
+  for hd in [280, 80, 305, 55, 330, 30, 350, 10] {
+    let reach = (abs(sin(hd)) * w * 0.9 + abs(cos(hd)) * h * 1.2) * (0.8 + noise(seed + 1, n) * 0.3)
+    frond(x + (noise(seed, n) - 0.5) * 4, y - 1, reach, hd, 15 + abs(sin(hd)) * 50 + noise(seed + 2, n) * 20, c, rib)
+    n += 1
+  }
+}
+
+# ---------------------------------------------------------------------------
+# terrain
+
+# A boulder or rock slab from your own outline: fill c, the part below and right of a diagonal
+# through its middle in `shade`, and an edge line. cut moves that diagonal from −1 (almost all
+# shadow) to 1 (almost none); 0 shades about half. For packed rock walls, draw back to front so
+# each outline becomes a crevice. Not for a slab lit along its long slope: use shape() and a few
+# shade-coloured bands in its folds and along its foot instead.
+fn boulder(pts, c = lightgrey, shade = darkgrey, edge = black, cut = 0) {
+  shape(pts, c, null)
+  let x1 = 999
+  let x2 = -999
+  let y1 = 999
+  let y2 = -999
+  for p in pts {
+    x1 = min(x1, p[0])
+    x2 = max(x2, p[0])
+    y1 = min(y1, p[1])
+    y2 = max(y2, p[1])
+  }
+  # keep the points on the far side of the line u = (x - cx) / w + (y - cy) / h = cut
+  let cx = (x1 + x2) / 2
+  let cy = (y1 + y2) / 2
+  let w = max(1, x2 - x1)
+  let h = max(1, y2 - y1)
+  let side = []
+  let n = len(pts)
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[(i + 1) % n]
+    let ua = (a[0] - cx) / w + (a[1] - cy) / h - cut
+    let ub = (b[0] - cx) / w + (b[1] - cy) / h - cut
+    if ua >= 0 { push(side, a) }
+    if (ua >= 0) != (ub >= 0) {
+      let t = ua / (ua - ub)
+      push(side, [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t])
+    }
+  }
+  if len(side) >= 3 { shape(side, shade, null) }
+  if edge != null {
+    color edge
+    outline pts
+  }
+}
+
+# Boulder: light grey with a dark grey shadow on its lower right and a black outline.
+fn rock(x, y, w = 10, h = 6, seed = 1, c = lightgrey, shade = darkgrey) {
+  let pts = blob(x, y - h / 2, w / 2, h / 2, seed, 0.15, 10)
+  shape(pts, c, null)
+  color shade
+  polygon [[x, y - h * 0.15], [x + w * 0.45, y - h * 0.45], [x + w * 0.4, y - 1], [x - w * 0.1, y]]
+  color black
+  outline(pts)
+}
+
+# Pond or lake: blue blob with light-blue ripple lines. (cx, cy) is the centre.
+fn pond(cx, cy, rx = 30, ry = 14, seed = 1, c = blue, ripple = lightblue) {
+  let pts = blob(cx, cy, rx, ry, seed, 0.12, 20)
+  shape(pts, c, null)
+  color ripple
+  for k in 0..5 {
+    let wy = cy - ry * 0.6 + k * ry * 0.3
+    let wx = cx - rx * 0.5 + noise(seed + 6, k) * rx * 0.6
+    line wx, wy  wx + 4 + noise(seed + 7, k) * 6, wy
+  }
+}
+
+# River or path following a list of [x, y] points, `width` rows wide (stamped with the pen).
+fn stream(pts, width = 8, c = blue) {
+  color c
+  let size = clamp(round(width / 2), 0, 7)
+  pen size, circle
+  for i in 0..len(pts) - 1 {
+    let a = pts[i]
+    let b = pts[i + 1]
+    let steps = max(1, ceil(max(abs(b[0] - a[0]), abs(b[1] - a[1])) / 2))
+    for s in 0..=steps {
+      plot a[0] + (b[0] - a[0]) * s / steps, a[1] + (b[1] - a[1]) * s / steps
+    }
+  }
+  pen 0
+}
+
+fn river(pts, width = 12, c = blue, sparkle = white) {
+  stream(pts, width, c)
+  color sparkle
+  for i in 0..len(pts) - 1 {
+    let a = pts[i]
+    let b = pts[i + 1]
+    line a[0] + (b[0] - a[0]) * 0.3, a[1] + (b[1] - a[1]) * 0.3  a[0] + (b[0] - a[0]) * 0.55, a[1] + (b[1] - a[1]) * 0.55
+  }
+}
+
+fn path(pts, width = 10, c = brown) {
+  stream(pts, width, c)
+}
+
+# Cave mouth: grey rock arch around a black opening; (x, y) = bottom centre.
+fn cave_mouth(x, y, w = 24, h = 20, seed = 1) {
+  shape(blob(x, y - h * 0.55, w * 0.75, h * 0.75, seed, 0.12, 14), lightgrey, null)
+  shape([[x - w / 2, y], [x - w / 2.4, y - h * 0.6], [x - w / 5, y - h], [x + w / 5, y - h], [x + w / 2.4, y - h * 0.6], [x + w / 2, y]], black, null)
+  color darkgrey
+  line x - w * 0.7, y - h * 0.3  x - w / 2, y
+}
+
+# ---------------------------------------------------------------------------
+# built things
+
+# Wooden fence from (x1, y1) to (x2, y2): brown posts every `gap` columns and two rails.
+fn fence(x1, y1, x2, y2, h = 8, gap = 6, c = brown) {
+  color c
+  line x1, y1 - h * 0.75  x2, y2 - h * 0.75
+  line x1, y1 - h * 0.35  x2, y2 - h * 0.35
+  let n = max(1, round(abs(x2 - x1) / gap))
+  for i in 0..=n {
+    let px = x1 + (x2 - x1) * i / n
+    let py = y1 + (y2 - y1) * i / n
+    rect px, py - h, px, py
+  }
+}
+# A wooden fence standing on the ground along a screen polyline `pts` (a fence line from a sketch),
+# in the stage's perspective: each post is h_near rows tall on the bottom row and shorter with
+# distance (groundscale of its base, horizon as for trail), posts come closer together further
+# away (gap columns apart on the bottom row), two rails join them, all outlined in `edge`. Points
+# can run off the picture; they must be below the horizon.
+fn fenceline(pts, h_near = 14, horizon = 40, gap = 10, c = brown, edge = black) {
+  if len(pts) < 2 { error "fenceline: needs at least 2 points" }
+  for i in 0..len(pts) {
+    if pts[i][1] <= horizon { error "fenceline: point " + str(i) + " (" + str(pts[i][0]) + ", " + str(pts[i][1]) + ") is at or above the horizon (" + str(horizon) + ")" }
+  }
+  # the posts' bases: walk along the line, a step of gap·scale (on screen) between posts
+  let posts = []
+  let i = 0
+  let at = pts[0]
+  push(posts, at)
+  # (on screen a column counts double)
+  let left = 2 * gap * groundscale(at[1], horizon)
+  while i < len(pts) - 1 {
+    let b = pts[i + 1]
+    let dx = (b[0] - at[0]) * 2
+    let dy = b[1] - at[1]
+    let d = sqrt(dx * dx + dy * dy)
+    if d >= left && d > 0 {
+      at = [at[0] + (b[0] - at[0]) * left / d, at[1] + (b[1] - at[1]) * left / d]
+      push(posts, at)
+      left = max(3, 2 * gap * groundscale(at[1], horizon))
+    } else {
+      left -= d
+      at = b
+      i += 1
+    }
+  }
+  if posts[-1] != pts[-1] { push(posts, pts[-1]) }
+  # rails at 3/4 and 2/5 of each post's height (a dark underside line near the viewer), then the
+  # posts over them: outlined where they're wide enough, plain far away
+  for f in [0.75, 0.4] {
+    let rail = []
+    let under = []
+    for p in posts {
+      let h = h_near * groundscale(p[1], horizon)
+      push(rail, [p[0], p[1] - h * f])
+      push(under, [p[0], p[1] - h * f + max(1, h * 0.08)])
+    }
+    color edge
+    stroke under
+    color c
+    stroke rail
+  }
+  for p in posts {
+    let k = groundscale(p[1], horizon)
+    let h = max(2, h_near * k)
+    if k >= 0.6 {
+      color edge
+      rect p[0] - 1, p[1] - h, p[0] + 1, p[1]
+      color c
+      rect p[0], p[1] - h + 1, p[0], p[1] - 1
+    } else {
+      color c
+      rect p[0], p[1] - h, p[0], p[1]
+    }
+  }
+}
+
+# Low stone wall: light grey slab with dark grey stone joints and a black outline. (x1, y1) to
+# (x2, y2) is its base; it stands h rows tall on it.
+fn stonewall(x1, y1, x2, y2, h = 6, seed = 1) {
+  let pts = [[x1, y1], [x2, y2], [x2, y2 - h], [x1, y1 - h]]
+  shape(pts, lightgrey)
+  color darkgrey
+  let n = max(1, round(abs(x2 - x1) / 6))
+  for i in 0..n {
+    let t = (i + 0.5 + (noise(seed, i) - 0.5) * 0.5) / n
+    let px = x1 + (x2 - x1) * t
+    let py = y1 + (y2 - y1) * t
+    line px, py - 1  px, py - h + 1
+  }
+  line x1 + 1, (y1 + y1 - h) / 2  x2 - 1, (y2 + y2 - h) / 2
+}
+
+# Round column from x1 to x2 between rows top and bottom: shaft with a shaded right third and a
+# highlight line, and a capital and base one column wider on each side. Black outlines. Under
+# 7 columns wide it keeps its main colour by shading just one column and skipping the highlight.
+# base gives the plinth its own colour (e.g. darkgrey under pink marble).
+fn column(x1, x2, top, bottom, c = lightgrey, shade = darkgrey, light = white, base = null) {
+  let w = x2 - x1
+  shape([[x1, top + 3], [x2, top + 3], [x2, bottom - 3], [x1, bottom - 3]], c)
+  if bottom - top > 9 && w < 6 {
+    color shade
+    line x2 - 1, top + 4, x2 - 1, bottom - 4
+  } else if bottom - top > 9 {
+    color shade
+    rect x2 - max(1, round(w / 3)), top + 4, x2 - 1, bottom - 4
+    color light
+    let hx = x1 + max(1, round(w / 4))
+    line hx, top + 4, hx, bottom - 4
+  }
+  shape([[x1 - 1, top], [x2 + 1, top], [x2 + 1, top + 3], [x1 - 1, top + 3]], c)
+  shape([[x1 - 1, bottom - 3], [x2 + 1, bottom - 3], [x2 + 1, bottom], [x1 - 1, bottom]], base == null ? c : base)
+}
+
+# Spider web centred on (cx, cy), rx × ry: `spokes` (1+) straight threads out from the centre
+# and `rings` threads round it (0 for spokes only) that sag inwards between the spokes. Clipped at the picture edge.
+# White threads read best on a mid or dark background (lightblue or darker), not on lightcyan.
+fn web(cx, cy, rx, ry, spokes = 12, rings = 6, c = white, sag = 0.15) {
+  if spokes < 1 { error "web: needs at least 1 spoke" }
+  color c
+  for k in 0..spokes {
+    let a = k * 360 / spokes
+    stroke cx, cy, cx + rx * sin(a), cy - ry * cos(a)
+  }
+  for j in range(1, rings + 1) {
+    let f = j / rings
+    let pts = []
+    for k in 0..=spokes {
+      let a = k * 360 / spokes
+      push(pts, [cx + rx * f * sin(a), cy - ry * f * cos(a)])
+      if k < spokes {
+        let m = a + 180 / spokes
+        push(pts, [cx + rx * f * (1 - sag) * sin(m), cy - ry * f * (1 - sag) * cos(m)])
+      }
+    }
+    stroke pts
+  }
+}
+
+# Mortar lines for a block wall or chimney over the box (x1, y1)-(x2, y2): courses `h` rows
+# tall of blocks `w` columns wide, every other course offset by half a block. Paint the stone
+# colour first; this only draws the joints. clip = a closed outline keeps the joints inside it
+# (bricks showing through torn plaster, a wall with a slanted foot). The outline is assumed to
+# be one piece on each row (its leftmost to rightmost point there).
+fn stones(x1, y1, x2, y2, h = 6, w = 8, c = darkgrey, clip = null) {
+  color c
+  for y in range(y1 + h, y2, h) {
+    if clip == null { line x1, y, x2, y } else {
+      let sp = spanx(clip, y)
+      if sp != null && max(x1, sp[0]) <= min(x2, sp[1]) { stroke max(x1, sp[0]), y, min(x2, sp[1]), y }
+    }
+  }
+  let row = 0
+  for y in range(y1, y2, h) {
+    for x in range(x1 + (row % 2) * (w / 2) + w / 2, x2, w) {
+      let ya = y + 1
+      let yb = min(y + h - 1, y2)
+      if clip == null { line x, ya, x, yb } else {
+        # draw only the rows of this joint that are inside the outline
+        let start = null
+        for yy in ya..=yb {
+          let sp = spanx(clip, yy)
+          let inside = sp != null && x >= sp[0] && x <= sp[1]
+          if inside && start == null { start = yy }
+          if !inside && start != null {
+            stroke x, start, x, yy - 1
+            start = null
+          }
+        }
+        if start != null { stroke x, start, x, yb }
+      }
+    }
+    row += 1
+  }
+}
+
+# A shelf of books from column x1 to x2 standing on row `ybot`: 1-pixel spines about h rows
+# tall in mixed colours, with the odd gap. Draw the shelf board yourself.
+fn books(x1, x2, ybot, h = 8, seed = 1, colors = [red, blue, magenta, darkgrey, green, brown, lightgrey]) {
+  for x in x1..=x2 {
+    if noise(seed, x) >= 0.12 {
+      color colors[floor(noise(seed + 1, x) * len(colors))]
+      line x, ybot - 1, x, ybot - h + floor(noise(seed + 2, x) * 3)
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
+# lighting
+
+# Turn the picture so far into a night scene: black sky, dim hills, dark grass, silhouetted
+# foliage and trunks, dimmed flowers and fruit. Every colour is remapped at once (yellow → brown
+# and brown → black don't chain), and never-painted white canvas becomes light grey. Draw the
+# moon, stars, lit windows and anything that should glow AFTER calling it.
+fn night() {
+  remap {
+    blue: black, lightblue: blue, lightgreen: green, green: darkgrey, cyan: blue,
+    lightcyan: cyan, white: lightgrey, lightgrey: darkgrey, darkgrey: black, yellow: brown,
+    brown: black, red: magenta, lightred: red, lightmagenta: magenta
+  }
+}
+
+# Warm evening palette: magenta sky, pink mountains, yellow clouds and walls, darker greens.
+# It only swaps colours - draw a low sun or long shadows yourself after calling it.
+fn dusk() {
+  remap { blue: magenta, lightblue: lightred, white: yellow, lightgreen: green, green: darkgrey }
+}
+
+# ---------------------------------------------------------------------------
+# sky things
+
+# Fluffy white cloud centred at (cx, cy) with a light grey underside.
+fn cloud(cx, cy, w = 30, seed = 1) {
+  let pts = blob(cx, cy, w / 2, w / 7, seed, 0.3, 16)
+  shape(pts, white, null)
+  color lightgrey
+  line cx - w * 0.4, cy + w / 9  cx + w * 0.4, cy + w / 9
+}
+
+# Moon (full by default; phase > 0 shades the right part).
+fn moon(cx, cy, r = 5, c = white, phase = 0, shadow = black) {
+  color c
+  ellipse cx, cy, r / 2, r
+  if phase > 0 {
+    color shadow
+    ellipse cx + r * (1 - phase) * 0.5, cy - 1, r / 2, r
+  }
+}
+
+# n stars scattered between rows top and bottom. Stars paint over anything, so keep `bottom`
+# above the highest mountain peak (for horizon(y), that's about y - 24).
+fn stars(n = 25, top = 1, bottom = 14, seed = 7, c = white) {
+  color c
+  for k in 0..n {
+    line 1 + noise(seed, k) * 157, top + noise(seed + 1, k) * (bottom - top)
+  }
+}

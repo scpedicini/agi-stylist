@@ -1,0 +1,20 @@
+# Authentic AGI technique: outline regions on the white canvas, THEN flood-fill them.
+# Fill only spreads into white pixels, so every outline must be closed and each area is
+# filled before anything is painted on top of it.
+scene "Outline then fill"
+
+# sky: the horizon line closes the sky region against the frame
+color blue
+line 0,30 159,30
+fill 80,10
+
+# a lake, outlined before the grass is filled so the grass fill stops at its shore
+color blue
+line 40,100 70,90 110,92 130,104 110,118 60,120 40,100
+fill 85,105
+
+# the grass fills everything that is still white below the horizon
+color lightgreen
+fill 80,60      # lint: ok - a deliberately big background fill
+
+frame

@@ -1,0 +1,228 @@
+# Palace Treasure Room
+# Source: King's Quest VI VGA background, reference/kq6/r07-c07.png
+#   (a blue-lit vaulted treasure room in the Castle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r07-c07.png --name kq6-r07-c07
+# Method: translated by eye. Kept: the two near piers with their stepped dentil cornices, the
+#   lit dome with its two painted pendentives, the dark second arch and the lit ring of the
+#   third arch, the far cornice and wall, the pile of chests behind the table, the round table
+#   with its yellow cloth, white urn and green plant, the crossed spears and gold shields on
+#   both piers, the gold horn and the dark chest stack on the right, the teal tile borders
+#   along the wall feet, the pale floor with the table's shadow, and the two pale vases.
+# Dropped: the pendentive scrollwork detail, the wall mottling, the small candle stand by
+#   the left pilaster, most of the small treasure on the pile, floor reflections.
+# Colours: slate-blue stone -> blue, lit pilasters and arch rings -> lightblue, the skylit
+#   dome -> lightcyan with white rings, cornice highlights -> yellow over black dentils,
+#   lavender floor -> lightgrey with a darkgrey shadow, teal tile borders -> cyan, chests ->
+#   brown / red / magenta / green with yellow bands, gold -> yellow with brown, vases -> cyan
+#   with lightcyan highlights.
+scene "Palace Treasure Room"
+variants night
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn cornice(path, w = 6) {
+  # a lightblue cornice with a yellow lit top edge and black dentils hanging under it
+  shape(band(path, w), lightblue, black)
+  color yellow
+  stroke offset(path, -w / 2 + 1)
+  color black
+  for p in along(offset(path, w / 2 - 1), 4) { stroke [[p[0], p[1]], [p[0], p[1] + 2]] }
+}
+
+fn spears(tip1, foot1, tip2, foot2) {
+  color brown
+  line foot1, tip1
+  line foot2, tip2
+  color white
+  line tip1[0], tip1[1], tip1[0], tip1[1] + 3
+  line tip2[0], tip2[1], tip2[0], tip2[1] + 3
+}
+
+fn shield(cx, cy, rx, ry) {
+  shape(blob(cx, cy, rx, ry, 1, 0, 16), yellow)
+  shape(blob(cx, cy, rx * 0.5, ry * 0.5, 1, 0, 12), white, brown)
+  color brown
+  line cx - rx + 1, cy + ry * 0.4, cx + rx - 1, cy + ry * 0.4
+}
+
+fn vase(cx, top, bottom, w) {
+  # a tall two-handled amphora: flared lip, narrow neck, round shoulders, slim foot
+  let h = bottom - top
+  let body = [[cx - 1, top + 2], [cx + 1, top + 2], [cx + 1, top + h * 0.22],
+    [cx + w * 0.8, top + h * 0.3], [cx + w, top + h * 0.42], [cx + w * 0.8, top + h * 0.6],
+    [cx + 2, top + h * 0.8], [cx + 1, top + h * 0.92], [cx + 3, bottom],
+    [cx - 3, bottom], [cx - 1, top + h * 0.92], [cx - 2, top + h * 0.8],
+    [cx - w * 0.8, top + h * 0.6], [cx - w, top + h * 0.42], [cx - w * 0.8, top + h * 0.3],
+    [cx - 1, top + h * 0.22]]
+  # ear handles from the neck down to the shoulder
+  color black
+  stroke [[cx - 1, top + h * 0.12], [cx - w - 1, top + h * 0.16], [cx - w - 1, top + h * 0.38]]
+  stroke [[cx + 1, top + h * 0.12], [cx + w + 1, top + h * 0.16], [cx + w + 1, top + h * 0.38]]
+  color cyan
+  stroke [[cx - 1, top + h * 0.13], [cx - w, top + h * 0.17], [cx - w, top + h * 0.36]]
+  stroke [[cx + 1, top + h * 0.13], [cx + w, top + h * 0.17], [cx + w, top + h * 0.36]]
+  shape(body, cyan)
+  shape([[cx - 3, top], [cx + 3, top], [cx + 2, top + 2], [cx - 2, top + 2]], cyan)
+  color lightcyan
+  line cx - w * 0.5, top + h * 0.36, cx - w * 0.5, top + h * 0.56
+  line cx - 1, top + h * 0.6, cx - 1, top + h * 0.85
+}
+
+# ---- backdrop: slate-blue stone --------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, 167
+}
+
+# ---- the skylit dome of the near bay ---------------------------------------------------------
+shape([[29, -1], [109, -1], [106, 40], [32, 46]], lightcyan, null)
+color white
+stroke arc(68, 6, 34, 14, 230, 490, 10)
+# pendentives: painted lightblue triangles with a yellow trim and a pale emblem
+shape([[30, 4], [52, 10], [31, 46]], lightblue, null)
+shape([[86, 10], [108, 3], [106, 44]], lightblue, null)
+color yellow
+stroke [[30, 4], [52, 10]]
+stroke [[86, 10], [108, 3]]
+stroke [[30, 4], [30, 46]]
+stroke [[108, 3], [107, 44]]
+color lightcyan
+for c in [[39, 17], [99, 16]] {
+  stroke [[c[0], c[1] - 4], [c[0] + 2, c[1]], [c[0], c[1] + 4], [c[0] - 2, c[1]], [c[0], c[1] - 4]]
+  line c[0], c[1] + 5, c[0], c[1] + 14
+}
+
+# ---- the second arch: white ring, dark vault ------------------------------------------------
+delay {
+  shape(arc(64, 58, 29, 44, 270, 450, 10) + [[93, 112], [35, 112]], white, null)
+}
+shape(arc(64, 58, 27, 42, 270, 450, 10) + [[91, 112], [37, 112]], blue, null)
+
+# far bay side walls and the cornice lines running in towards the far wall
+color lightblue
+line 33, 51, 44, 64
+line 92, 55, 82, 64
+
+# ---- the third arch: a lit ring, the far bay ---------------------------------------------------
+let a3 = [[43, 66]] + arc(63, 64, 20, 24, 270, 450, 10) + [[83, 66]]
+shape(band(a3, 4), lightblue, null)
+color black
+stroke offset(a3, 2)
+# far cornice
+cornice([[42, 66], [84, 66]], 4)
+
+# ---- the pile of treasure chests against the far wall ----------------------------------------
+fn chest(x1, y1, x2, y2, c, bands = yellow) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], c)
+  color bands
+  line x1 + 1, y1 + 2, x2 - 1, y1 + 2
+  let mx = round((x1 + x2) / 2)
+  line mx, y1 + 3, mx, y1 + 4
+}
+# a dark heap behind, then chests and barrels back to front
+blobs([[48, 92, 8, 10], [62, 88, 8, 10], [74, 90, 7, 9]], darkgrey)
+# a gold bust standing on top of the heap
+shape(blob(66, 80, 2, 3, 2, 0.05), yellow)
+shape([[63, 84], [69, 84], [70, 90], [62, 90]], brown)
+chest(41, 84, 51, 95, brown)
+chest(52, 86, 62, 95, red)
+chest(71, 84, 80, 96, green)
+# a barrel with gold hoops
+shape([[40, 95], [52, 95], [53, 101], [52, 108], [40, 108], [39, 101]], darkgrey)
+color yellow
+line 40, 98, 52, 98
+line 40, 104, 52, 104
+chest(52, 95, 63, 105, magenta, yellow)
+color lightmagenta
+line 53, 96, 62, 96
+chest(62, 90, 71, 100, brown)
+# gold urn on the green chest's foot
+shape(blob(76, 101, 3, 5, 2, 0.05), yellow)
+color brown
+line 74, 102, 78, 102
+chest(63, 100, 73, 108, darkgrey)
+
+# ---- floor ------------------------------------------------------------------------------------
+shape([[37, 108], [92, 108], [113, 128], [160, 152], [160, 168], [-1, 168], [-1, 160],
+  [30, 118]], lightgrey)
+# teal tile borders along the wall feet
+shape(band([[40, 112], [29, 122], [4, 158]], 3, 5), cyan)
+shape(band([[100, 118], [111, 133], [148, 166]], 3, 5), cyan)
+color black
+
+
+
+# the table's shadow on the floor
+shape(blob(68, 128, 25, 6, 3, 0.05), darkgrey, null)
+
+# ---- the round table ------------------------------------------------------------------------
+shape([[61, 118], [67, 118], [66, 128], [70, 131], [58, 131], [62, 128]], black)
+shape(arc(66, 117, 20, 6, 0, 360, 10), brown)
+shape(arc(66, 115, 20, 6, 0, 360, 10), brown)
+color yellow
+stroke arc(66, 114, 18, 4, 280, 440, 10)
+color black
+stroke arc(66, 116, 19, 4, 110, 250, 10)
+# a blue bundle, the green plant and the white urn on the table
+shape([[56, 107], [62, 106], [63, 113], [56, 113]], lightblue)
+blobs([[70, 108, 3, 4], [73, 107, 2, 3]], green)
+color lightgreen
+line 70, 106, 70, 110
+shape(blob(78, 113, 3, 4, 4, 0.05), white)
+color lightgrey
+line 77, 114, 80, 114
+# the yellow cloth draped over the near edge
+shape([[51, 113], [64, 112], [66, 117], [65, 128], [60, 129], [58, 118], [52, 116]], yellow)
+color brown
+line 61, 118, 62, 127
+line 57, 115, 63, 114
+
+# ---- the near left pier ---------------------------------------------------------------------
+shape([[-1, 10], [18, 13], [18, 140], [-1, 158]], blue)
+color black
+line 6, 14, 6, 150
+# its inner face, where the spears hang, and the lit pilaster beyond
+shape([[18, 22], [26, 34], [26, 118], [18, 138]], blue, null)
+shape([[26, 36], [32, 46], [32, 112], [26, 120]], lightblue)
+color lightblue
+line 18, 14, 18, 139
+cornice([[-1, 3], [9, 12], [18, 13], [27, 34]])
+cornice([[27, 47], [34, 50]], 5)
+spears([19, 62], [23, 108], [24, 63], [18, 108])
+shield 21, 94, 3, 7
+
+# ---- the near right pier ---------------------------------------------------------------------
+# lit pilaster and the dim side face beside it
+shape([[92, 52], [100, 52], [100, 114], [92, 108]], lightblue)
+shape([[100, 48], [113, 38], [113, 128], [100, 114]], blue)
+# pier front, its edges and the shadowed corner
+shape([[113, 36], [132, 15], [142, 16], [160, 5], [160, 152], [113, 128]], blue)
+shape([[140, 16], [147, 13], [147, 158], [140, 155]], black, null)
+color lightblue
+line 113, 37, 113, 127
+line 133, 20, 133, 139
+color yellow
+line 114, 128, 140, 141
+cornice([[90, 54], [113, 52]], 5)
+cornice([[112, 36], [132, 15], [142, 16], [160, 5]])
+spears([117, 64], [126, 108], [128, 62], [118, 108])
+shield 122, 95, 4, 8
+
+# the dark chest stack and the gold horn beside the right pilaster
+chest(105, 106, 113, 118, darkgrey)
+chest(106, 96, 112, 106, black, yellow)
+shape([[107, 89], [111, 89], [111, 96], [107, 96]], darkgrey)
+shape([[104, 118], [113, 118], [113, 126], [104, 124]], black)
+color yellow
+stroke arc(104, 94, 2, 4, 0, 270, 30)
+line 102, 98, 101, 100
+
+# ---- the vases --------------------------------------------------------------------------------
+shape([[138, 120], [150, 118], [150, 152], [142, 153]], black, null)
+shape([[-1, 152], [16, 152], [18, 158], [-1, 158]], darkgrey)
+shape([[130, 152], [146, 152], [148, 158], [128, 158]], darkgrey)
+vase(9, 121, 152, 6)
+vase(139, 121, 152, 6)
+
+frame()

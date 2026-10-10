@@ -1,0 +1,207 @@
+# Timbered Passage
+# Source: King's Quest VI VGA background, reference/kq6/r08-c01.png
+#   (a plastered passage braced with timber frames, a cobbled floor running away to an end
+#   wall); reframed with:
+#   pnpm grid reference/kq6/r08-c01.png --name kq6-r08-c01
+# Method: translated by eye. Kept: the near A-frame post and brace on the left, the big near
+#   frame (header, posts, crossed knee braces and the wall plates running to the vanishing
+#   point), the doubled post on the right, the two smaller frames down the passage, the
+#   cracked end wall, the cobbled floor with its sills, the plaster cracks and the torn
+#   patches showing slate brick. Dropped: the plaster's mottling, wood grain, most of the
+#   hairline cracks, individual bricks. Moved: nothing.
+# Colours: ochre plaster -> yellow with brown cracks, maroon timbers -> red with black shadow
+#   sides, slate brick and cobbles -> darkgrey with black joints and lightblue lit edges.
+scene "Timbered Passage"
+variants lit
+
+# ---- helpers ---------------------------------------------------------------------------------
+# an upright post: red face, black shadow strip on one side (sh = "l" or "r")
+fn post(x1, x2, top, bottom, sh = "l", sw = 2) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], red)
+  color black
+  if sh == "l" {
+    rect x1, top, x1 + sw - 1, bottom
+  } else {
+    rect x2 - sw + 1, top, x2, bottom
+  }
+}
+
+# a slanting timber along a path: red band with a black shadow line on its lower side
+fn timber(path, w, shade = 1) {
+  shape(band(path, w), red)
+  color black
+  stroke offset(path, shade * (w / 2 - 1.5))
+}
+
+# x-range of a closed polygon on row y (its leftmost and rightmost crossing)
+fn spanx(pts, y) {
+  let lo = 999
+  let hi = -999
+  let n = len(pts)
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[(i + 1) % n]
+    if (a[1] <= y && b[1] > y) || (b[1] <= y && a[1] > y) {
+      let x = a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1])
+      lo = min(lo, x)
+      hi = max(hi, x)
+    }
+  }
+  return [lo, hi]
+}
+
+# a torn patch of plaster showing slate brick: brown torn edge, black brick courses
+fn patch(pts, seed = 1) {
+  shape(pts, darkgrey, brown)
+  let y1 = 999
+  let y2 = -1
+  for p in pts { y1 = min(y1, p[1]); y2 = max(y2, p[1]) }
+  let row = 0
+  for y in range(y1 + 3, y2 - 1, 3) {
+    row += 1
+    let s = spanx(pts, y)
+    if s[1] - s[0] < 3 { continue }
+    color black
+    stroke [ceil(s[0]) + 1, y], [floor(s[1]) - 1, y]
+    # staggered head joints up to the course above
+    for x in range(ceil(s[0]) + 2 + (row % 2) * 2, floor(s[1]) - 1, 4) {
+      line x, y - 1, x, y - 2
+    }
+  }
+}
+
+# a jagged plaster crack: a polyline with a short branch off its middle
+fn crack(pts, br = null) {
+  color brown
+  line pts
+  if br != null { line br }
+}
+
+# ---- plaster everywhere -----------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color yellow
+  rect 0, 0, 159, 167
+}
+
+# ---- the far end: back wall, its patch and the far frame --------------------------------------
+patch([[101, 88], [104, 82], [109, 79], [113, 77], [113, 112], [99, 112], [99, 103], [103, 97]], 3)
+crack([[90, 84], [94, 88], [93, 95], [97, 100], [96, 108]])
+
+# frame C (farthest): posts and header
+post 84, 87, 68, 112, "l", 1
+post 113, 116, 68, 112, "r", 1
+shape([[84, 68], [116, 68], [116, 71], [84, 71]], red)
+color black
+line 84, 71, 116, 71
+
+# ---- floor: slate cobbles on black joints, between two red sills ------------------------------
+let fl = [[87, 112], [63, 167]]
+let fr = [[113, 112], [137, 167]]
+fn fx(edge, y) {
+  let t = (y - edge[0][1]) / (edge[1][1] - edge[0][1])
+  return edge[0][0] + (edge[1][0] - edge[0][0]) * t
+}
+shape([[87, 112], [113, 112], [137, 167], [63, 167]], black, null)
+let rows = [112, 114, 117, 121, 126, 132, 139, 147, 156, 166, 177]
+for i in 0..10 {
+  let ya = rows[i]
+  let yb = rows[i + 1]
+  let h = yb - ya
+  let xa = fx(fl, ya) + 1
+  let xb = fx(fr, ya) - 1
+  let x = xa - noise(i + 20, 0) * h
+  let k = 0
+  while x < xb {
+    let w = h * (0.8 + noise(i + 1, k) * 0.9) + 1
+    let x1 = min(x + w, xb)
+    let x0 = max(x, xa)
+    if x1 - x0 >= 2 {
+      if h <= 3 {
+        shape([[x0, ya + 1], [x1 - 1, ya + 1], [x1 - 1, yb - 1], [x0, yb - 1]], darkgrey, null)
+      } else {
+        # an irregular cobble, nudged up or down a little so the rows don't line up
+        let cy = (ya + yb) / 2 + (noise(i + 4, k) - 0.5) * h * 0.4
+        let pts = blob((x0 + x1) / 2, cy, (x1 - x0) / 2 + 0.6, h / 2 + 0.2, i * 31 + k, 0.2, 8)
+        shape(pts, darkgrey, null)
+        if noise(i + 9, k) < 0.5 {
+          color lightblue
+          let lx = (x0 + x1) / 2
+          stroke [lx - (x1 - x0) / 4, cy - h / 2 + 2], [lx + (x1 - x0) / 5, cy - h / 2 + 2]
+        }
+      }
+    }
+    x = x1 + 1
+    k += 1
+  }
+}
+# the floor sills
+shape([[86, 111], [88, 111], [65, 167], [59, 167]], red)
+shape([[112, 111], [114, 111], [141, 167], [135, 167]], red)
+color black
+line 86, 112, 114, 112
+
+# ---- the middle frame B -----------------------------------------------------------------------
+patch([[72, 92], [76, 88], [79, 93], [78, 108], [81, 118], [77, 128], [73, 118]], 5)
+patch([[123, 64], [126, 61], [128, 66], [126, 72], [128, 78], [124, 80]], 6)
+# plates from frame B's corners to frame C's
+timber([[70, 56], [86, 70]], 3)
+timber([[121, 56], [114, 70]], 3, -1)
+# knee braces under B's header
+timber([[80, 58], [69, 68]], 3)
+timber([[110, 58], [122, 68]], 3, -1)
+# ceiling beam between B and C
+shape([[78, 62], [120, 62], [120, 64], [78, 64]], red)
+color black
+line 78, 64, 120, 64
+post 66, 70, 53, 160, "l", 2
+post 120, 123, 53, 134, "r", 1
+shape([[66, 53], [123, 53], [123, 57], [66, 57]], red)
+color black
+rect 66, 57, 123, 58
+
+# ---- the near frame A ---------------------------------------------------------------------------
+# ceiling between the frames: cracks, a knot hole and the top beam
+crack([[86, 9], [92, 7], [98, 9]], [[92, 7], [95, 4]])
+shape([[107, 9], [111, 7], [116, 8], [112, 10]], black, null)
+shape([[68, 0], [132, 0], [132, 2], [68, 2]], red)
+color black
+line 68, 3, 132, 3
+# beam between A and B along the ceiling
+shape([[72, 40], [124, 40], [124, 43], [72, 43]], red)
+color black
+line 72, 43, 124, 43
+# wall patches and cracks between A and B
+patch([[60, 86], [62, 83], [64, 90], [63, 104], [65, 116], [62, 130], [60, 126]], 7)
+crack([[62, 62], [64, 70], [61, 78]])
+crack([[125, 86], [127, 95], [125, 104], [127, 114]], [[127, 95], [129, 99]])
+patch([[134, 116], [137, 113], [138, 122], [136, 132], [134, 127]], 8)
+# the doubled post on the right, behind A's header
+post 129, 132, 0, 167, "r", 1
+# plates running from the top corners towards the vanishing point
+timber([[16, -6], [52, 28], [84, 58]], 8)
+timber([[168, 0], [143, 30], [119, 57]], 8, -1)
+# A's header and posts
+shape([[51, 21], [143, 21], [143, 31], [51, 31]], red)
+color black
+rect 51, 30, 143, 31
+post 51, 58, 21, 167, "l", 3
+post 140, 145, 0, 167, "r", 3
+# A's knee braces, crossing the plates
+timber([[82, 31], [55, 62]], 7)
+timber([[121, 31], [142, 64]], 7, -1)
+
+# ---- the nearest timbers and walls ------------------------------------------------------------
+crack([[40, 50], [44, 58], [41, 66], [37, 76], [38, 86]], [[41, 66], [46, 70]])
+crack([[146, 70], [149, 80], [146, 90], [148, 100]])
+crack([[152, 104], [156, 116], [153, 128], [157, 140]], [[153, 128], [149, 134]])
+crack([[16, 42], [19, 54], [15, 66], [18, 80], [13, 86]])
+patch([[9, 86], [13, 83], [15, 92], [12, 104], [14, 118], [11, 128], [8, 116], [10, 104]], 9)
+patch([[0, 128], [6, 131], [10, 140], [14, 150], [20, 158], [21, 167], [0, 167]], 10)
+patch([[150, 152], [154, 149], [159, 147], [159, 167], [148, 167], [151, 160]], 11)
+# the near A-frame: a brace from the left edge up to the peak, and the post
+timber([[-4, 42], [24, -2]], 9, -1)
+post 24, 34, 0, 167, "l", 4
+
+frame()

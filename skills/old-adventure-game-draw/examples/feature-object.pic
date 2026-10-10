@@ -1,0 +1,30 @@
+# A "special" object that must read at 160×168: bigger than its neighbours, outlined in black,
+# a highlight pixel, a sparkle - and redrawn after night() so it keeps glowing.
+# (Adapted from the golden apple drawn during the skill's acceptance run.)
+scene "Golden apple"
+variants day, night
+
+horizon 30
+tree 80, 140, 1.5, seed: 6
+fruit 80, 80, 16, 26, 10, red
+
+fn golden_apple(x, y, glow = white) {
+  color black
+  polygon x, y - 1  x + 2, y - 1  x + 3, y  x + 3, y + 4  x + 2, y + 5  x, y + 5  x - 1, y + 4  x - 1, y
+  color yellow
+  rect x, y, x + 2, y + 4
+  color brown
+  line x + 1, y - 3  x + 1, y - 2      # stem
+  color white
+  line x, y  x, y + 1                  # highlight
+  sparkle(x + 1, y + 2, glow, 4)
+}
+golden_apple 80, 66
+
+if variant == "night" {
+  night()
+  moon 132, 8, 5
+  stars 30, 1, 6
+  golden_apple 80, 66, yellow
+}
+frame

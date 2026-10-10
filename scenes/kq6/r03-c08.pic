@@ -1,0 +1,309 @@
+# Rose Arch Villa
+# Source: King's Quest VI (VGA) - reference/kq6/r03-c08.png; reframed with:
+#   pnpm grid reference/kq6/r03-c08.png --name kq6-r03-c08
+# Method: translated by eye. Kept: the salmon villa with its three shuttered windows, porch,
+#   dark doorway, steps and creeping vines; the rose arbour; the rose hedge on its low wall;
+#   the two palms on the left; the dark trees and distant hill; the lawns; the big sunlit dirt
+#   path with its shadows; two boulders and the dark agave in the foreground.
+#   Dropped: individual roses and leaves, pebbles, the cream haze patch behind the trees,
+#   the sun glare on the villa's top corner, the small window on the right wing.
+# Colours: pale sky → blue, hazy hill → lightblue, dark trees → green with black shadows,
+#   salmon plaster → lightred with red shading, shutters → brown, stone steps and path →
+#   lightgrey/darkgrey, lawns → lightgreen with green shade, sunlit dirt → yellow with brown
+#   shadows, rose hedge → green with lightred/red roses, low walls → red, agave → black.
+scene "Rose Arch Villa"
+variants day
+
+# ---- sky, distant hill -----------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, 70
+}
+shape([[14, 70], [24, 56], [36, 48], [46, 44], [54, 38], [60, 32], [66, 29], [72, 31],
+       [80, 36], [88, 40], [88, 70]], lightblue, null)
+color cyan
+line 40, 52, 50, 46, 58, 44
+line 62, 36, 68, 34
+
+# ---- dark trees behind the garden ------------------------------------------------------
+blobs([[6, 60, 8, 14], [16, 66, 8, 12], [30, 62, 10, 12], [44, 58, 10, 12], [58, 56, 10, 14],
+       [72, 50, 10, 18], [80, 30, 8, 18], [84, 12, 8, 14], [70, 72, 14, 12], [40, 74, 18, 10],
+       [12, 76, 12, 8]], green, black, 0.3, 4)
+color black
+for t in [[8, 66], [22, 70], [34, 68], [48, 64], [60, 64], [72, 60], [78, 40], [82, 22],
+          [52, 74], [28, 76]] {
+  line t[0] - 2, t[1], t[0], t[1] + 2, t[0] + 2, t[1] + 1
+}
+color lightgreen
+for t in [[4, 52], [28, 54], [42, 50], [56, 46], [70, 38], [78, 22], [84, 6], [16, 58]] {
+  line t[0] - 2, t[1] + 1, t[0], t[1], t[0] + 2, t[1] + 1
+}
+
+# ---- lawn behind the hedge -------------------------------------------------------------
+delay {
+  shape([[30, 82], [60, 78], [86, 76], [159, 74], [159, 140], [60, 110], [30, 92]], lightgreen, null)
+}
+# shade along the foot of the villa
+shape([[60, 78], [86, 76], [159, 74], [159, 96], [130, 92], [100, 96], [80, 98], [60, 92]],
+      green, null)
+color green
+line 120, 102, 126, 101
+line 136, 106, 142, 105
+
+# ---- the villa -------------------------------------------------------------------------
+# narrow shaded side wall and the main front
+shape([[84, 6], [88, 4], [88, 78], [84, 78]], red)
+shape([[88, 4], [104, 2], [124, 0], [159, 0], [159, 78], [88, 78]], lightred)
+# right wing, set forward
+color red
+line 137, 0, 137, 78
+# roof lip
+color red
+line 88, 6, 104, 4, 124, 2, 136, 1
+# shading under the porch roof and between the porch columns
+shape([[92, 46], [122, 44], [122, 74], [92, 74]], red, null)
+
+fn window(x1, y1, x2, y2) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], black)
+  shape([[x1 - 3, y1 - 1], [x1 - 1, y1], [x1 - 1, y2], [x1 - 3, y2 + 1]], brown)
+  shape([[x2 + 1, y1], [x2 + 3, y1 - 1], [x2 + 3, y2 + 1], [x2 + 1, y2]], brown)
+  color red
+  line x1 - 3, y2 + 2, x2 + 3, y2 + 2
+}
+window 94, 20, 97, 32
+window 108, 17, 111, 29
+window 123, 13, 126, 25
+
+# porch roof slab
+shape([[90, 40], [124, 38], [124, 44], [90, 46]], lightred)
+color red
+line 91, 46, 123, 44
+# doorway
+shape(archway(111, 50, 4, 5, 70), black)
+color red
+stroke arc(111, 55, 5, 6, 270, 450)
+# porch columns
+shape([[93, 46], [96, 46], [96, 74], [93, 74]], lightred)
+shape([[118, 45], [121, 45], [121, 74], [118, 74]], lightred)
+color white
+line 94, 47, 94, 72
+line 119, 46, 119, 72
+
+# creeping vines on the walls
+fn vine(pts) {
+  color green
+  line pts
+  color black
+  for i in 1..len(pts) { line pts[i][0] - 1, pts[i][1] + 1, pts[i][0], pts[i][1] }
+}
+vine [[90, 74], [92, 66], [90, 56], [92, 50]]
+vine [[100, 46], [102, 40], [100, 34], [104, 30]]
+vine [[126, 74], [128, 62], [126, 52], [130, 40], [128, 30], [132, 22]]
+vine [[133, 74], [132, 60], [135, 48]]
+vine [[142, 76], [144, 62], [140, 50], [145, 38], [142, 26], [146, 14]]
+vine [[152, 76], [150, 64], [155, 52], [151, 40], [156, 28]]
+color green
+line 128, 40, 134, 36
+line 140, 50, 146, 52
+line 142, 26, 148, 30
+line 151, 40, 156, 44
+line 145, 62, 150, 60
+
+# ---- steps and the stone walk down to the arbour ---------------------------------------
+# the walk first, then the flight of steps over its top
+shape([[94, 82], [114, 82], [100, 88], [84, 96], [70, 104], [60, 108], [60, 100], [72, 96],
+       [82, 88]], lightgrey)
+color darkgrey
+line 92, 86, 104, 86
+line 84, 91, 94, 91
+line 76, 96, 86, 96
+line 68, 101, 76, 101
+line 88, 88, 86, 91
+line 80, 93, 78, 96
+line 72, 98, 70, 101
+shape([[100, 69], [120, 69], [120, 82], [92, 84]], lightgrey)
+color darkgrey
+for y in [72, 75, 78, 81] { line 100 - (y - 69) * 0.6, y, 120, y }
+color white
+for y in [70, 73, 76, 79] { line 100 - (y - 69) * 0.6, y, 119, y }
+color darkgrey
+line 116, 70, 119, 82
+
+# rose bushes along the foot of the villa
+blobs([[86, 76, 4, 3], [124, 76, 6, 3], [136, 75, 6, 4], [148, 76, 8, 4], [157, 75, 4, 4]],
+      green, black, 0.3, 7)
+
+# ---- left: low wall behind the palms ---------------------------------------------------
+shape([[0, 78], [30, 82], [30, 94], [0, 92]], red)
+color black
+line 0, 85, 30, 88
+for x in [7, 15, 23] { line x, 79, x, 93 }
+
+# ---- the sunlit dirt path --------------------------------------------------------------
+shape([[0, 92], [30, 94], [56, 104], [62, 108], [100, 122], [130, 134], [159, 142],
+       [159, 167], [86, 167], [74, 156], [62, 144], [50, 132], [36, 122], [20, 112], [0, 108]],
+      yellow, null)
+# shadows
+shape([[30, 95], [56, 104], [62, 108], [100, 122], [130, 134], [159, 142], [159, 150],
+       [128, 142], [96, 130], [70, 120], [48, 110], [34, 102]], brown, null)
+shape([[52, 140], [80, 142], [110, 148], [140, 152], [159, 150], [159, 160], [120, 160],
+       [96, 158], [70, 156], [62, 148]], brown, null)
+shape([[90, 167], [100, 162], [130, 160], [150, 163], [159, 162], [159, 167]], yellow, null)
+color brown
+line 40, 104, 58, 112
+line 66, 128, 84, 132
+line 104, 140, 122, 142
+
+# ---- left lawn -------------------------------------------------------------------------
+shape([[0, 108], [20, 112], [36, 122], [50, 132], [62, 144], [74, 156], [86, 167], [0, 167]],
+      lightgreen, null)
+color green
+line 0, 108, 20, 112, 36, 122, 50, 132, 62, 144, 74, 156, 86, 167
+line 40, 132, 46, 130
+line 52, 150, 58, 148
+line 66, 160, 72, 158
+
+# ---- rose hedge on its low wall --------------------------------------------------------
+# right wall face (in shade)
+shape([[76, 102], [100, 112], [130, 124], [159, 130], [159, 142], [130, 134], [100, 122],
+       [76, 112]], red)
+color black
+for x in [100, 124, 146] {
+  line x, interp([[76, 112], [100, 122], [130, 134], [159, 142]], x) - 1,
+       x, interp([[76, 102], [100, 112], [130, 124], [159, 130]], x) + 2
+}
+# left wall face
+shape([[30, 86], [58, 98], [58, 108], [30, 95]], red)
+color black
+line 44, 92, 44, 101
+let hedge_r = [[78, 102, 6, 4], [88, 104, 6, 4], [98, 108, 6, 4], [108, 112, 6, 4],
+               [118, 116, 6, 4], [128, 120, 6, 4], [138, 124, 6, 4], [148, 127, 6, 4],
+               [157, 129, 4, 4]]
+blobs(hedge_r, green, black, 0.3, 3)
+let hedge_l = [[32, 85, 4, 3], [40, 88, 5, 3], [48, 92, 5, 3], [55, 96, 4, 3]]
+blobs(hedge_l, green, black, 0.3, 5)
+fn roses(list, s) {
+  for i in 0..len(list) {
+    let h = list[i]
+    for k in 0..3 {
+      let x = h[0] + (noise(s, i * 3 + k) - 0.5) * h[2] * 1.4
+      let y = h[1] + (noise(s + 1, i * 3 + k) - 0.5) * h[3] * 1.2
+      color k == 1 ? red : lightred
+      stroke x, y, x + 1, y
+    }
+  }
+}
+roses(hedge_r, 11)
+roses(hedge_l, 13)
+
+# ---- rose arbour -----------------------------------------------------------------------
+# wooden posts at the feet
+color brown
+rect 56, 96, 59, 108
+rect 72, 94, 75, 104
+color black
+line 56, 108, 59, 108
+line 72, 104, 75, 104
+shape(band([[58, 98], [57, 80], [57, 64], [59, 55], [63, 51], [68, 51], [72, 54], [74, 62],
+            [74, 80], [74, 96]], 5, 5), green)
+let arbour = [[57, 92, 2, 3], [57, 84, 2, 3], [57, 76, 2, 3], [57, 68, 2, 3], [58, 60, 2, 3],
+              [61, 53, 2, 2], [66, 51, 2, 2], [71, 54, 2, 2], [74, 62, 2, 3], [74, 70, 2, 3],
+              [74, 78, 2, 3], [74, 86, 2, 3]]
+roses(arbour, 21)
+color black
+line 59, 92, 59, 66, 61, 57
+line 72, 58, 73, 66, 73, 90
+
+# ---- boulders ----------------------------------------------------------------------------
+rock 34, 150, 24, 22, seed: 3
+rock 151, 112, 16, 12, seed: 2
+
+# ---- palms ---------------------------------------------------------------------------------
+fn trunk(pts, w1, w2, s) {
+  shape(band(pts, w1, w2), brown)
+  # rings: short dark arcs down the trunk
+  color black
+  let n = len(pts)
+  for i in 0..n - 1 {
+    let a = pts[i]
+    let b = pts[i + 1]
+    for k in 0..3 {
+      let t = k / 3
+      let x = a[0] + (b[0] - a[0]) * t
+      let y = a[1] + (b[1] - a[1]) * t
+      let hw = (w1 + (w2 - w1) * (i + t) / (n - 1)) / 4
+      stroke x - hw, y - 1, x, y + 1, x + hw, y - 1
+    }
+  }
+  color yellow
+  let off = -w1 / 6
+  for i in 0..n - 1 {
+    stroke pts[i][0] + off, pts[i][1] - 2, pts[i][0] + off, pts[i][1] - 4
+  }
+}
+# a thin drooping date-palm leaf: a curving spine with paired needles hanging off it
+fn leaf(x, y, n, heading, droop) {
+  let side = heading % 360 < 180 ? 1 : -1
+  let px = x
+  let py = y
+  let spine = [[x, y]]
+  for i in 1..=n {
+    let hh = heading + side * droop * i / n
+    px += 1.5 * sin(hh)
+    py -= 2 * cos(hh)
+    push(spine, [px, py])
+  }
+  for i in 1..=n {
+    let p = spine[i]
+    let l = 4 * sin(180 * i / (n + 2)) + 1
+    color green
+    stroke p[0], p[1], p[0] - side * l * 0.3, p[1] + l
+    color i % 3 == 0 ? lightgreen : green
+    stroke p[0], p[1], p[0] + side * l * 0.6, p[1] + l * 0.8
+  }
+  color green
+  stroke spine
+}
+# left palm, mostly off the edge
+trunk([[6, 150], [5, 128], [3, 104], [1, 80], [-2, 50], [-4, 30]], 12, 10, 1)
+leaf(-2, 26, 26, 60, 70)
+leaf(-2, 26, 20, 25, 60)
+leaf(-2, 26, 22, 120, 40)
+leaf(-2, 26, 18, 160, 20)
+
+# the big palm
+trunk([[18, 150], [19, 126], [21, 104], [24, 80], [27, 60], [30, 40]], 12, 8, 2)
+# husk below the crown
+shape([[29, 6], [36, 5], [38, 14], [37, 26], [34, 36], [31, 42], [28, 34], [27, 20]], brown)
+color red
+line 30, 10, 29, 22, 31, 34
+line 35, 12, 36, 24
+color yellow
+line 34, 8, 33, 20
+# fronds
+leaf(32, 8, 26, 100, 70)
+leaf(32, 8, 22, 70, 70)
+leaf(32, 8, 20, 130, 40)
+leaf(32, 8, 26, 260, 70)
+leaf(32, 8, 22, 290, 70)
+leaf(32, 8, 18, 230, 40)
+leaf(32, 8, 12, 20, 40)
+leaf(32, 8, 12, 340, 40)
+
+# ---- dark agave in the foreground --------------------------------------------------------
+fn spike(x, y, tx, ty, w) {
+  shape([[x - w, y], [tx, ty], [x + w, y]], black)
+  color darkgrey
+  line x, y, (x + tx) / 2, (y + ty) / 2
+}
+spike(10, 167, 0, 128, 4)
+spike(14, 167, 26, 130, 4)
+spike(20, 167, 46, 150, 5)
+spike(26, 167, 64, 158, 4)
+spike(6, 167, 14, 140, 4)
+spike(30, 167, 40, 158, 6)
+spike(48, 167, 70, 152, 3)
+
+frame()

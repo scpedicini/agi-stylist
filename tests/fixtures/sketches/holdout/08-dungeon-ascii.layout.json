@@ -1,0 +1,159 @@
+{
+  "id": "08-dungeon-ascii",
+  "source": "tests/fixtures/sketches/holdout/08-dungeon-ascii.txt",
+  "brief": "A dungeon cell of rough grey stone. The torches are lit. The chest is open and full of gold.",
+  "units": "character cells inside the frame: [col,row], 0-based",
+  "entities": [
+    {
+      "label": "TORCH",
+      "kind": "attached",
+      "at": [
+        3,
+        0
+      ],
+      "is": "lit wall torch (left)",
+      "support": "back wall",
+      "labelBox": [
+        1,
+        0,
+        6,
+        1
+      ],
+      "pic": [
+        13.3,
+        16.8
+      ]
+    },
+    {
+      "label": "IRON DOOR",
+      "kind": "attached",
+      "at": [
+        19,
+        0
+      ],
+      "is": "iron door in the back wall",
+      "support": "back wall / floor",
+      "labelBox": [
+        14,
+        0,
+        25,
+        1
+      ],
+      "pic": [
+        74.3,
+        16.8
+      ]
+    },
+    {
+      "label": "TORCH",
+      "kind": "attached",
+      "at": [
+        37,
+        0
+      ],
+      "is": "lit wall torch (right)",
+      "support": "back wall",
+      "labelBox": [
+        35,
+        0,
+        40,
+        1
+      ],
+      "pic": [
+        142.9,
+        16.8
+      ]
+    },
+    {
+      "label": "SKELETON",
+      "kind": "grounded",
+      "at": [
+        6.5,
+        2
+      ],
+      "is": "a skeleton",
+      "support": "floor",
+      "labelBox": [
+        3,
+        2,
+        11,
+        3
+      ],
+      "pic": [
+        26.7,
+        84
+      ]
+    },
+    {
+      "label": "CHEST",
+      "kind": "grounded",
+      "at": [
+        27,
+        2
+      ],
+      "is": "open chest full of gold",
+      "support": "floor",
+      "labelBox": [
+        25,
+        2,
+        30,
+        3
+      ],
+      "pic": [
+        104.8,
+        84
+      ]
+    },
+    {
+      "label": "PIT OF SPIKES",
+      "kind": "region",
+      "at": [
+        15,
+        4
+      ],
+      "is": "a pit of spikes in the floor",
+      "labelBox": [
+        8,
+        4,
+        23,
+        5
+      ],
+      "pic": [
+        59,
+        151.2
+      ]
+    },
+    {
+      "label": "RAT",
+      "kind": "grounded",
+      "at": [
+        32,
+        4
+      ],
+      "is": "a rat",
+      "support": "floor",
+      "labelBox": [
+        31,
+        4,
+        34,
+        5
+      ],
+      "pic": [
+        123.8,
+        151.2
+      ]
+    }
+  ],
+  "requirements": [
+    "a dungeon cell",
+    "rough grey stone walls",
+    "both torches lit",
+    "iron door",
+    "open chest",
+    "gold in the chest",
+    "pit of spikes",
+    "skeleton",
+    "rat"
+  ],
+  "ambiguities": []
+}

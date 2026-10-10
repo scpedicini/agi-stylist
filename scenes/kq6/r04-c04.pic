@@ -1,0 +1,230 @@
+# Temple in the Canyon
+# Source: King's Quest VI (VGA) - reference/kq6/r04-c04.png; reframed with:
+#   pnpm grid reference/kq6/r04-c04.png --name kq6-r04-c04
+# Method: translated by eye. Kept: blue sky, snowy far peak, grey canyon walls, temple facade
+#   (pediment, two columns, frame, half-open plank door, black doorway, steps), the left cave
+#   mouth, the tumbled rock pile right of the temple, the right cliff with its dark hollow and
+#   bush, the sand floor with cliff shadows, the foreground rock spires. Dropped: the frieze
+#   lettering, rock speckle, most small boulders, soft shading on the sand. Moved: nothing.
+# Colours: pale sky → blue, snowy peak → white with lightblue faces, distant lavender rock →
+#   lightgrey with darkgrey shade, pale tan rock (cliff, boulders, spires) → lightgrey lit side
+#   with a brown shadow side, carved temple → white with lightgrey/darkgrey lines, orange sand
+#   → yellow with brown shadows, door → brown planks, doorway and cave → black, teal bush → cyan.
+#   (Tan rock as yellow merged with the sand, so the warmth lives in the brown shadows.)
+scene "Temple in the Canyon"
+variants day
+
+# ---- sky and the far snowy peak -------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, 80
+}
+shape([[96, 50], [104, 34], [112, 22], [120, 14], [126, 8], [131, 8], [138, 14], [146, 20],
+       [154, 24], [159, 26], [159, 70], [96, 70]], white, lightgrey)
+# shaded faces
+shape([[104, 40], [110, 30], [116, 26], [114, 36], [110, 46]], lightblue, null)
+shape([[118, 30], [122, 24], [124, 34], [120, 46], [116, 50]], lightblue, null)
+shape([[134, 22], [140, 20], [146, 26], [140, 34], [136, 30]], lightblue, null)
+color lightgrey
+line 126, 8, 124, 14, 126, 20
+line 131, 8, 134, 16
+
+# ---- sand floor ------------------------------------------------------------------------
+delay {
+  color yellow
+  rect 0, 60, 159, 167
+}
+
+
+# ---- helpers ---------------------------------------------------------------------------
+# sun-lit rock: light grey with a brown shadow on its lower right, black outline
+fn boulder(cx, cy, rx, ry, seed, shade = brown) {
+  let pts = blob(cx, cy, rx, ry, seed, 0.2)
+  shape(pts, lightgrey)
+  shape(shadow_side(pts, cx, cy, rx, ry), shade, null)
+  color black
+  outline pts
+}
+# the part of a closed outline below-right of a diagonal through (cx, cy): the shadow side
+fn shadow_side(pts, cx, cy, rx, ry) {
+  let n = len(pts)
+  let k = 0
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[(i + 1) % n]
+    if (a[0] - cx) / rx + (a[1] - cy) / ry <= 0.2 && (b[0] - cx) / rx + (b[1] - cy) / ry > 0.2 {
+      k = i + 1
+    }
+  }
+  let out = []
+  for j in 0..n {
+    let p = pts[(k + j) % n]
+    if (p[0] - cx) / rx + (p[1] - cy) / ry <= 0.2 { break }
+    push(out, p)
+  }
+  return out
+}
+# a crag given as a polygon, with its shadowed side as a second polygon
+fn crag(pts, shadow, shade = brown) {
+  shape(pts, lightgrey)
+  shape(shadow, shade, null)
+  color black
+  outline pts
+}
+
+# ---- grey canyon walls in the hazy middle distance ------------------------------------
+# left wall, falling from the top edge to the canyon floor
+shape([[80, 0], [86, 0], [90, 8], [94, 18], [98, 26], [102, 36], [106, 44], [110, 52],
+       [112, 62], [110, 70], [96, 76], [80, 76]], lightgrey)
+# shaded faces (darkgrey: cooler than the brown shade on the near rock)
+shape([[96, 28], [102, 38], [106, 48], [108, 60], [102, 56], [98, 44]], darkgrey, null)
+color darkgrey
+line 88, 4, 90, 14, 96, 26
+line 92, 22, 94, 34, 100, 42
+line 98, 46, 104, 54, 106, 64
+line 94, 50, 98, 60
+# right wall, a stack of grey ledges
+shape([[116, 66], [118, 58], [124, 54], [130, 48], [138, 42], [146, 34], [152, 28],
+       [159, 24], [159, 80], [116, 78]], lightgrey)
+shape([[124, 58], [132, 52], [138, 56], [130, 62]], darkgrey, null)
+shape([[140, 46], [148, 40], [154, 44], [146, 50]], darkgrey, null)
+color darkgrey
+line 118, 64, 126, 60, 134, 62
+line 126, 54, 134, 50, 140, 54
+line 136, 46, 144, 40, 150, 44
+line 146, 36, 154, 30
+line 122, 70, 130, 68
+
+# ---- near right cliff ------------------------------------------------------------------
+crag([[159, 36], [154, 44], [150, 54], [146, 64], [140, 70], [132, 74], [124, 80],
+      [122, 88], [126, 94], [136, 96], [146, 100], [150, 106], [146, 114], [142, 122],
+      [140, 132], [142, 140], [148, 146], [159, 148]],
+     [[150, 62], [154, 58], [159, 56], [159, 100], [154, 96], [150, 84], [148, 74]])
+boulder 132, 84, 9, 7, 4
+boulder 152, 52, 7, 9, 6
+boulder 153, 124, 7, 14, 8
+color black
+line 156, 100, 152, 108, 154, 114
+line 146, 128, 150, 138
+# dark hollow with a teal bush in it
+shape([[138, 96], [140, 88], [146, 84], [152, 86], [155, 92], [152, 98]], black, null)
+shape(blob(145, 94, 4, 3, 3, 0.3), cyan, null)
+color lightcyan
+line 142, 93, 145, 91
+line 145, 95, 148, 93
+
+# ---- the left cliff the temple is carved into -----------------------------------------
+crag([[0, 0], [84, 0], [86, 8], [84, 20], [80, 30], [78, 44], [78, 62], [80, 80],
+      [84, 92], [88, 100], [60, 104], [20, 110], [0, 112]],
+     [[0, 0], [4, 0], [5, 20], [3, 44], [5, 70], [2, 90], [0, 96]])
+# overhang shadow above the pediment
+shape([[10, 10], [14, 4], [24, 2], [34, 4], [20, 8]], brown, null)
+shape([[52, 6], [60, 4], [70, 8], [78, 16], [74, 22], [64, 12]], brown, null)
+color black
+line 10, 30, 12, 50, 10, 70
+line 72, 36, 74, 52, 72, 70
+
+# ---- the temple facade ----------------------------------------------------------------
+# recessed wall behind the columns
+shape([[16, 28], [70, 30], [70, 94], [16, 96]], lightgrey)
+color darkgrey
+line 17, 30, 17, 94
+line 69, 32, 69, 92
+# pediment and entablature
+shape([[8, 14], [40, 3], [72, 18], [72, 30], [10, 26]], white)
+color lightgrey
+line 18, 15, 40, 8, 62, 18
+line 11, 21, 71, 25
+color darkgrey
+line 10, 18, 71, 22
+line 11, 26, 71, 30
+fn column(x, top, bottom) {
+  shape([[x, top], [x + 5, top], [x + 5, bottom], [x, bottom]], white)
+  color lightgrey
+  line x + 3, top + 3, x + 3, bottom - 3
+  color darkgrey
+  line x + 4, top + 3, x + 4, bottom - 3
+  # capital and base
+  shape([[x - 1, top], [x + 6, top], [x + 5, top + 2], [x, top + 2]], white)
+  shape([[x - 1, bottom - 2], [x + 6, bottom - 2], [x + 6, bottom], [x - 1, bottom]], white)
+}
+column 20, 29, 94
+column 62, 31, 92
+# door frame
+shape([[30, 30], [57, 31], [57, 92], [30, 93]], white)
+color lightgrey
+line 32, 32, 32, 91
+# black doorway with the half-open plank door
+shape([[34, 34], [55, 35], [55, 91], [34, 92]], black)
+shape([[34, 34], [46, 35], [46, 91], [34, 92]], brown)
+color black
+for x in [37, 40, 43] {
+  line x, 36, x, 90
+}
+line 34, 48, 46, 48
+line 34, 76, 46, 76
+color yellow
+line 45, 36, 45, 90
+
+# steps
+shape([[8, 94], [80, 90], [88, 96], [86, 101], [16, 109], [6, 104]], white)
+color lightgrey
+shape([[8, 98], [84, 93], [86, 101], [16, 109], [6, 104]], lightgrey, null)
+color darkgrey
+line 10, 102, 85, 97
+color black
+outline [[8, 94], [80, 90], [88, 96], [86, 101], [16, 109], [6, 104]]
+line 8, 98, 84, 93
+
+# cave mouth on the far left
+shape([[0, 120], [1, 98], [5, 88], [10, 85], [14, 92], [16, 104], [14, 114], [8, 120]], black)
+
+# ---- tumbled rocks right of the temple ------------------------------------------------
+# rock behind the pile, so no sky shows between the boulders
+shape([[76, 6], [88, 6], [92, 30], [98, 56], [104, 70], [80, 96]], lightgrey, null)
+boulder 82, 20, 6, 10, 31
+boulder 86, 36, 7, 10, 32
+boulder 82, 52, 6, 9, 33
+boulder 92, 62, 9, 9, 34
+boulder 82, 70, 8, 9, 35
+boulder 104, 72, 9, 7, 36
+boulder 94, 82, 12, 8, 37
+boulder 110, 86, 8, 6, 38
+boulder 80, 90, 8, 6, 39
+
+# ---- shadows on the sand --------------------------------------------------------------
+shape([[124, 102], [140, 104], [144, 110], [138, 118], [130, 126], [128, 134], [140, 140],
+       [142, 130], [140, 120]], brown, null)
+shape([[84, 152], [96, 148], [112, 150], [110, 156], [96, 158]], brown, null)
+# shade band at the foot of the steps
+shape([[14, 110], [86, 101], [96, 102], [60, 110], [24, 114]], brown, null)
+
+# ---- foreground rocks -----------------------------------------------------------------
+crag([[0, 112], [6, 114], [10, 126], [12, 140], [16, 152], [20, 167], [0, 167]],
+     [[6, 124], [10, 128], [12, 142], [16, 154], [18, 167], [6, 167], [8, 146]])
+crag([[18, 167], [19, 140], [21, 120], [24, 106], [27, 106], [32, 116], [36, 126],
+      [40, 134], [42, 150], [44, 167]],
+     [[28, 126], [34, 124], [40, 134], [42, 150], [44, 167], [30, 167], [32, 148]])
+crag([[42, 167], [44, 146], [48, 136], [56, 130], [64, 126], [72, 124], [70, 132],
+      [66, 142], [64, 154], [68, 167]],
+     [[52, 146], [62, 136], [70, 130], [66, 142], [64, 154], [66, 167], [54, 167]])
+crag([[64, 167], [68, 156], [76, 152], [82, 160], [84, 167]],
+     [[74, 156], [76, 153], [82, 160], [84, 167], [72, 167]])
+crag([[118, 167], [120, 150], [124, 138], [128, 140], [132, 150], [136, 167]],
+     [[126, 146], [128, 141], [132, 150], [136, 167], [126, 167]])
+crag([[136, 167], [140, 154], [148, 148], [159, 148], [159, 167]],
+     [[148, 156], [159, 152], [159, 167], [146, 167]])
+# blue-grey shade at the foot of the spires
+color darkgrey
+line 19, 146, 19, 166
+line 20, 152, 20, 166
+line 45, 150, 44, 166
+# cracks
+color black
+line 24, 116, 26, 128, 24, 138
+line 48, 150, 52, 158
+line 4, 130, 6, 144
+
+frame()

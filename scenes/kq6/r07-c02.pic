@@ -1,0 +1,206 @@
+# Castle Lower Corridor
+# Source: King's Quest VI VGA background, reference/kq6/r07-c02.png
+#   (a vaulted stone corridor in the Castle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r07-c02.png --name kq6-r07-c02
+# Method: translated by eye. Kept: the dark near arch and its two piers with their cornices,
+#   the vault groins top left and right, the lit domed bay with its ring and two painted
+#   pendentives, the second arch and the far bay with its end wall and stained-glass windows,
+#   the two tall stained-glass windows on the left, the arched blue door on the left, the three
+#   blue doors on the right wall (the nearest in a stone frame), the suit of armour on its red
+#   plinth, the recessed panel on the left pier, the lit floor and the step line in front.
+# Dropped: the green mottling of the stone, the pendentive scrollwork detail, the window
+#   figures, the door planks' fine detail, floor reflections.
+# Colours: dark olive stone -> darkgrey with black shadow lines and lightgrey lit edges, near
+#   arch soffit -> black, far arch soffit -> darkgrey, pale lit stone -> lightgrey walls with white pilasters and dome, slate
+#   pendentives -> blue with lightcyan scrolls, violet doors -> blue with black lines, lit
+#   floor -> white with lightgrey joints, shaded near floor -> lightgrey, stained glass ->
+#   red / yellow / lightblue, armour -> darkgrey / lightgrey on a red plinth.
+scene "Castle Lower Corridor"
+variants lit
+
+# vanishing point of the corridor
+let vx = 63
+let vy = 85
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn glass(x, y1, y2, w = 2) {
+  # a tall stained-glass lancet: black lead frame, bands of red, yellow and lightblue
+  shape([[x, y1 + 1], [x + 1, y1], [x + w, y1 + 1], [x + w, y2], [x, y2]], black)
+  let cols = [red, yellow, lightblue, red]
+  let h = (y2 - y1 - 2) / 4
+  for i in 0..4 {
+    color cols[i]
+    let ya = y1 + 2 + i * h
+    for xx in range(x + 1, x + w) { line xx, ya, xx, ya + h - 1 }
+  }
+}
+
+fn door(pts, lines) {
+  # a blue door with dark plank lines
+  shape(pts, blue)
+  color black
+  for l in lines { line l }
+}
+
+# ---- the lit interior: bay walls, back to front --------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightgrey
+  rect 0, 0, 159, 167
+}
+
+# far end wall of the second bay, with a white arch ring and three little windows
+shape([[48, 68], [79, 68], [79, 99], [48, 99]], lightgrey)
+shape(arc(63, 80, 15, 14, 270, 450, 10) + [[78, 80], [48, 80]], white, null)
+shape(arc(63, 81, 12, 11, 270, 450, 10) + [[75, 81], [51, 81]], lightgrey, null)
+color darkgrey
+line 51, 81, 51, 97
+line 75, 81, 75, 97
+glass 56, 70, 76
+glass 61, 69, 76
+glass 66, 70, 76
+# second bay's little dome ring and pendentives
+shape(arc(63, 70, 16, 12, 270, 450, 10), white, null)
+color darkgrey
+stroke arc(63, 70, 16, 12, 280, 440, 10)
+shape([[50, 62], [56, 64], [53, 70]], blue)
+shape([[70, 64], [76, 62], [73, 70]], blue)
+# second bay side walls (receding) with far doors on the right
+shape([[44, 70], [48, 68], [48, 99], [44, 104]], lightgrey, null)
+shape([[79, 68], [84, 70], [84, 105], [79, 99]], lightgrey, null)
+color darkgrey
+line 47, 70, 47, 100
+door([[80, 86], [82, 87], [82, 106], [80, 103]], [])
+# window pair high on the second bay's left wall
+glass 45, 73, 79, 1
+
+# ---- the suit of armour by the far door -------------------------------------------------------
+shape([[74, 95], [78, 95], [78, 99], [74, 99]], red)
+# legs, body, helmet, halberd
+color darkgrey
+line 75, 88, 75, 94
+line 77, 88, 77, 94
+shape([[74, 82], [78, 82], [78, 88], [74, 88]], darkgrey)
+color lightgrey
+line 75, 83, 75, 87
+shape([[75, 78], [77, 78], [77, 81], [75, 81]], darkgrey)
+color black
+line 79, 75, 79, 95
+line 78, 76, 80, 76
+
+# ---- the first (domed) bay ---------------------------------------------------------------------
+# left bay wall, between the near arch and the second arch's left leg
+shape([[18, 40], [44, 50], [44, 106], [18, 132]], lightgrey, null)
+# right bay wall / pilaster face
+shape([[84, 40], [102, 40], [102, 124], [84, 106]], white, null)
+color lightgrey
+line 98, 74, 98, 116
+line 87, 74, 87, 104
+# cornice line along both bay walls, aimed at the vanishing point
+color white
+line 20, 62, 44, 72
+color darkgrey
+line 20, 64, 44, 73
+line 84, 72, 102, 66
+line 84, 74, 102, 69
+
+# the dome: white ceiling with a lightgrey ring and the second arch's rim
+shape(arc(62, 40, 40, 34, 270, 450, 10), white, null)
+shape(arc(62, 19, 25, 9, 0, 360, 15), lightgrey, null)
+color lightgrey
+stroke arc(62, 21, 31, 13, 240, 480, 10)
+# second arch: white rim, black soffit band, the far bay showing through
+let arch2 = [[41, 106]] + arc(63, 73, 22, 32, 270, 450, 10) + [[85, 106]]
+shape(band(arch2, 10), white)
+shape(band(offset(arch2, 2), 5), darkgrey, black)
+
+# pendentives: slate triangles with a pale scroll
+shape([[30, 26], [48, 34], [41, 50]], blue)
+shape([[76, 34], [94, 26], [85, 50]], blue)
+color lightcyan
+stroke arc(39, 35, 3, 4, 0, 300, 30)
+stroke arc(86, 35, 3, 4, 60, 360, 30)
+line 40, 41, 41, 46
+line 85, 41, 85, 46
+
+# tall stained-glass windows high on the left bay wall
+glass 25, 41, 60
+glass 30, 44, 62
+
+# arched blue door in the left bay wall, in a white stone frame
+shape(archway(28, 74, 6, 6, 122), white)
+shape(archway(28, 78, 3, 4, 117), blue)
+color black
+line 28, 80, 28, 116
+line 31, 80, 31, 117
+color darkgrey
+stroke arc(28, 80, 6, 6, 270, 450, 30)
+
+# door on the right bay wall
+shape([[90, 86], [99, 87], [99, 121], [90, 110]], lightgrey)
+door([[92, 89], [97, 90], [97, 118], [92, 111]], [[[94, 91], [94, 113]]])
+
+# ---- floor -------------------------------------------------------------------------------------
+# lit floor of the bays, white with a couple of joint lines
+shape([[48, 99], [79, 99], [104, 128], [20, 128], [44, 104]], white)
+color lightgrey
+line 37, 112, 89, 112
+line 28, 120, 96, 120
+# shaded near floor and the step line
+shape([[0, 128], [159, 128], [159, 167], [0, 167]], lightgrey, null)
+color darkgrey
+line 0, 150, 159, 150
+line 10, 158, 150, 158
+
+# ---- the near frame: piers and the big arch ------------------------------------------------
+let opening = arc(60, 50, 39, 42, 270, 450, 10) + [[99, 50], [100, 121], [126, 150],
+  [170, 150], [170, 175], [-10, 175], [-10, 151], [22, 128], [21, 50]]
+surround(opening, darkgrey)
+# arch soffit: a black band inside the edge, darker on the far side
+shape(band(arc(60, 50, 42, 46, 270, 450, 10), 6, 6), black, null)
+color darkgrey
+stroke arc(60, 50, 44, 48, 270, 450, 10)
+# pier faces under the arch
+shape([[16, 50], [22, 50], [22, 128], [16, 134]], black, null)
+color darkgrey
+line 18, 52, 18, 130
+
+# left pier: cornice and a recessed panel, both on lines to the vanishing point
+shape([[0, 40], [18, 52], [18, 60], [0, 48]], lightgrey)
+color white
+line 0, 40, 17, 51
+color black
+line 0, 49, 17, 61
+outline [[3, 62], [14, 69], [14, 125], [3, 137]]
+color lightgrey
+line 4, 138, 14, 126
+
+# right pier: cornice slab across its front, its side face receding to the arch
+shape([[100, 58], [122, 45], [160, 45], [160, 56], [122, 56], [100, 68]], lightgrey)
+color white
+line 100, 58, 122, 45, 159, 45
+color black
+line 100, 68, 122, 56, 159, 56
+line 122, 45, 122, 150
+color lightgrey
+line 136, 137, 159, 137
+
+# stone-framed blue door on the pier's side face
+shape([[102, 82], [120, 80], [120, 148], [102, 124]], lightgrey)
+stones(102, 80, 120, 150, 5, 5)
+door([[106, 88], [117, 87], [117, 141], [106, 128]], [[[109, 89], [109, 131]], [[113, 88], [113, 136]]])
+# re-cut the floor below the door frame
+shape([[101, 123], [126, 151], [101, 151]], lightgrey, null)
+color darkgrey
+line 101, 150, 126, 150
+color black
+line 101, 123, 125, 151
+
+# vault groins: pale ribs falling between the vaults
+shape([[112, -1], [132, -1], [123, 28], [121, 38], [119, 28]], lightgrey, null)
+color darkgrey
+line 116, 0, 121, 32
+shape([[-1, -1], [8, -1], [3, 20], [-1, 34]], lightgrey, null)
+
+frame()

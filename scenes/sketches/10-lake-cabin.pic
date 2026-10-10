@@ -1,0 +1,230 @@
+# Log Cabin by a Woodland Lake
+# Source: layout sketch tests/fixtures/sketches/10-lake-cabin.png (hybrid: words plus brushstrokes);
+#   reframed with:
+#   pnpm grid tests/fixtures/sketches/10-lake-cabin.png --crop 0,0,1024,768 --fit --name sketches-10-lake-cabin
+# Brief: A quiet lake in the woods at golden hour. The cabin is built of logs. A small campfire
+#   is burning by the shore, and the dock is wooden.
+# Method: composed from a layout sketch. Labels: Cabin → log cabin, gable end facing the camera
+#   with its right side wall receding, front wall x 8-30, base on the ground at y 80 (label
+#   (23,72) inside the front wall); campfire → small campfire (stone ring, crossed logs, flames,
+#   a wisp of smoke) on the red dab ~2, base (33,107); Dock → wooden plank dock with posts along
+#   brown line ~3 from the shore (47,110) out into the lake (68,105); Lake → the blue loop ~1;
+#   Meadow → the green fill ~4, a patch of tall grass with a few flowers.
+#   Geometry: blue loop ~1 → lake outline (sand shore just outside it); red dab ~2 → campfire;
+#   brown line ~3 → dock's long axis; green fill ~4 → meadow outline.
+# Stage: horizon y 45 (chosen; hidden behind the woods)
+# Interpreted: the empty top of the sketch is sky and the far woods ("in the woods"): a treeline
+#   of merged round crowns (blobs) across the back, foot at y 62-70, behind the cabin and lake.
+#   Golden hour → day variant with a low yellow sun upper right (118,16) over flat blue /
+#   lightcyan / yellow sky bands, its yellow glitter on the lake below it, long green cast
+#   shadows falling towards the viewer and left (cabin, pines), the cabin's sun-side wall lit
+#   with yellow log lines. Ground lightgreen; the meadow green tall grass so it reads apart from
+#   it. The lake's outline is grid's (strokes.pic): the middle of the painted ring. The dab's red is
+#   only a hint: the fire is yellow/lightred flames. Invented to make the woods whole: two pines
+#   on the right edge, right of the lake (bases (145,126) and (151,150)), the lower-middle
+#   ground left open. Woods' foot and cast shadows green on the lightgreen ground. Cabin extras: stone chimney, dark plank door, a warm-lit
+#   window. Brushstroke colours agree with the brief (no conflicts).
+scene "Log Cabin by a Woodland Lake"
+variants day
+
+let hz = 45
+
+# ---------------------------------------------------------------- sky (golden hour bands)
+color blue
+rect 0, 0, 159, 8
+color lightcyan
+rect 0, 9, 159, 24
+color yellow
+rect 0, 25, 159, 70
+
+# low sun, upper right
+color yellow
+ellipse 118, 16, 7, 12
+color white
+ellipse 117, 15, 4, 7
+
+# ---------------------------------------------------------------- ground
+color lightgreen
+rect 0, 58, 159, 167
+
+# ---------------------------------------------------------------- the far woods
+# a backdrop along the horizon: merged round crowns (a treeline), not forest()
+# in two rows, each one mass with its own outline, the nearer row lower and over the back one
+let back = []
+let front = []
+for i in 0..15 {
+  push(back, [i * 11 + 2, 42 + noise(3, i) * 6, 8 + noise(4, i) * 3, 12 + noise(5, i) * 4])
+  push(front, [i * 11 + 7, 54 + noise(6, i) * 4, 7 + noise(7, i) * 3, 10 + noise(8, i) * 2])
+}
+blobs(back, green, black, 0.18, 3)
+blobs(front, green, black, 0.18, 9)
+
+# the woods' long shadow towards the viewer, along their foot
+color green
+polygon 0, 63, 20, 64, 40, 65, 60, 68, 80, 69, 100, 71, 120, 71, 140, 69, 159, 67,
+        159, 70, 130, 74, 100, 74, 70, 72, 40, 69, 0, 66
+
+# ---------------------------------------------------------------- the lake (blue loop ~1)
+let lake = [[89, 79.5], [114, 83], [125.7, 89.8], [131, 105.1], [129, 112.8], [124.1, 118.9],
+            [111.6, 125.7], [96.6, 128.1], [74.9, 125.2], [63, 120], [57.6, 108.4], [62.3, 95.3],
+            [72.6, 84.3]]
+
+# sand shore: a little outside the water, wider on the near side
+shape(shift(scale(lake, 1.035), 0, 1.2), yellow)
+shape(lake, blue, null)
+
+# ripples
+color lightblue
+for r in [[70, 96, 6], [84, 90, 8], [98, 86, 6], [76, 110, 8], [92, 104, 10], [70, 118, 6],
+          [102, 120, 8], [86, 124, 6]] {
+  line r[0], r[1], r[0] + r[2], r[1]
+}
+
+# the sun's glitter on the water, under the sun
+for g in [[116, 84, 4], [113, 89, 8], [115, 94, 6], [112, 99, 10], [114, 104, 8],
+          [111, 109, 12], [114, 114, 8], [112, 119, 10], [115, 124, 4]] {
+  color yellow
+  line g[0], g[1], g[0] + g[2], g[1]
+}
+color white
+line 115, 99, 118, 99
+line 114, 109, 118, 109
+
+# ---------------------------------------------------------------- the cabin (logs)
+# front (gable end) faces the camera; right side wall recedes towards (80, hz)
+let cx1 = 8
+let cx2 = 30
+let base = 80
+let eave = 66
+let peak = 53
+
+# long cast shadow, towards the viewer and left
+color green
+polygon 8, 80, 41, 72, 30, 89, 0, 92, 0, 84
+
+# right side wall (lit by the low sun)
+shape([[cx2, eave], [41, 61.4], [41, 72.3], [cx2, base]], brown)
+color yellow
+for i in 1..5 {
+  let yf = eave + i * 2.6
+  let yb = 61.4 + i * 1.8
+  stroke cx2 + 1, yf, 40, yb
+}
+
+# stone chimney on the far side of the roof
+shape([[33, 47], [37, 47], [37, 60], [33, 60]], lightgrey)
+color darkgrey
+line 34, 50, 36, 50
+line 34, 53, 36, 53
+line 34, 56, 36, 56
+color black
+rect 33, 46, 37, 46
+
+# right roof plane (sunlit shingles)
+shape([[19, peak], [32.4, 51.2], [43, 61.6], [32, eave + 0.5]], lightgrey)
+color darkgrey
+stroke 23, 57, 35, 55
+stroke 27, 61, 39, 58
+
+# front wall with the gable
+let front = [[cx1, base], [cx1, eave], [19, peak], [cx2, eave], [cx2, base]]
+shape(front, brown)
+color black
+for y in range(eave + 3, base, 3) {
+  stroke cx1 + 1, y, cx2 - 1, y
+}
+for y in range(peak + 4, eave, 3) {
+  let hw = (y - peak) * (11 / 13)
+  stroke 19 - hw + 1, y, 19 + hw - 1, y
+}
+# log ends sticking out at the corners
+color yellow
+for y in range(eave + 1, base, 3) {
+  line cx1, y, cx1, y + 1
+  line cx2, y, cx2, y + 1
+}
+# roof edge (bargeboards) over the gable
+color darkgrey
+line 6, 67, 19, 52, 32, 67
+color black
+line 5, 67, 19, 51, 33, 67
+
+# door and window
+shape([[11, 71], [16, 71], [16, 80], [11, 80]], darkgrey)
+color black
+line 13, 72, 13, 79
+color yellow
+line 15, 76, 15, 76
+shape([[20, 70], [27, 70], [27, 75], [20, 75]], yellow)
+color brown
+line 23, 71, 23, 74
+line 21, 72, 26, 72
+color black
+line 19, 76, 28, 76
+
+# ---------------------------------------------------------------- the dock (brown line ~3)
+let dock = [[47, 110], [68.5, 105]]
+# deck: planks running across it, a dark front face below
+let dtop = [[46, 106], [69, 101]]
+let dbot = [[47, 112], [70, 107]]
+shape([[46, 106], [69, 101], [70, 107], [47, 112]], brown)
+color black
+for x in range(49, 69, 3) {
+  stroke x, interp(dtop, x) + 1, x, interp(dbot, x) - 1
+}
+color darkgrey
+line 48, 113, 70, 108
+color black
+line 47, 114, 70, 109
+# posts standing in the water under the deck's outer end
+for x in [59, 64, 68] {
+  let yb = interp([[47, 114], [70, 109]], x) + 1
+  color black
+  rect x, yb, x + 1, yb + 2
+  color darkgrey
+  line x, yb, x, yb + 1
+}
+
+# ---------------------------------------------------------------- the campfire (red dab ~2)
+pixmap(28, 94, [
+  ".....r.....",
+  "....rR.....",
+  "....RR..r..",
+  "...rRYR.R..",
+  "..rRYYRRR..",
+  "..RRYWYRr..",
+  "..RYYWYYR..",
+  "..RYYYYYR..",
+  "...RYYYR...",
+  ".kbbRYRbbk.",
+  "..kbbbbbk..",
+  ".ggdgggdgg.",
+  "..dd.dd.dd."
+], "rRYWbkgd", [red, lightred, yellow, white, brown, black, lightgrey, darkgrey])
+# a wisp of smoke
+color lightgrey
+line 33, 92, 34, 90, 34, 88, 35, 86, 35, 84
+
+# ---------------------------------------------------------------- the meadow (green fill ~4)
+let meadow = [[8.7, 123], [12, 121], [15, 124], [19, 122], [23, 125], [27, 123], [31, 126],
+              [35, 124], [39, 127], [43, 125], [47.7, 128], [47.5, 135], [50, 140],
+              [49.5, 145.5], [52, 150], [53.5, 161.5], [30, 160], [7.6, 158.3],
+              [7.4, 145.4], [10.2, 141]]
+shape(meadow, green, null)
+# tall grass blades
+color lightgreen
+for b in [[14, 130], [24, 133], [36, 131], [44, 137], [18, 142], [30, 146], [42, 148],
+          [12, 152], [24, 155], [38, 156], [48, 157]] {
+  line b[0], b[1], b[0] - 1, b[1] - 3
+  line b[0] + 2, b[1], b[0] + 2, b[1] - 4
+}
+flowers(12, 128, 46, 156, 10, 5, [yellow, lightmagenta, lightred])
+
+# ---------------------------------------------------------------- pines at the right edge
+color green
+polygon 143, 126, 147, 126, 128, 136, 120, 135
+polygon 148, 150, 153, 150, 132, 161, 122, 159
+pine(145, 126, 1.0, 2)
+pine(151, 150, 1.2, 5)
+
+frame()

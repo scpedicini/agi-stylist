@@ -1,0 +1,275 @@
+# Castle Garden Portico
+# Source: King's Quest VI background, reference/kq6/r03-c03.png
+#   (the garden in front of a castle portico, with a hollow stone sentry post); reframed with:
+#   pnpm grid reference/kq6/r03-c03.png --name kq6-r03-c03
+# Method: translated by eye. Kept: the shaded left wall with its recessed window, the cream
+#   portico with its arch, scroll capitals, carved panels and pilasters, the doorway with the
+#   red stair and curtain inside, the entrance steps, the lit wall and orange opening right of
+#   the portico, the shaded recess, the round tower with its cornice bands and vines, the patch
+#   of sky with far mountains and pines, the hedges, the lawns, the flagstone path and its left
+#   branch, the big round bush, the dark right-hand shrubs, three grey rocks and the hollow
+#   keyhole sentry post. Dropped: the carving inside the panels (a few strokes only), most of
+#   the vines, the furniture seen through the doorway, grass and leaf texture. Moved: nothing.
+# Colours: lavender shaded stone -> lightblue with blue deep shade, cream portico and peach lit
+#   wall -> yellow with brown lines, orange carved panels and lit opening -> brown, recessed
+#   window -> magenta, arch vault -> blue, doorway wood -> brown/black, red carpet -> red and
+#   lightred, steps -> lightgrey/darkgrey, pale sky -> lightcyan, peach mountains -> lightgrey
+#   with white lit faces, far pines -> cyan, hedges and shrubs -> green with black shade and
+#   lightgreen marks, lawns -> lightgreen, flagstones -> yellow with brown joints and shadow,
+#   rocks -> lightgrey/darkgrey, sentry post -> yellow lit / lightblue shaded, black opening.
+scene "Castle Garden Portico"
+variants day
+
+# ---- sky, far mountains, far pines (right edge) ----------------------------------------------
+color lightcyan
+rect 140, 0, 159, 60
+shape([[140, 52], [146, 44], [150, 40], [154, 44], [157, 41], [160, 39], [160, 60], [140, 60]], lightgrey, null)
+shape([[150, 40], [154, 44], [152, 50], [149, 46]], white, null)
+shape([[157, 41], [160, 39], [160, 46], [158, 47]], white, null)
+# a dark wall of firs: spiky top, light zigzag needles on each tip
+shape([[140, 96], [140, 58], [143, 54], [145, 60], [148, 50], [151, 58], [154, 48], [157, 56],
+       [160, 52], [160, 96]], cyan)
+color lightcyan
+for t in [[148, 50], [154, 48], [143, 54]] {
+  line t[0] - 1, t[1] + 4, t[0], t[1] + 2, t[0] + 1, t[1] + 5
+  line t[0] - 2, t[1] + 12, t[0], t[1] + 9, t[0] + 2, t[1] + 13
+}
+
+# ---- left wall (in shade) ---------------------------------------------------------------------
+shape([[-1, -1], [31, -1], [31, 96], [-1, 96]], lightblue, null)
+# cornice band and the recessed window
+color blue
+line 0, 8, 30, 8
+line 0, 10, 30, 10
+shape([[3, 22], [26, 22], [26, 62], [3, 62]], blue, null)
+shape([[5, 24], [24, 24], [24, 62], [5, 62]], brown, null)
+# vines across the wall
+color black
+line 0, 30, 4, 24, 8, 18, 6, 10, 12, 2
+line 8, 18, 14, 14, 18, 4
+line 6, 26, 12, 34, 14, 46, 18, 50, 22, 44
+line 12, 34, 20, 30, 24, 24
+
+# ---- portico: cream frame, arch, pilasters ---------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  shape([[30, -1], [89, -1], [89, 96], [30, 96]], yellow)
+}
+# entablature lines
+color brown
+line 31, 4, 88, 4
+line 31, 10, 88, 10
+# carved spandrel panels
+shape([[34, 12], [50, 12], [47, 18], [44, 23], [34, 23]], brown)
+shape([[72, 12], [88, 12], [88, 25], [77, 25], [75, 18]], brown)
+color yellow
+line 36, 15, 40, 18, 44, 15
+line 38, 20, 42, 20
+line 76, 15, 80, 18, 84, 15
+line 80, 22, 86, 22
+# arch: yellow rim line, then the shadowed vault and reveal
+shape(arc(60, 33, 19, 19, 270, 450, 10) + [[79, 33], [41, 33]], brown)
+shape(arc(60, 33, 17, 17, 270, 450, 10) + [[77, 33], [77, 94], [43, 94], [43, 33]], blue)
+# lit soffit edge on the right reveal
+shape([[68, 37], [77, 33], [77, 94], [68, 94]], lightblue, null)
+color black
+line 68, 37, 68, 94
+
+# ---- doorway and the red stair inside ---------------------------------------------------------
+shape([[44, 37], [67, 37], [67, 84], [44, 84]], brown)
+color black
+line 47, 37, 47, 84
+line 52, 40, 51, 82
+shape([[44, 72], [49, 72], [49, 84], [44, 84]], black, null)
+# red curtain
+shape([[55, 37], [57, 38], [58, 84], [54, 84]], red, null)
+color lightred
+line 56, 40, 56, 82
+# red carpeted stair rising to the right
+shape([[59, 84], [59, 60], [62, 56], [67, 50], [67, 84]], red, null)
+color lightred
+for y in range(60, 84, 3) { line 60, y, 66, y }
+# banister
+color yellow
+line 49, 66, 55, 56
+line 50, 70, 50, 82
+
+# ---- pilasters with scroll capitals -----------------------------------------------------------
+fn pilaster(x1, x2, top, bottom) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], yellow)
+  # carved inner panel
+  shape([[x1 + 3, top + 6], [x2 - 3, top + 6], [x2 - 3, bottom - 14], [x1 + 3, bottom - 14]], brown)
+  color yellow
+  for y in range(top + 9, bottom - 15, 6) { line x1 + 4, y, x2 - 4, y + 2 }
+  # base
+  color brown
+  line x1, bottom - 10, x2, bottom - 10
+  line x1, bottom - 7, x2, bottom - 7
+  # scroll capital
+  shape([[x1 - 2, top - 6], [x2 + 2, top - 6], [x2 + 2, top - 1], [x1 - 2, top - 1]], yellow)
+  color brown
+  line x1 - 2, top - 1, x2 + 2, top - 1
+  line arc(x1 + 1, top - 3, 2, 2.5, 0, 300, 30)
+  line arc(x2 - 1, top - 3, 2, 2.5, 60, 360, 30)
+  line x1 + 3, top - 5, x2 - 3, top - 5
+}
+pilaster 31, 43, 38, 96
+pilaster 77, 88, 38, 96
+
+# ---- lit wall right of the portico, opening and recess ---------------------------------------
+shape([[89, -1], [101, -1], [101, 96], [89, 96]], yellow)
+color brown
+line 89, 12, 101, 12
+line 89, 14, 101, 14
+line 89, 30, 101, 30
+line 89, 32, 101, 32
+shape([[90, 42], [100, 42], [100, 80], [90, 80]], brown)
+# shaded recess
+shape([[101, -1], [115, -1], [115, 96], [101, 96]], lightblue)
+shape([[101, -1], [106, -1], [106, 96], [101, 96]], blue, null)
+color black
+line 101, 0, 101, 96
+
+# ---- round tower ------------------------------------------------------------------------------
+shape([[114, -1], [147, -1], [147, 96], [114, 96]], lightblue)
+# lit right side
+shape([[132, -1], [147, -1], [147, 96], [138, 96], [134, 50]], yellow, null)
+color black
+line 114, 0, 114, 96
+line 147, 0, 147, 96
+# cornice bands curving round the tower
+fn band_ring(y) {
+  # a moulding: shadow line under a lighter lip, brown where the sun hits it
+  color black
+  stroke arc(130, y - 6, 18, 6, 130, 270, 10)
+  color blue
+  stroke arc(130, y - 8, 18, 6, 130, 270, 10)
+  color brown
+  stroke arc(130, y - 6, 18, 6, 90, 130, 10)
+  stroke arc(130, y - 8, 18, 6, 90, 130, 10)
+}
+band_ring 18
+band_ring 38
+# vines
+color black
+line 116, 70, 118, 60, 122, 50, 120, 40, 124, 30, 126, 20, 130, 10
+line 122, 50, 128, 46, 132, 38
+line 126, 60, 130, 70, 134, 62
+color brown
+line 138, 80, 141, 66, 139, 54, 143, 40, 141, 26, 144, 14
+line 141, 66, 145, 58
+line 139, 54, 136, 48
+
+# ---- hedges against the walls -----------------------------------------------------------------
+blobs([[6, 70, 9, 18], [18, 66, 8, 16], [24, 80, 8, 12], [8, 86, 10, 10]], green)
+color lightgreen
+line 18, 52, 18, 72
+line 19, 54, 19, 70
+color black
+line 6, 60, 10, 72, 8, 86
+line 24, 76, 22, 90
+blobs([[94, 62, 6, 18], [96, 84, 8, 10], [108, 82, 10, 10]], green)
+color lightgreen
+line 92, 48, 92, 66
+line 96, 74, 100, 70
+color black
+line 98, 56, 97, 78
+line 104, 84, 112, 80
+
+# ---- lawns and path --------------------------------------------------------------------------
+color lightgreen
+rect 0, 92, 159, 167
+color green
+line 0, 93, 30, 93
+# ---- steps ------------------------------------------------------------------------------------
+shape([[44, 84], [76, 84], [76, 96], [44, 96]], lightgrey)
+color darkgrey
+line 45, 87, 75, 87
+line 45, 91, 75, 91
+line 45, 95, 75, 95
+shape([[70, 84], [76, 84], [76, 96], [72, 96]], darkgrey, null)
+
+# flagstone path: left branch and the main path widening toward the viewer
+let path_l = [[0, 98], [40, 96], [36, 96], [80, 96], [86, 96], [92, 102], [100, 112], [105, 126],
+              [110, 138], [118, 146], [130, 150], [118, 156], [108, 160], [100, 167], [24, 167],
+              [42, 158], [58, 148], [70, 140], [76, 130], [74, 120], [64, 108], [0, 109]]
+shape(path_l, yellow, brown)
+# path shadow along the right lawn
+shape([[86, 96], [92, 102], [100, 112], [105, 126], [110, 138], [118, 146], [126, 150], [112, 150],
+       [100, 136], [94, 120], [86, 106], [82, 98]], brown, null)
+# flagstone joints
+color brown
+for s in [[8, 102, 5], [20, 104, 5], [32, 101, 5], [48, 100, 6], [62, 100, 5], [74, 104, 4],
+          [70, 112, 5], [80, 110, 4], [78, 120, 4], [84, 126, 4], [80, 136, 4], [90, 140, 5],
+          [70, 146, 5], [84, 150, 6], [98, 148, 5], [56, 156, 6], [72, 158, 6], [88, 160, 6],
+          [44, 164, 5], [62, 165, 6], [80, 166, 5]] {
+  line s[0] - s[2], s[1], s[0] - s[2] + 2, s[1] + 1, s[0] + s[2] - 2, s[1] + 1, s[0] + s[2], s[1]
+}
+color yellow
+line 88, 112, 92, 113
+line 92, 124, 96, 125
+line 98, 134, 102, 135
+
+# grass tufts on the lawns
+color green
+for t in [[10, 120], [6, 140], [20, 150], [12, 160], [34, 140], [60, 134], [120, 160], [140, 158],
+          [150, 164], [96, 96], [104, 98]] {
+  line t[0], t[1], t[0] + 1, t[1] - 3, t[0] + 3, t[1]
+}
+
+# ---- big round bush on the left lawn ----------------------------------------------------------
+blobs([[40, 116, 22, 18], [28, 122, 12, 11], [54, 122, 11, 10]], green, black, 0.2, 3)
+shape(blob(32, 124, 8, 7, 7, 0.25), black, null)
+color lightgreen
+line 44, 104, 50, 106
+line 54, 110, 58, 114
+line 24, 108, 30, 105
+line 50, 118, 56, 122
+line 46, 126, 52, 128
+
+# ---- dark shrubs on the right --------------------------------------------------------------
+blobs([[118, 96, 14, 8], [140, 100, 12, 10], [154, 104, 8, 12], [112, 112, 10, 14], [124, 128, 10, 14],
+       [150, 128, 10, 14], [154, 146, 8, 8], [116, 136, 8, 8]], green, black, 0.25, 5)
+# deep shade inside the shrubs
+shape(blob(118, 110, 8, 10, 4, 0.3), black, null)
+shape(blob(128, 104, 6, 6, 8, 0.3), black, null)
+shape(blob(112, 128, 5, 8, 9, 0.3), black, null)
+shape(blob(150, 118, 5, 9, 12, 0.3), black, null)
+color black
+line 106, 104, 114, 112, 116, 124
+color lightgreen
+line 104, 92, 110, 90
+line 122, 94, 128, 92
+line 112, 108, 116, 104
+line 150, 96, 156, 94
+line 146, 140, 152, 136
+# lawn strip at the right edge, in front of the shrubs
+shape([[130, 152], [146, 148], [160, 142], [160, 168], [104, 168], [110, 160], [120, 155]], lightgreen, null)
+
+# ---- rocks -------------------------------------------------------------------------------------
+rock 118, 90, 12, 10, 3
+rock 122, 138, 12, 14, 2
+rock 108, 167, 16, 12, 5
+
+# ---- hollow sentry post ----------------------------------------------------------------------
+# shaft: shaded left face, lit right face
+shape([[131, 92], [150, 92], [150, 150], [130, 150]], yellow)
+shape([[131, 92], [133, 92], [133, 150], [130, 150]], lightblue, null)
+# keyhole opening
+shape(arc(140, 100, 4, 6, 0, 360, 20), black, null)
+shape([[136, 102], [144, 102], [145, 148], [135, 148]], black, null)
+color lightblue
+line 137, 104, 136, 147
+# cap
+shape([[128, 84], [152, 84], [152, 92], [128, 92]], yellow)
+shape(arc(140, 84, 8, 7, 270, 450, 15) + [[148, 84], [132, 84]], yellow)
+shape([[128, 84], [131, 84], [131, 92], [128, 92]], lightblue, null)
+color brown
+line 129, 88, 151, 88
+line 129, 91, 151, 91
+color black
+outline [[128, 84], [152, 84], [152, 92], [128, 92]]
+outline [[131, 92], [150, 92], [150, 150], [130, 150]]
+
+frame()

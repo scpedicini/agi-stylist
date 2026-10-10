@@ -1,0 +1,264 @@
+# Throne of the Lord of the Dead
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c11.png (the Lord of the
+#   Dead on his winged throne in the Realm of the Dead); reframed with:
+#   pnpm grid reference/kq6/r06-c11.png --name kq6-r06-c11
+# Method: translated by eye. Kept: the pale domed web-wall with its grey leaf cells, the four
+#   yellow-green lamp glows, the winged throne back and its central spire, the seated Lord
+#   trimmed in gold, the rusty dais with its curling gold tendrils, the two fanged serpent
+#   maws gaping at the walk, the gold claw lamp stands, the ribbed walkway, and the dark
+#   slate roots framing left, right and below. Dropped: most of the leaf cells, most root
+#   rib texture (now a few grooves), the soft glow falloff, the Lord's face and armour
+#   detail, the small gold tendrils on the far wall.
+# Colours: pale teal wall → lightcyan with lightgrey leaf cells, lamp glows → yellow with
+#   the cells inside them lightgreen, slate roots → blue with black grooves and lightblue
+#   lit ridges, wings → darkgrey with lightblue/brown quills, the Lord → black with yellow
+#   gold trim and a lightgrey skull, dais → brown with red and yellow strokes, gold claws →
+#   yellow with brown shade, serpent maws → lightgrey with black throats and white fangs,
+#   walkway → darkgrey with lightgrey/black ribs.
+scene "Throne of the Lord of the Dead"
+variants lit
+
+# ---- the pale domed wall ----------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightcyan
+  rect 0, 0, 159, 167
+}
+
+# ---- lamp glows (the cells are painted over them, green inside the light) --------------
+let glows = [[30, 46, 11, 15], [118, 32, 8, 11], [116, 66, 8, 11], [44, 98, 6, 9]]
+let gi = 1
+for g in glows {
+  shape(blob(g[0], g[1], g[2], g[3], gi, 0.08), yellow, null)
+  gi += 1
+}
+fn in_glow(x, y) {
+  for g in glows {
+    let dx = (x - g[0]) / g[2]
+    let dy = (y - g[1]) / g[3]
+    if dx * dx + dy * dy < 0.8 { return true }
+  }
+  return false
+}
+
+# leaf cells: radial diamonds along rings round the throne, only above the mist line
+for r in 0..9 {
+  let rx = 18 + r * 10
+  let ry = 22 + r * 10
+  let step = max(5, 22 - r * 2)
+  let a = -120 + (r % 2) * step / 2 + noise(r, 0) * 3
+  while a < 120 {
+    let j = noise(r, a)
+    let mid = a + step * 0.3
+    let w = step * (0.28 + j * 0.08)
+    let rin = 1.5
+    let rout = 8 + j * 2
+    let p = [[80 + (rx + rin) * sin(mid), 70 - (ry + rin) * cos(mid)],
+             [80 + (rx + 4.5) * sin(mid + w), 70 - (ry + 4.5) * cos(mid + w)],
+             [80 + (rx + rout) * sin(mid + 1), 70 - (ry + rout) * cos(mid + 1)],
+             [80 + (rx + 4.5) * sin(mid - w), 70 - (ry + 4.5) * cos(mid - w)]]
+    let cx = 80 + (rx + 4) * sin(mid)
+    let cy = 70 - (ry + 4) * cos(mid)
+    if cy < 82 && cy > -4 {
+      shape(p, in_glow(cx, cy) ? lightgreen : lightgrey, null)
+    }
+    a += step
+  }
+}
+
+# lamp flames, drawn later with the stands
+
+# ---- winged throne back -------------------------------------------------------------------
+let wingl = [[50, -1], [80, -1], [80, 56], [74, 52], [68, 47], [65, 40], [60, 36], [60, 28],
+             [55, 22], [55, 12], [51, 6]]
+let wingr = [[80, -1], [110, -1], [109, 6], [105, 12], [105, 22], [100, 28], [100, 36],
+             [95, 40], [92, 47], [86, 52], [80, 56]]
+shape(wingl, darkgrey)
+shape(wingr, darkgrey)
+# quills fanning out from the Lord's back, lit and shadowed in turn
+let qi = 0
+for q in [[53, 2], [57, 16], [62, 30], [66, 0], [94, 0], [98, 30], [103, 16], [107, 2]] {
+  color qi % 2 == 0 ? lightblue : brown
+  stroke [[80 + (q[0] - 80) * 0.25, 46 + (q[1] - 46) * 0.25], [q[0] + (80 - q[0]) * 0.06, q[1] + 2]]
+  qi += 1
+}
+color brown
+stroke [[71, 0], [74, 30]]
+stroke [[89, 0], [86, 30]]
+# central spire
+shape([[77, -1], [83, -1], [82, 20], [84, 30], [80, 36], [76, 30], [78, 20]], brown)
+color yellow
+stroke [[79, 0], [79, 28]]
+
+# ---- dais ---------------------------------------------------------------------------------
+blobs([[63, 66, 12, 9], [97, 65, 12, 9], [80, 72, 22, 7]], brown)
+color red
+stroke [[54, 66], [60, 61], [68, 62]]
+stroke [[92, 62], [100, 60], [106, 66]]
+stroke [[58, 72], [66, 69], [72, 71]]
+stroke [[88, 71], [96, 69], [103, 72]]
+color yellow
+stroke [[56, 60], [62, 57], [67, 58]]
+stroke [[93, 58], [98, 56], [104, 59]]
+
+# gold tendrils curling up off the dais
+fn tendril(pts, w = 2.5) {
+  shape(band(pts, w, 1), yellow)
+}
+tendril([[56, 64], [52, 58], [48, 54], [47, 50]])
+tendril([[60, 74], [52, 70], [48, 74]])
+tendril([[102, 60], [104, 52], [101, 46], [103, 43]])
+tendril([[104, 72], [110, 70], [111, 64]])
+tendril([[66, 56], [62, 48], [63, 44]])
+tendril([[94, 56], [97, 50], [95, 46]])
+
+# ---- the Lord of the Dead -----------------------------------------------------------------
+# a dark figure trimmed in gold
+# robe below the knees
+shape([[73, 61], [87, 61], [89, 75], [71, 75]], black)
+color darkgrey
+stroke [[76, 63], [75, 74]]
+stroke [[84, 63], [85, 74]]
+color yellow
+stroke [[72, 74], [88, 74]]
+# torso, cowl and gold collar
+shape([[76, 34], [84, 34], [86, 40], [85, 52], [75, 52], [74, 40]], black)
+color yellow
+stroke [[76, 38], [80, 41], [84, 38]]
+stroke [[80, 42], [80, 50]]
+# arms down to the throne arms, gold hands
+shape(band([[76, 37], [72, 44], [70, 53]], 4, 3), black)
+shape(band([[84, 37], [88, 44], [90, 53]], 4, 3), black)
+color darkgrey
+stroke [[73, 42], [71, 50]]
+stroke [[87, 42], [89, 50]]
+color yellow
+rect 69, 53, 71, 55
+rect 89, 53, 91, 55
+# knees: a wider rounded mass just below the lap
+shape([[73, 52], [87, 52], [90, 57], [87, 62], [73, 62], [70, 57]], black)
+color yellow
+stroke [[72, 56], [75, 53], [79, 54]]
+stroke [[81, 54], [85, 53], [88, 56]]
+# skull face with green eyes under a gold crest
+shape([[76, 27], [80, 21], [84, 27], [85, 30], [75, 30]], yellow)
+shape([[78, 29], [82, 29], [83, 34], [80, 36], [77, 34]], lightgrey)
+color black
+plot 79, 31
+plot 81, 31
+stroke [[80, 34], [80, 35]]
+
+# ---- walkway ------------------------------------------------------------------------------
+let walk = [[66, 78], [94, 78], [100, 100], [108, 125], [116, 145], [120, 168],
+            [26, 168], [40, 145], [54, 125], [62, 100]]
+shape(walk, darkgrey)
+# ribs, spaced wider towards the viewer
+let ys = [84, 90, 97, 105, 114, 124, 135, 147, 160]
+let i = 0
+for y in ys {
+  let half = 14 + (y - 78) * 0.55
+  color i % 2 == 0 ? lightgrey : black
+  stroke arc(80, y - 4, half, 5 + (y - 78) * 0.08, 270, 450, 15)
+  i += 1
+}
+
+# ---- roots framing the room ---------------------------------------------------------------
+fn root(pts, c = blue) {
+  shape(pts, c)
+}
+# left: the wall-side mass and the arm round the lower-left hollow
+root([[-1, -1], [10, -1], [8, 20], [5, 40], [6, 60], [9, 80], [14, 92], [12, 100], [13, 112],
+      [18, 124], [26, 132], [38, 136], [50, 132], [58, 124], [56, 138], [44, 152], [34, 168],
+      [-1, 168]])
+root(band([[0, 82], [14, 86], [26, 88], [34, 92], [30, 104]], 8, 3))
+root(band([[22, 0], [12, 10], [6, 20]], 5, 4))
+root(band([[3, 28], [8, 55], [14, 84]], 4, 3))
+# right: the great mass
+root([[132, -1], [160, -1], [160, 168], [118, 168], [110, 150], [100, 136], [112, 124],
+      [122, 114], [132, 100], [138, 86], [140, 60], [136, 30]])
+# the root rising under the right gold hook
+root(band([[118, 168], [114, 140], [110, 118], [108, 104]], 14, 7))
+# the root under the small lamp
+root(band([[58, 134], [52, 124], [48, 116]], 8, 4))
+
+color black
+stroke [[2, 100], [6, 130], [14, 168]]
+stroke [[6, 60], [3, 90]]
+stroke [[30, 140], [20, 150], [12, 168]]
+stroke [[145, 0], [147, 40], [145, 90], [133, 118], [124, 140], [128, 168]]
+# rib grooves across the roots
+fn ribs(path, step, half) {
+  for p in along(path, step) {
+    let nx = -p[3] * half
+    let ny = p[2] * half / 2
+    # a slightly bowed groove with a lit ridge just above it
+    let a = [p[0] - nx, p[1] - ny]
+    let m = [p[0], p[1] + 1.5]
+    let b = [p[0] + nx, p[1] + ny]
+    color black
+    stroke [a, m, b]
+    color lightblue
+    stroke shift([a, m, b], 0, -1)
+  }
+}
+ribs([[153, 4], [153, 50], [149, 95], [136, 128], [130, 168]], 13, 6)
+ribs([[4, 104], [12, 135], [24, 152], [30, 168]], 13, 6)
+ribs([[115, 164], [112, 140], [110, 116]], 12, 4)
+color lightblue
+stroke [[11, 104], [16, 120], [26, 130], [38, 134], [50, 130]]
+stroke [[140, 2], [142, 40], [140, 80]]
+stroke [[134, 96], [124, 110], [114, 122]]
+
+# ---- serpent heads gaping at the walk ----------------------------------------------------
+# necks: dark ribbed roots rising from the floor's edges
+shape(band([[62, 142], [61, 128], [62, 112]], 12, 9), blue)
+shape(band([[110, 138], [102, 124], [94, 110]], 13, 9), blue)
+color black
+stroke [[58, 120], [64, 122]]
+stroke [[57, 130], [65, 131]]
+stroke [[96, 116], [101, 112]]
+stroke [[99, 124], [105, 119]]
+stroke [[103, 132], [109, 127]]
+fn head(cx, cy, dir, seed) {
+  # a pale bony maw: outer head, black throat open towards the walk, fangs round the rim
+  shape(blob(cx, cy, 8, 15, seed, 0.15), lightgrey)
+  let m = blob(cx + dir * 3, cy, 6, 10, seed + 1, 0.12)
+  shape(m, black, null)
+  color white
+  stroke arc(cx + dir * 3, cy, 6, 10, dir > 0 ? 280 : 80, dir > 0 ? 360 : 0, 20)
+  for k in [-6, -2, 2] {
+    let tx = cx + dir * (3 + k * 0.6)
+    line tx, cy - 9 + abs(k) * 0.4, tx, cy - 6 + abs(k) * 0.4
+  }
+  for k in [-4, 0, 4] {
+    let tx = cx + dir * (3 + k * 0.6)
+    line tx, cy + 9 - abs(k) * 0.4, tx, cy + 6 - abs(k) * 0.4
+  }
+  color darkgrey
+  stroke arc(cx, cy, 7, 13, dir > 0 ? 200 : 160, dir > 0 ? 250 : 110, 10)
+}
+head(65, 102, 1, 3)
+head(90, 96, -1, 5)
+
+# ---- gold claw lamp stands ----------------------------------------------------------------
+fn stand(pts, cup) {
+  shape(band(pts, 4, 3), yellow)
+  shape(cup, yellow)
+  color brown
+  stroke shift(pts, 1, 0)
+  let fx = (cup[0][0] + cup[1][0]) / 2
+  let fy = cup[0][1]
+  shape([[fx - 2, fy], [fx, fy - 5], [fx + 2, fy]], yellow, null)
+  color white
+  line fx, fy - 1, fx, fy - 3
+}
+stand([[32, 64], [33, 74], [31, 84], [28, 90]], [[29, 61], [36, 61], [35, 64], [30, 64]])
+stand([[121, 46], [123, 56], [128, 64], [134, 68]], [[118, 43], [125, 43], [124, 46], [119, 46]])
+stand([[46, 110], [48, 116], [50, 122]], [[42, 107], [49, 107], [48, 110], [43, 110]])
+stand([[112, 80], [110, 86], [104, 92], [104, 100]], [[109, 77], [116, 77], [115, 80], [110, 80]])
+# gold manes over the heads
+tendril([[52, 82], [60, 81], [66, 85]], 3)
+tendril([[88, 80], [96, 80], [100, 86]], 3)
+
+frame()

@@ -1,0 +1,324 @@
+# Ferry Dock
+# Source: King's Quest VI (VGA) - reference/kq6/r03-c09.png; reframed with:
+#   pnpm grid reference/kq6/r03-c09.png --name kq6-r03-c09
+# Method: translated by eye. Kept: the beached ship (hull, cabin, mast, yard, sail heap, hanging
+#   sack), the gangplank, the plank dock and its posts, the dirt path winding up the grassy
+#   headland, the earth cliff under the grass, grey rocks on the right, the jungle and palms on
+#   the skyline, the far sandy peak, the sea and beach behind the ship, the cove water.
+# Dropped: most rigging ropes, the second flag pole's cloth detail, the bonsai shrub's needles,
+#   individual planks of the ship's deck, roots in the cliff, weed on the water.
+# Colours: pale VGA sky → blue, clouds → white/lightgrey, sandy peak → lightblue with yellow lit
+#   faces, sea → cyan, beach → yellow, grass → lightgreen/green, jungle → green with black,
+#   dirt path → brown, earth cliff → brown with black grooves, tan dock planks → yellow with
+#   brown seams, ship's wood → brown with black plank lines and yellow highlights, grey rock →
+#   lightgrey/darkgrey/white, teal cove → cyan with lightcyan ripples.
+scene "Ferry Dock"
+variants day
+
+# ---- sky and clouds ------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, 50
+}
+blobs([[46, 8, 8, 5], [56, 5, 8, 5], [66, 9, 6, 4]], white)
+color lightgrey
+line 40, 12, 50, 13, 60, 12, 70, 12
+blobs([[114, 12, 8, 7], [124, 16, 6, 5]], white)
+
+# ---- far sandy peak ------------------------------------------------------------------------
+shape([[26, 42], [36, 34], [46, 24], [54, 17], [60, 12], [64, 13], [70, 19], [78, 22],
+       [86, 19], [92, 22], [100, 32], [104, 42]], lightblue)
+shape([[60, 12], [64, 13], [70, 19], [66, 26], [62, 34], [56, 40], [58, 30], [60, 22]], yellow, null)
+shape([[86, 19], [92, 22], [100, 32], [94, 34], [90, 28]], yellow, null)
+color blue
+line 70, 20, 74, 30
+line 52, 24, 50, 34
+
+# ---- sea and beach behind the ship ---------------------------------------------------------
+color cyan
+rect 0, 38, 50, 48
+color lightcyan
+line 4, 41, 14, 41
+line 24, 44, 34, 44
+shape([[0, 47], [20, 46], [40, 46], [52, 48], [52, 64], [0, 64]], yellow, null)
+
+# ---- the cove water (everything below the cliffs) ------------------------------------------
+delay {
+  color cyan
+  rect 0, 76, 159, 167
+}
+
+# ---- jungle and bushes on the skyline -------------------------------------------------------
+blobs([[66, 30, 6, 8], [76, 28, 6, 8], [104, 26, 9, 9], [118, 22, 9, 10], [132, 16, 10, 12],
+       [146, 12, 10, 12], [156, 8, 8, 12], [150, 26, 10, 8], [140, 4, 8, 8], [156, 30, 6, 6]],
+      green)
+color lightgreen
+for t in [[120, 16], [134, 10], [146, 6], [150, 20], [128, 24], [156, 14], [110, 22]] {
+  line t[0] - 3, t[1] + 1, t[0], t[1] - 1, t[0] + 3, t[1] + 1
+}
+color black
+for t in [[100, 30], [108, 28], [116, 30], [138, 22], [70, 34], [144, 30]] {
+  line t[0] - 2, t[1], t[0] + 1, t[1] + 2, t[0] + 3, t[1]
+}
+
+# ---- palms -----------------------------------------------------------------------------------
+palm(69, 40, 32, -5, 1)
+palm(74, 32, 22, -2, 2)
+palm(96, 32, 30, -2, 3)
+palm(101, 30, 28, 1, 4)
+
+# ---- the grassy headland ----------------------------------------------------------------------
+let grass_edge = [[44, 46], [48, 52], [56, 58], [66, 61], [80, 60], [92, 62], [108, 62],
+                  [118, 64], [130, 62], [142, 62], [152, 60], [159, 58]]
+shape([[44, 46], [48, 40], [58, 36], [70, 36], [86, 32], [100, 32], [116, 30], [130, 28],
+       [146, 30], [159, 32]] + [[159, 58], [152, 60], [142, 62], [130, 62], [118, 64],
+       [108, 62], [92, 62], [80, 60], [66, 61], [56, 58], [48, 52]], lightgreen)
+# a darker fold in the grass and a few tufts
+color green
+line 58, 50, 70, 52, 84, 50
+line 124, 54, 136, 50, 150, 48
+for t in [[62, 42], [80, 44], [96, 40], [140, 40], [150, 52], [70, 56], [128, 58]] {
+  line t[0] - 2, t[1], t[0], t[1] - 2, t[0] + 2, t[1]
+}
+
+# ---- little wind-bent shrub on the headland -----------------------------------------------
+color brown
+line 82, 50, 86, 47, 90, 46, 94, 42
+line 83, 50, 87, 48
+blobs([[86, 44, 4, 1.5], [95, 41, 5, 1.5], [91, 47, 3, 1.5]], green, black, 0.15)
+
+# ---- the dirt path ------------------------------------------------------------------------
+shape([[128, 30], [120, 36], [116, 40], [122, 45], [116, 50], [104, 55], [93, 61], [108, 61],
+       [122, 56], [134, 51], [139, 45], [132, 40], [140, 34], [148, 30]], brown)
+color yellow
+line 132, 33, 138, 32
+line 122, 41, 128, 40
+line 126, 48, 132, 47
+line 108, 56, 116, 55
+
+# ---- the grey boulder up on the grass -------------------------------------------------------
+shape([[128, 46], [131, 40], [136, 38], [140, 41], [139, 46]], lightgrey)
+shape([[134, 46], [136, 42], [140, 41], [139, 46]], darkgrey, null)
+
+# ---- the earth cliff under the grass -------------------------------------------------------
+shape(grass_edge + [[159, 92], [140, 88], [128, 82], [116, 80], [100, 80], [86, 80], [70, 78],
+      [58, 76], [46, 62]], brown)
+# root grooves hanging from the grass edge
+color black
+for i in 0..18 {
+  let x = 48 + i * 6 + noise(5, i) * 3
+  if x > 90 && x < 110 { continue }
+  let top = interp(grass_edge, x) + 1
+  let len = 6 + noise(6, i) * 12
+  line x, top, x - 1, top + len / 2, x + (noise(7, i) - 0.5) * 3, top + len
+}
+color yellow
+for i in 0..8 {
+  let x = 54 + i * 13
+  if x > 90 && x < 110 { continue }
+  let top = interp(grass_edge, x) + 3
+  line x, top, x, top + 4
+}
+# dark undercut along the foot of the cliff
+color black
+line 58, 76, 70, 77, 86, 79
+line 116, 79, 128, 81, 140, 87
+
+# ---- grey rocks on the right bank --------------------------------------------------------
+shape([[126, 84], [130, 76], [138, 70], [146, 64], [152, 58], [159, 56], [159, 96],
+       [150, 94], [140, 90], [132, 88]], lightgrey)
+shape([[140, 90], [144, 80], [150, 74], [159, 72], [159, 96], [150, 94]], darkgrey, null)
+color white
+line 134, 76, 140, 71, 146, 66
+line 150, 62, 156, 59
+color black
+line 138, 88, 142, 80, 148, 72, 154, 66
+line 130, 84, 134, 78
+line 146, 92, 150, 84, 159, 80
+color darkgrey
+line 132, 80, 138, 76
+line 142, 70, 148, 66
+
+# ---- sand under the walkway ----------------------------------------------------------------
+shape([[60, 80], [70, 78], [86, 80], [92, 84], [90, 90], [72, 90], [62, 88]], yellow, null)
+color green
+line 66, 84, 70, 84
+line 78, 86, 82, 85
+
+# ---- grass bank under the ship -------------------------------------------------------------
+shape([[0, 116], [20, 110], [40, 102], [56, 92], [68, 86], [74, 92], [72, 104], [66, 116],
+       [62, 126], [54, 134], [42, 140], [26, 144], [12, 146], [0, 146]], lightgreen)
+# shade under the hull
+shape([[0, 122], [24, 116], [42, 108], [54, 98], [62, 92], [62, 100], [48, 112], [30, 120],
+       [0, 128]], green, null)
+# earth and rocks along its water edge
+shape([[26, 144], [42, 140], [54, 134], [62, 126], [66, 116], [70, 118], [66, 130], [58, 140],
+       [46, 146], [30, 148]], brown)
+color black
+line 34, 146, 36, 143
+line 46, 142, 48, 139
+line 56, 136, 58, 132
+line 63, 126, 66, 122
+color green
+for t in [[10, 130], [24, 124], [40, 118], [52, 112], [62, 100], [20, 138], [36, 132]] {
+  line t[0] - 2, t[1], t[0], t[1] - 3, t[0] + 2, t[1]
+}
+
+# ---- the ship -------------------------------------------------------------------------------
+fn ship() {
+  # a second spar with a flag, behind the rigging
+  color brown
+  line 57, 2, 57, 40
+  shape([[50, 0], [58, 0], [58, 4], [54, 3], [50, 4]], white, lightgrey)
+  # main mast and yard
+  shape([[22, 0], [26, 0], [26, 58], [22, 58]], brown)
+  color yellow
+  line 23, 2, 23, 56
+  shape(band([[0, 34], [14, 24], [32, 8], [40, 2]], 4, 3), brown)
+  shape([[28, 0], [40, 0], [38, 6], [32, 8], [28, 4]], white, lightgrey)
+  # rigging
+  color brown
+  stroke 40, 16, 48, 36, 56, 58
+  color black
+  stroke 26, 8, 0, 14
+
+  # hull
+  let hull = [[0, 62], [30, 60], [48, 60], [54, 56], [60, 58], [64, 64], [64, 74], [60, 86],
+              [54, 98], [42, 108], [24, 116], [0, 122]]
+  shape(hull, brown)
+  # plank lines following the curve
+  color black
+  for k in 0..5 {
+    let y = 80 + k * 7
+    stroke 0, y + 4, 20, y + 2, 40, y - 2, 54, y - 8 - k, 62, y - 14 - k * 2
+  }
+  color yellow
+  for k in 0..5 {
+    let y = 81 + k * 7
+    stroke 0, y + 4, 20, y + 2, 40, y - 2, 52, y - 7 - k
+  }
+  # cabin on the deck with its dark door
+  shape([[0, 60], [44, 58], [46, 62], [46, 78], [0, 78]], brown)
+  shape([[30, 58], [46, 58], [48, 62], [32, 63]], yellow)
+  color black
+  for y in [66, 70, 74] { line 0, y, 45, y - 1 }
+  line 46, 62, 46, 78
+  shape([[4, 63], [11, 63], [11, 76], [4, 76]], black, null)
+  shape([[30, 65], [36, 65], [36, 70], [30, 70]], black, null)
+  color yellow
+  line 0, 78, 46, 78
+  # raised bow with its rail
+  shape([[46, 62], [52, 58], [58, 58], [64, 64], [62, 72], [46, 72]], brown)
+  color yellow
+  line 48, 62, 54, 59, 60, 60, 63, 64
+  color black
+  line 46, 72, 62, 72
+  line 52, 63, 52, 71
+  line 58, 62, 58, 71
+  # capstan and the heap of sailcloth on the deck
+  shape([[12, 40], [24, 40], [24, 48], [12, 48]], brown)
+  color yellow
+  line 13, 42, 23, 42
+  shape([[0, 56], [6, 52], [14, 52], [20, 46], [22, 38], [27, 37], [29, 44], [31, 52], [37, 57],
+         [40, 61], [30, 62], [20, 60], [10, 62], [4, 70], [0, 72]], white)
+  color lightgrey
+  line 22, 42, 25, 52, 30, 58
+  line 6, 56, 12, 58, 18, 56
+  line 2, 64, 6, 60
+  # the sack hanging from the side
+  color black
+  line 26, 80, 26, 90
+  shape([[25, 90], [27, 90], [29, 96], [29, 102], [26, 104], [23, 102], [23, 96]], white)
+  color lightgrey
+  line 28, 96, 28, 102
+}
+ship()
+
+# ---- props under the hull --------------------------------------------------------------------
+# dark brace from the bank up to the hull
+shape(band([[6, 140], [30, 122], [58, 100]], 4, 3), brown)
+color black
+stroke 8, 142, 30, 124, 58, 102
+
+# ---- the gangplank from the ship to the dock -------------------------------------------------
+shape([[44, 78], [88, 86], [88, 94], [44, 86]], brown)
+color yellow
+for x in [48, 54, 60, 66, 72, 78, 84] { line x, 80 + (x - 44) * 8 / 44, x - 1, 85 + (x - 44) * 8 / 44 }
+color black
+line 44, 87, 88, 95
+
+# ---- the dock --------------------------------------------------------------------------------
+# posts behind the deck
+shape([[86, 112], [90, 112], [90, 122], [86, 122]], brown)
+shape([[63, 90], [67, 90], [67, 128], [63, 128]], brown)
+color black
+line 66, 92, 66, 127
+# walkway and platform
+let deck = [[92, 62], [107, 62], [112, 76], [117, 88], [119, 108], [68, 108], [70, 99],
+            [84, 90], [88, 76]]
+shape(deck, yellow)
+# plank seams across the walkway and the platform
+color brown
+for k in 1..15 {
+  let y = 62 + k * 3
+  if y > 106 { break }
+  let xl = interp([[62, 92], [76, 88], [90, 84], [99, 70], [108, 69]], y)
+  let xr = interp([[62, 107], [76, 112], [88, 117], [108, 118]], y)
+  line xl + 1, y, xr - 1, y
+}
+color black
+line 92, 62, 88, 76, 84, 90, 70, 99, 68, 108
+line 107, 62, 112, 76, 117, 88, 119, 108
+# front face of the platform
+shape([[68, 108], [119, 108], [119, 113], [68, 113]], brown)
+color yellow
+line 69, 109, 118, 109
+# shadow of the dock on the water
+shape([[70, 114], [119, 114], [122, 118], [72, 118]], blue, null)
+# posts, with stubs above the deck
+fn post(x1, x2, top, bottom) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], brown)
+  color black
+  line x2 - 1, top + 1, x2 - 1, bottom - 1
+  color yellow
+  line x1 + 1, top + 1, x1 + 1, bottom - 2
+}
+post 31, 36, 108, 156
+post 72, 77, 102, 165
+post 112, 118, 100, 166
+post 89, 92, 70, 82
+post 114, 117, 80, 90
+color lightcyan
+line 28, 157, 40, 157
+line 68, 166, 80, 166
+line 108, 166, 122, 166
+
+# ---- ripples on the cove ---------------------------------------------------------------------
+color lightcyan
+for i in 0..26 {
+  let x = 2 + noise(11, i) * 150
+  let y = 96 + noise(12, i) * 70
+  if x < 70 && y < 150 { continue }
+  if x > 60 && x < 124 && y < 120 { continue }
+  if (x > 26 && x < 40) || (x > 68 && x < 80) || (x > 108 && x < 122) { continue }
+  line x, y, x + 4 + noise(13, i) * 5, y
+}
+color blue
+for i in 0..10 {
+  let x = 70 + noise(14, i) * 85
+  let y = 124 + noise(15, i) * 40
+  if (x > 64 && x < 80) || (x > 104 && x < 122) { continue }
+  line x, y, x + 5, y
+}
+
+# ---- foreground: the long prop beam and the hanging ropes ----------------------------------
+shape(band([[0, 128], [10, 146], [20, 160]], 5, 5), brown)
+color yellow
+stroke 1, 128, 11, 145, 19, 158
+color yellow
+line 13, 62, 13, 167
+line 16, 60, 16, 167
+
+frame()

@@ -1,0 +1,161 @@
+# The Spider's Web
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c04.png; reframed with:
+#   pnpm grid reference/kq6/r05-c04.png --name kq6-r05-c04
+# Method: translated by eye. Kept: the swirling teal-and-blue void (a teal top, a dark blue
+#   swirl band, a lighter streak on the left, a teal floor band), the pale glow behind the
+#   web, the green mound under it, the big spider web (radials and sagging spiral rings), the
+#   twisted bonsai-like tree with its spiky tufts and the root curling right, the tumbling
+#   books (yellow, pale, green, brown, small red, grey, dark) and the red book at the tree.
+#   Dropped: the soft painted mottling, the web's glow fading, page lines, cover sheen.
+#   Moved: nothing.
+# Colours: teal void → cyan, slate-blue void → blue, pale left rim → lightcyan, sky-blue glow
+#   → lightcyan, green mound → green, web → white, trunk → brown with black shade and yellow
+#   lit edge, needle tufts → green with lightgreen and black spikes, pale books → white with
+#   lightgrey, book covers → yellow/brown, green, brown/yellow, red/lightred, darkgrey.
+scene "The Spider's Web"
+variants day
+
+# ---- the void: blue base, teal top, swirl streaks -----------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color blue
+  rect 0, 0, 159, 167
+}
+# teal top band, curving up to the right above the tree
+shape([[0, 0], [159, 0], [159, 40], [146, 30], [130, 22], [110, 19], [90, 25], [74, 33],
+       [60, 40], [44, 44], [28, 45], [12, 43], [0, 40]], cyan, null)
+# lighter streak on the left below the dark swirl band
+shape([[0, 54], [16, 55], [30, 60], [40, 70], [42, 84], [36, 98], [22, 104], [8, 106],
+       [0, 106]], cyan, null)
+# pale rim down the left edge
+shape([[0, 24], [3, 50], [3, 120], [0, 140]], lightcyan, null)
+# teal floor band
+shape([[0, 150], [30, 148], [60, 151], [90, 154], [120, 153], [159, 150], [159, 167],
+       [0, 167]], cyan, null)
+# streaks breaking the band edges
+color blue
+line 8, 34, 30, 36, 46, 35
+line 120, 12, 140, 16, 158, 24
+line 14, 76, 30, 78
+line 10, 94, 26, 92
+color cyan
+line 10, 48, 34, 50, 50, 48
+line 4, 124, 20, 122, 40, 124
+line 130, 70, 150, 66
+line 20, 146, 46, 145
+line 100, 152, 120, 150, 140, 149
+color green
+line 8, 160, 30, 158, 52, 160
+line 90, 162, 110, 160
+
+# ---- the pale glow behind the web ---------------------------------------------------------
+shape([[44, 80], [46, 66], [52, 54], [62, 44], [74, 36], [88, 30], [102, 28], [112, 32],
+       [117, 42], [118, 58], [114, 72], [104, 82], [92, 90], [78, 96], [64, 98], [52, 94]], lightblue, null)
+
+# ---- the green mound under the web --------------------------------------------------------
+shape([[66, 152], [68, 136], [74, 118], [84, 102], [96, 90], [106, 82], [116, 80],
+       [122, 88], [126, 104], [127, 124], [122, 142], [110, 151]], green)
+
+# ---- the web ------------------------------------------------------------------------------
+let CX = 86
+let CY = 91
+let RAYS = [[86, 24], [100, 24], [112, 30], [116, 46], [114, 66], [124, 90], [124, 110],
+            [118, 132], [106, 146], [88, 150], [72, 146], [60, 136], [50, 120], [44, 104],
+            [40, 86], [44, 68], [54, 50], [70, 34]]
+fn at(p, f) {
+  return [CX + (p[0] - CX) * f, CY + (p[1] - CY) * f]
+}
+color white
+for p in RAYS {
+  line CX, CY, p[0], p[1]
+}
+let n = len(RAYS)
+for k in 1..=7 {
+  let f = 0.08 + k * 0.125
+  let ring = []
+  for i in 0..n {
+    let a = RAYS[i]
+    let b = RAYS[(i + 1) % n]
+    let m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    push(ring, at(a, f))
+    push(ring, at(m, f * 0.9))
+  }
+  push(ring, ring[0])
+  line ring
+}
+# the hub
+ellipse CX, CY, 1, 2
+
+# ---- the tree -----------------------------------------------------------------------------
+fn tuft(cx, cy, r) {
+  let pts = []
+  for i in 0..18 {
+    let a = i * 360 / 18 + 7
+    let rr = i % 2 == 0 ? r : r * 0.45
+    push(pts, [cx + sin(a) * rr / 2, cy - cos(a) * rr])
+  }
+  shape(pts, green)
+  color black
+  line cx, cy + r * 0.3, cx - r / 4, cy - r * 0.5
+  line cx, cy + r * 0.3, cx + r / 4, cy - r * 0.4
+  color lightgreen
+  line cx - 1, cy - r * 0.2, cx - 1, cy - r * 0.6
+}
+# branches behind the tufts
+shape(band([[114, 34], [106, 29], [98, 26], [92, 24]], 4, 2), brown)
+shape(band([[115, 36], [116, 28], [114, 22]], 4, 2), brown)
+shape(band([[117, 44], [124, 42], [131, 38], [137, 36]], 4, 2), brown)
+shape(band([[118, 48], [126, 50], [134, 52]], 4, 2), brown)
+# trunk: a winding band from the root up to the crown
+let TRUNK = [[123, 128], [121, 116], [124, 106], [127, 96], [120, 85], [113, 76], [112, 64],
+             [115, 54], [118, 44], [116, 34], [114, 28]]
+shape(band(TRUNK, 18, 5), brown)
+shape(band([[121, 126], [130, 127], [138, 130], [144, 134], [148, 133]], 8, 2), brown)
+color black
+line 126, 120, 127, 110, 128, 100, 126, 90, 120, 82, 116, 72, 116, 60, 119, 50
+color black
+line 121, 118, 122, 108
+# needle tufts
+tuft 92, 24, 9
+tuft 101, 24, 10
+tuft 108, 31, 8
+tuft 114, 21, 10
+tuft 126, 27, 8
+tuft 130, 38, 8
+tuft 137, 36, 9
+tuft 136, 52, 10
+
+# ---- the tumbling books -------------------------------------------------------------------
+# a book seen at an angle: cover quad, then a strip of pages along one edge
+fn book(cover, pages, c, page_c = white) {
+  shape(pages, page_c)
+  shape(cover, c)
+}
+# pale book under the yellow one
+book([[22, 88], [30, 85], [40, 95], [32, 100]], [[30, 85], [40, 95], [42, 97], [32, 87]], lightgrey)
+# yellow book on top
+book([[26, 78], [39, 72], [45, 86], [31, 92]], [[31, 92], [45, 86], [46, 90], [32, 96]], yellow)
+color brown
+line 26, 79, 30, 92
+# green book
+book([[31, 110], [42, 99], [51, 104], [40, 118]], [[31, 110], [40, 118], [41, 122], [32, 114]], green)
+color black
+line 51, 105, 41, 119
+# pale blue book diagonal behind the brown one
+book([[42, 113], [58, 116], [62, 123], [46, 121]], [[46, 121], [62, 123], [61, 127], [46, 124]], lightcyan, lightgrey)
+# small red book
+book([[56, 124], [62, 119], [65, 123], [60, 130]], [[60, 130], [65, 123], [66, 126], [61, 132]], red)
+# brown book
+book([[44, 127], [51, 121], [58, 138], [52, 145]], [[41, 128], [44, 127], [52, 145], [49, 147]], brown)
+color yellow
+line 51, 122, 57, 136
+# pale grey book and the dark one at the bottom of the tumble
+book([[56, 136], [66, 140], [68, 150], [58, 146]], [[58, 146], [68, 150], [67, 152], [57, 148]], lightgrey)
+book([[70, 141], [80, 137], [82, 143], [72, 148]], [[72, 148], [82, 143], [82, 146], [73, 150]], darkgrey)
+# the red book leaning on the tree
+book([[116, 118], [129, 124], [124, 139], [110, 134]], [[110, 134], [124, 139], [129, 124], [131, 127], [126, 144], [111, 138]], red)
+color lightred
+line 117, 119, 128, 124
+
+frame()

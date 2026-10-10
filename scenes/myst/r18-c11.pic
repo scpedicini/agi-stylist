@@ -1,0 +1,362 @@
+# The Dock
+# Source: Myst (1993) render, reference/myst/r18-c11.png;
+#   reframed with: pnpm grid reference/myst/r18-c11.png --crop 0,0,544,333 --name myst-r18-c11
+# Method: translated by eye. Kept: the pale sky and the sea with its dark ripples, the orange
+#   rock hill with its moss, the granite gear and the blocks behind it on top, the winding
+#   concrete stair with its front wall and rope railing, the dark stone building framing the
+#   left edge (its pillars and lit window slot), the low wall and its lip, the plank dock with
+#   its lit side beam, the lit steps and lamp post at its end, the marker switch box, two
+#   capped posts, the black cast shadow and its railing streaks, the slab with the rusty edge,
+#   the sunken ship's mast, the thick collared spar and the thin roped spar, a rigging line and
+#   the dark rock lower right. Dropped: stone and plank texture, the far low rocks at the end
+#   of the bay, most of the railing posts, the rope wrapping on the thin spar.
+#   Moved: nothing.
+# Colours: sky → lightcyan, sea → cyan with blue ripple dashes, rock hill → brown with yellow
+#   lit ridges, red/black folds and green moss, the far hazy rocks along the bay → lightgrey with
+#   darkgrey folds (aerial perspective: apart from the brown hill and the brown spar that
+#   crosses them), gear → lightgrey/darkgrey with square teeth, a black groove and a black hub,
+#   concrete → lightgrey/white lit and darkgrey shade, dark stone building and walls →
+#   darkgrey/black, dock planks → brown with black seams and yellow lit board edges, dock side
+#   beam → yellow, posts and spars → brown with yellow lit edges and yellow collars, thin spar →
+#   red with a lightred lit line, marker box → brown panel in a yellow frame.
+scene "The Dock"
+variants day
+
+# ---- sky and sea ------------------------------------------------------------------------------
+# Painted first, so everything else stands on them, but held back with delay: over the original
+# the viewer paints them last, filling in behind what's already there (the sea, then the sky).
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 167
+}
+delay {
+  color cyan
+  rect 92, 87, 159, 167
+}
+
+# dark ripple dashes: short and close near the horizon, longer and wider apart near the viewer
+color blue
+let ry = 89
+let row = 0
+while ry < 167 {
+  let t = (ry - 87) / 80
+  let gap = 7 + t * 9
+  let dash = 1 + round(t * 4)
+  let x = 92 + noise(3, row) * gap
+  while x < 160 {
+    let jx = x + noise(5, row * 31 + x) * 3
+    stroke jx, ry, jx + dash, ry
+    x += gap
+  }
+  ry += 2 + round(t * 3)
+  row += 1
+}
+color lightcyan
+for g in [[128, 96, 3], [146, 104, 4], [118, 116, 3], [140, 132, 5], [155, 120, 3]] {
+  stroke g[0], g[1], g[0] + g[2], g[1]
+}
+
+# ---- the gear and the granite blocks on the hilltop ------------------------------------------
+# a cog seen face-on: a round body of radius r0 (rows) with square teeth out to r1, half-width w;
+# worked in screen units (x doubled) so the teeth stay square on the 2:1 pixels
+fn gear(cx, cy, r0, r1, w, teeth, phase) {
+  let pts = []
+  let step = 360 / teeth
+  let al = atan2(w, sqrt(r0 * r0 - w * w))
+  for k in 0..teeth {
+    let c = phase + k * step
+    let ux = sin(c)
+    let uy = -cos(c)
+    let tx = cos(c)
+    let ty = sin(c)
+    push(pts, [cx + r0 * sin(c - al) / 2, cy - r0 * cos(c - al)])
+    push(pts, [cx + (r1 * ux - w * tx) / 2, cy + r1 * uy - w * ty])
+    push(pts, [cx + (r1 * ux + w * tx) / 2, cy + r1 * uy + w * ty])
+    push(pts, [cx + r0 * sin(c + al) / 2, cy - r0 * cos(c + al)])
+    push(pts, [cx + r0 * sin(c + step / 2) / 2, cy - r0 * cos(c + step / 2)])
+  }
+  return pts
+}
+# blocks behind the gear, to its right
+shape([[82, 47], [84, 47], [84, 43], [88, 43], [88, 45], [91, 45], [91, 43], [95, 43], [96, 46],
+       [97, 46], [97, 56], [82, 56]], darkgrey)
+color lightgrey
+stroke 84, 44, 87, 44
+stroke 91, 44, 94, 44
+color black
+stroke 88, 46, 88, 55
+stroke 93, 46, 93, 55
+
+let gx = 76
+let gy = 53
+let cog = gear(gx, gy, 18, 23, 4, 9, 20)
+shape(cog, lightgrey)
+# shaded right side
+shape([[gx + 4, gy - 24], [gx + 13, gy - 17], [gx + 13, gy], [gx + 7, gy], [gx + 7, gy - 14]], darkgrey, null)
+shape(cog, null)
+color white
+stroke gx - 6, gy - 16, gx - 4, gy - 18
+# a grooved ring and the dark hub
+color black
+stroke arc(gx, gy, 6.5, 13, 280, 440, 10)
+color darkgrey
+stroke arc(gx, gy, 5.5, 11, 280, 440, 10)
+shape(arc(gx, gy, 3.5, 7, 270, 450, 15), black, null)
+
+# ---- the far low rocks along the bay, behind the hill's right face ----------------------------
+shape([[103, 82], [108, 80], [111, 83], [113, 81], [116, 84], [118, 83], [121, 86], [123, 86],
+       [126, 90], [128, 94], [131, 99], [134, 104], [131, 107], [112, 108], [104, 104]], lightgrey)
+color darkgrey
+stroke 116, 86, 117, 97
+stroke 122, 89, 124, 102
+stroke 127, 96, 128, 105
+shape([[104, 96], [112, 99], [120, 104], [131, 107], [112, 108], [104, 104]], darkgrey, null)
+
+# ---- the rock hill ----------------------------------------------------------------------------
+let hill = [[46, 90], [47, 80], [49, 72], [50, 64], [52, 58], [54, 54], [57, 52], [64, 52],
+            [70, 53], [84, 54], [90, 55], [98, 55], [103, 55], [106, 56], [107, 60], [108, 68],
+            [109, 76], [110, 84], [111, 92], [110, 100], [109, 107], [106, 112], [62, 112]]
+shape(hill, brown)
+# moss on the crown
+shape([[53, 56], [57, 54], [62, 54], [60, 57], [57, 60], [54, 62], [52, 60]], green, null)
+shape([[64, 55], [72, 55], [70, 58], [65, 59]], green, null)
+shape([[90, 56], [98, 56], [103, 56], [101, 58], [96, 59], [92, 60]], green, null)
+color lightgreen
+stroke 55, 56, 58, 55
+stroke 93, 57, 97, 57
+# lit ridges on the sunny right face
+color yellow
+stroke 91, 61, 90, 70, 92, 80, 91, 92
+stroke 105, 58, 106, 66, 106, 74
+stroke 52, 64, 51, 72
+# shadow folds
+color red
+stroke 103, 64, 102, 74, 104, 86
+stroke 55, 64, 56, 74
+color black
+stroke 94, 62, 93, 72, 95, 86, 94, 100
+stroke 99, 84, 98, 94
+stroke 49, 70, 48, 82
+# the shaded foot of the hill at the water
+color black
+stroke 97, 106, 102, 105, 108, 108
+
+# ---- the winding concrete stair --------------------------------------------------------------
+# the path along the top and down the right, round the hillside
+let path = [[55, 52], [66, 51], [78, 51], [84, 53], [87, 56], [85, 60], [80, 62], [71, 64], [58, 64]]
+shape(band(path, 4, 4), lightgrey)
+color white
+stroke 57, 51, 66, 50, 77, 50, 83, 52
+# the front wall, lit, and its curving face in shade
+shape([[56, 63], [71, 64], [71, 72], [56, 71]], lightgrey)
+color white
+stroke 57, 64, 70, 65
+shape([[71, 64], [80, 62], [86, 58], [89, 58], [89, 64], [84, 69], [71, 72]], darkgrey)
+# the dark stair base under it
+shape([[52, 72], [56, 71], [71, 72], [84, 69], [89, 64], [91, 72], [91, 82], [88, 88], [46, 88],
+       [47, 80]], darkgrey)
+shape([[47, 80], [60, 79], [72, 78], [86, 80], [88, 88], [46, 88]], black, null)
+# the orange spur between the stair base and the right face
+shape([[86, 72], [89, 70], [91, 74], [91, 84], [88, 86]], brown)
+color yellow
+stroke 89, 72, 89, 82
+# rope railings and posts
+color brown
+stroke 55, 49, 64, 48, 74, 47, 81, 47
+stroke 82, 47, 86, 51, 88, 55, 87, 59, 82, 63, 72, 64
+color black
+for p in [[56, 49], [64, 48], [74, 47], [81, 47], [87, 53], [86, 59]] {
+  stroke p[0], p[1], p[0], p[1] + 3
+}
+
+# ---- the dark stone building on the left, and the far rock beside it ---------------------------
+shape([[38, 50], [42, 52], [44, 58], [45, 66], [46, 76], [47, 86], [42, 86]], lightgrey)
+color darkgrey
+stroke 44, 62, 45, 74
+let bldg = [[0, 0], [33, 0], [33, 6], [30, 7], [30, 37], [32, 39], [36, 44], [39, 50], [41, 56],
+            [42, 66], [43, 76], [44, 86], [0, 86]]
+shape(bldg, darkgrey)
+# cornice and pillars of the upper storey
+color black
+stroke 0, 7, 32, 7
+stroke 0, 24, 13, 28, 26, 34, 30, 37
+rect 8, 8, 9, 25
+rect 18, 8, 19, 29
+color lightgrey
+stroke 0, 6, 32, 6
+stroke 23, 8, 23, 33
+# the window slot: sky above, the hill seen through it below
+color lightcyan
+rect 24, 14, 27, 28
+color brown
+rect 24, 29, 27, 36
+color black
+stroke 24, 13, 28, 13
+# the drum's shaded flank and a few cracks
+shape([[0, 48], [4, 55], [6, 68], [7, 86], [0, 86]], black, null)
+color black
+stroke 14, 40, 16, 52
+stroke 26, 50, 25, 62, 27, 70
+stroke 34, 62, 33, 76
+color lightgrey
+stroke 38, 54, 40, 62
+stroke 41, 70, 42, 80
+
+# ---- the low wall and its lit lip -------------------------------------------------------------
+color darkgrey
+rect 0, 87, 66, 112
+color lightgrey
+stroke 0, 86, 66, 86
+color black
+stroke 0, 87, 66, 87
+
+# ---- the end of the dock: lit steps, lamp post, marker box, posts ------------------------------
+color darkgrey
+rect 64, 88, 80, 110
+fn tread(y, x1, x2) {
+  color lightgrey
+  rect x1, y, x2, y + 1
+  color white
+  stroke x1, y, x2, y
+  color black
+  stroke x1, y + 2, x2, y + 2
+}
+tread(92, 70, 78)
+tread(96, 68, 78)
+tread(100, 67, 78)
+tread(104, 65, 78)
+# the lit wall beside the steps, and the brass lamp post on it
+shape([[79, 89], [82, 89], [82, 110], [79, 110]], lightgrey)
+color white
+stroke 79, 90, 79, 109
+color brown
+stroke 80, 85, 80, 88
+color yellow
+rect 79, 84, 81, 85
+# the marker switch: a granite post with a framed wooden box on top
+shape([[84, 99], [89, 99], [89, 110], [84, 110]], lightgrey)
+color darkgrey
+stroke 88, 100, 88, 109
+shape([[84, 89], [89, 89], [89, 99], [84, 99]], yellow)
+shape([[85, 91], [88, 91], [88, 97], [85, 97]], brown, null)
+color red
+stroke 86, 92, 86, 96
+# second post, capped
+shape([[91, 104], [96, 104], [96, 112], [91, 112]], brown)
+shape([[90, 101], [96, 101], [97, 104], [90, 104]], darkgrey)
+color black
+stroke 95, 105, 95, 111
+
+# ---- the plank dock ---------------------------------------------------------------------------
+let xl0 = 64
+let xr0 = 91
+let kl = (38 - 64) / 57
+let kr = (114 - 91) / 57
+fn xl(y) { return xl0 + (y - 110) * kl }
+fn xr(y) { return xr0 + (y - 110) * kr }
+shape([[xl0, 110], [xr0, 110], [114, 167], [38, 167]], brown)
+# seams across the boards, tilting down to the right more as they come nearer
+let y0 = 112
+let n = 0
+while y0 < 167 {
+  let t = (y0 - 110) / 57
+  let s = 0.03 + t * 0.2
+  let x1 = xl(y0)
+  let y2 = (y0 + s * (xr0 - 110 * kr - x1)) / (1 - s * kr)
+  let x2 = xr(y2)
+  color black
+  stroke x1, y0, x2, y2
+  # board-end ticks, staggered
+  let next = 2 + t * 5
+  let bx = x1 + 3 + noise(9, n) * 10
+  while bx < x2 - 3 {
+    let by = y0 + s * (bx - x1)
+    stroke bx, by + 1, bx, by + next - 1
+    bx += 12 + noise(11, n * 7 + bx) * 14
+  }
+  # broken lit runs along the top of some boards
+  if n % 3 == 1 {
+    color yellow
+    let lx = x1 + 4 + noise(13, n) * 12
+    let lx2 = min(lx + 10 + noise(17, n) * 16, x2 - 2)
+    stroke lx, y0 + s * (lx - x1) + 1, lx2, y0 + s * (lx2 - x1) + 1
+  }
+  y0 += next
+  n += 1
+}
+# the lit side beam along the right edge, and its shadow on the water
+shape([[91, 110], [93, 110], [116, 167], [113, 167]], yellow)
+color black
+stroke 92, 110, 115, 167
+stroke 94, 110, 117, 167
+shape([[95, 112], [97, 112], [118, 163], [117, 167]], blue, null)
+color black
+stroke 64, 110, 91, 110
+
+# ---- the black cast shadow, the rusty-edged slab, and the railing's shadow -------------------
+let shadow = [[10, 117], [16, 112], [22, 107], [28, 103], [35, 100], [42, 97], [48, 96],
+              [54, 98], [59, 102], [63, 107], [66, 111], [62, 118], [60, 125], [57, 131],
+              [53, 138], [49, 145], [45, 153], [41, 161], [39, 167], [33, 167], [30, 155],
+              [27, 138], [10, 119]]
+shape(shadow, black, null)
+shape([[0, 89], [9, 89], [9, 118], [27, 138], [30, 155], [33, 167], [0, 167]], darkgrey, null)
+color black
+stroke 0, 124, 8, 119
+stroke 0, 140, 4, 150
+color brown
+stroke 0, 89, 9, 89, 9, 117, 27, 137, 30, 154, 33, 167
+stroke 0, 90, 8, 90
+color lightgrey
+stroke 8, 91, 8, 117, 26, 138
+# the railing's shadow across the near boards
+shape(band([[42, 156], [58, 147], [70, 141], [82, 133]], 5, 2), black, null)
+shape(band([[40, 162], [50, 157], [58, 153]], 4, 2), black, null)
+
+# ---- the near post ----------------------------------------------------------------------------
+shape([[98, 117], [105, 117], [105, 140], [98, 140]], brown)
+color yellow
+stroke 99, 118, 99, 139
+color black
+stroke 102, 119, 102, 138
+stroke 104, 118, 104, 139
+shape([[97, 113], [105, 112], [106, 115], [106, 118], [97, 118]], black)
+color darkgrey
+stroke 98, 113, 104, 113
+
+# ---- the sunken ship's mast and the spars -------------------------------------------------------
+color yellow
+stroke 109, 51, 112, 80, 116, 130
+color brown
+stroke 112, 72, 113, 86, 117, 130
+shape([[112, 129], [119, 128], [119, 131], [112, 132]], brown)
+# the thin roped spar, behind the thick one
+shape(band([[121, 135], [160, 108]], 3, 3), red)
+color lightred
+stroke 123, 133, 158, 108
+color black
+for p in along([[121, 135], [160, 108]], 6) {
+  stroke p[0], p[1] - 1, p[0] + 1, p[1] + 1
+}
+# a rigging line up to the right
+color black
+stroke 131, 118, 159, 85
+# the dark rock under the spar
+boulder([[121, 167], [120, 157], [125, 150], [133, 147], [142, 148], [147, 153], [149, 167]],
+        darkgrey, black, black, 0.2)
+# the thick spar with its collars
+let spar = [[122, 99], [151, 168]]
+shape(band(spar, 9, 10), brown)
+color yellow
+stroke offset(spar, -3)
+color black
+stroke offset(spar, 2)
+fn sparpt(t) { return [122 + 29 * t, 99 + 69 * t] }
+for c in [[0.13, 0.18], [0.24, 0.29], [0.62, 0.67], [0.9, 0.95]] {
+  shape(band([sparpt(c[0]), sparpt(c[1])], 14), yellow)
+  color brown
+  let m = sparpt((c[0] + c[1]) / 2)
+  stroke m[0] - 3, m[1] + 1, m[0] + 3, m[1] - 1
+}
+shape(band([[120, 99], [124, 98]], 5), brown)
+
+frame()

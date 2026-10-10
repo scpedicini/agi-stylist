@@ -1,0 +1,27 @@
+/* The title screen: the picture alone, as large as fits (at most the stage's 3×). */
+#welcome {
+  /* a % of the viewport the dialog is fixed to (unlike vw, that leaves out any scrollbar) */
+  --pic-w: min(960px, 100% - 2 * var(--pad));
+  width: var(--pic-w); max-width: none; max-height: none;
+  padding: 0; border: 0; background: transparent; color: var(--fg); overflow: visible;
+}
+/* and no taller than the window */
+@supports (height: 1svh) {
+  #welcome { --pic-w: min(960px, 100% - 2 * var(--pad), (100svh - 2 * var(--pad)) * 320 / 168); }
+}
+#welcome:focus { outline: none; }
+#welcome::backdrop { background: rgb(0 0 0 / 0.88); }
+#welcome .welcome-frame { aspect-ratio: 320 / 168; overflow: hidden; }
+#welcome canvas { display: block; width: 100%; aspect-ratio: 320 / 168; image-rendering: pixelated; }
+/* on a narrow portrait screen, frame just the scroll and the ribbon (picture columns 20-139) so the text is bigger */
+@media (orientation: portrait) and (max-width: 600px) {
+  #welcome { --pic-w: calc(100% - 2 * var(--pad)); }
+  #welcome .welcome-frame { aspect-ratio: 240 / 168; }
+  #welcome canvas { width: calc(100% * 320 / 240); margin-left: calc(-100% * 40 / 240); }
+}
+#welcome .visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+/* the page behind stays put (its scrollbar gutter is reserved, so nothing shifts) */
+html:has(#welcome[open]) { overflow: hidden; }

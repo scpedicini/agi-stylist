@@ -1,0 +1,184 @@
+# Jungle Beach Landing
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c02.png; reframed with:
+#   pnpm grid reference/kq6/r05-c02.png --name kq6-r05-c02
+# Method: translated by eye. Kept: pale sky, the jungle wall with its dark gully and bright
+#   undergrowth, three palms, the big grey rocks framing left and right, the low rock behind
+#   the right one, the row of little striped crates down the left rocks, the pebble rock on
+#   the sand, the sand with its wet shore and the shadow under the right rock, the sea.
+#   Dropped: the small dark creature at the jungle's foot, sand speckle, the soft blue
+#   shading on the rocks (now a few folds), individual leaves.
+#   Moved: nothing.
+# Colours: pale blue sky → lightcyan, jungle → green crowns with lightgreen lit tops and black shadows,
+#   bright undergrowth → lightgreen, palm trunks → brown, blue-grey rock → lightgrey with
+#   darkgrey folds and white lit edges, tan sand → yellow with brown wet edge and shadow,
+#   turquoise sea → cyan with lightcyan ripples, striped crates → white / lightcyan / cyan.
+scene "Jungle Beach Landing"
+variants day
+
+# ---- sky -----------------------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightcyan
+  rect 0, 0, 159, 50
+}
+
+# ---- the jungle wall -----------------------------------------------------------------------
+let crowns = [[6, 12, 7, 7], [16, 16, 8, 7], [28, 12, 9, 7], [44, 22, 7, 6], [64, 32, 7, 5],
+              [80, 22, 8, 6], [94, 26, 8, 6], [112, 28, 7, 5], [140, 25, 8, 6], [153, 12, 8, 8],
+              [24, 32, 14, 10], [54, 36, 10, 8], [86, 36, 12, 8], [118, 36, 12, 7], [146, 32, 14, 9]]
+blobs(crowns, green)
+color green
+rect 1, 40, 158, 64
+# sunlit tops and shadowed undersides of the crowns
+for i in 0..len(crowns) {
+  let c = crowns[i]
+  color lightgreen
+  stroke arc(c[0] - 1, c[1] + 1, c[2] * 0.6, c[3] * 0.6, 290, 350, 15)
+  color black
+  stroke arc(c[0], c[1] - 1, c[2] * 0.8, c[3] * 0.8, 120, 220, 20)
+}
+# dark gully where the path goes in, and the deep shade on the right
+shape([[56, 62], [58, 52], [60, 44], [66, 40], [74, 42], [78, 50], [80, 62]], black, null)
+shape([[126, 62], [128, 50], [134, 44], [146, 42], [159, 40], [159, 63]], black, null)
+color black
+line 2, 60, 30, 61, 56, 62
+line 80, 62, 126, 62
+
+# ---- palms -----------------------------------------------------------------------------------
+fn mypalm(x, base, top, lean, w, flen, seed) {
+  let spine = []
+  for i in 0..=5 {
+    let t = i / 5
+    push(spine, [x + lean * t * t, base - (base - top) * t])
+  }
+  shape(band(spine, w, w * 0.7), brown)
+  color black
+  for y in range(top + 4, base, 4) {
+    let t = (base - y) / (base - top)
+    let cx = x + lean * t * t
+    stroke cx - 1, y, cx + 1, y + 1
+  }
+  let tx = x + lean
+  let n = 0
+  for hd in [240, 120, 285, 75, 325, 35] {
+    frond(tx, top, flen * (0.8 + noise(seed, n) * 0.4), hd, 50 + noise(seed + 1, n) * 30, green, lightgreen)
+    n += 1
+  }
+  shape(blob(tx, top + 1, 2, 2, seed, 0.2), brown)
+}
+mypalm(53, 56, 8, 0, 5, 22, 1)
+mypalm(112, 50, 10, 1, 4, 18, 4)
+mypalm(122, 46, 5, 1, 4, 18, 7)
+
+# ---- undergrowth at the jungle's foot ---------------------------------------------------------
+fern(40, 62, 10, 14, 2, green, lightgreen)
+fern(74, 63, 10, 9, 3, lightgreen, green)
+fern(92, 62, 12, 14, 5, lightgreen, green)
+fern(108, 62, 12, 13, 6, lightgreen, green)
+fern(122, 61, 8, 12, 8, green, lightgreen)
+fern(140, 62, 10, 12, 9, green, lightgreen)
+
+# ---- the sand -------------------------------------------------------------------------------
+shape([[0, 62], [40, 62], [54, 62], [62, 60], [68, 57], [74, 60], [80, 63], [96, 63],
+       [110, 64], [124, 64], [140, 65], [159, 65], [159, 140], [0, 140]], yellow, null)
+# shadow under the right rock and the wet shore
+shape([[104, 126], [112, 122], [122, 120], [130, 122], [132, 130], [108, 130]], brown, null)
+shape([[0, 130], [30, 129], [60, 130], [90, 129], [120, 130], [159, 129], [159, 136], [0, 136]], brown, null)
+color brown
+line 20, 124, 40, 125
+line 64, 122, 84, 121
+line 70, 110, 82, 110
+line 90, 100, 104, 100
+line 60, 84, 70, 84
+line 100, 76, 114, 76
+
+# ---- the low rock behind the right one -------------------------------------------------------
+boulder([[112, 65], [118, 60], [126, 57], [134, 58], [140, 62], [138, 66], [124, 67]])
+
+# ---- the sea --------------------------------------------------------------------------------
+shape([[0, 132], [24, 131], [50, 133], [80, 132], [110, 133], [140, 132], [159, 131],
+       [159, 167], [0, 167]], cyan, null)
+color lightcyan
+line 22, 133, 50, 134, 80, 133, 110, 134, 140, 133
+for i in 0..22 {
+  let x = 20 + noise(51, i) * 130
+  let y = 138 + noise(52, i) * 28
+  line x, y, x + 4 + noise(53, i) * 6, y
+}
+
+# ---- the right rocks ------------------------------------------------------------------------
+boulder([[127, 128], [125, 116], [127, 100], [129, 86], [134, 76], [142, 68], [152, 63],
+         [159, 62], [159, 120], [150, 124], [140, 126], [134, 129]], lightgrey, darkgrey, black, 0.4)
+color darkgrey
+line 133, 124, 130, 110, 132, 92, 136, 80
+line 142, 120, 140, 104, 142, 86, 148, 74
+line 150, 118, 149, 100, 152, 84
+color black
+line 129, 122, 128, 112
+line 137, 126, 134, 114, 136, 98
+color white
+line 140, 70, 150, 65, 158, 64
+line 130, 96, 132, 84, 138, 74
+boulder([[150, 146], [149, 134], [152, 124], [156, 116], [159, 113], [159, 148]], lightgrey, darkgrey)
+color white
+line 152, 124, 156, 117
+
+# ---- the left rocks -------------------------------------------------------------------------
+# middle rock behind the front block
+boulder([[0, 60], [8, 64], [14, 76], [16, 88], [14, 98], [0, 100]], lightgrey, darkgrey, black, 0.2)
+# big upper rock: lit sloping face, shade in the folds and along its foot
+shape([[0, 26], [8, 22], [16, 26], [22, 34], [26, 42], [30, 50], [36, 58], [40, 64],
+       [44, 70], [44, 76], [36, 79], [24, 80], [16, 76], [10, 68], [4, 60], [0, 56]], lightgrey)
+shape(band([[4, 30], [8, 44], [12, 58], [18, 70], [26, 78]], 6, 4), darkgrey, null)
+shape(band([[16, 34], [20, 48], [26, 60], [34, 72], [40, 77]], 4, 3), darkgrey, null)
+shape([[0, 56], [4, 60], [10, 68], [16, 76], [24, 80], [0, 80]], darkgrey, null)
+color black
+outline [[0, 26], [8, 22], [16, 26], [22, 34], [26, 42], [30, 50], [36, 58], [40, 64],
+         [44, 70], [44, 76], [36, 79], [24, 80], [16, 76], [10, 68], [4, 60], [0, 56]]
+line 6, 34, 9, 46, 13, 58
+line 20, 50, 26, 62, 32, 72
+color white
+line 9, 23, 15, 27, 20, 34
+line 24, 42, 28, 52, 34, 60, 40, 67
+line 12, 30, 14, 40
+# pebbles at its foot
+shape(blob(48, 75, 3, 2, 3, 0.15), white)
+shape(blob(54, 76, 2, 2, 5, 0.15), lightgrey)
+# front block, flat-topped
+boulder([[0, 102], [6, 98], [18, 97], [26, 98], [28, 104], [27, 118], [26, 130], [20, 140],
+         [12, 146], [0, 150]], lightgrey, darkgrey, black, -0.1)
+color white
+line 2, 101, 14, 99, 25, 100
+color darkgrey
+line 8, 104, 6, 120, 8, 140
+line 18, 104, 20, 118, 16, 132
+color black
+line 12, 104, 13, 116, 10, 128
+
+# ---- little striped crates down the rocks ----------------------------------------------------
+fn crate(x, y, w, h) {
+  shape([[x, y + 1], [x + 1, y], [x + w - 1, y], [x + w, y + 1], [x + w, y + h], [x, y + h]], lightcyan)
+  color white
+  line x + 1, y + 1, x + w - 1, y + 1
+  color cyan
+  for sx in range(x + 2, x + w, 2) { line sx, y + 2, sx, y + h - 1 }
+  color brown
+  line x, y + h + 1, x, y + h - 1
+  line x + w, y + h + 1, x + w, y + h - 1
+}
+crate 10, 83, 4, 3
+crate 16, 86, 4, 3
+crate 23, 89, 5, 3
+crate 30, 91, 5, 3
+crate 28, 99, 5, 3
+crate 36, 103, 6, 4
+crate 30, 110, 5, 4
+crate 30, 116, 12, 9
+
+# ---- rock on the sand --------------------------------------------------------------------------
+boulder([[49, 118], [50, 114], [54, 111], [58, 112], [61, 116], [60, 118]], lightgrey, darkgrey, black, 0.4)
+color white
+line 51, 114, 54, 112
+
+frame()

@@ -1,0 +1,280 @@
+# Treehouse Hollow
+# Source: King's Quest VI (VGA), reference/kq6/r06-c02.png; reframed with:
+#   pnpm grid reference/kq6/r06-c02.png --name kq6-r06-c02
+# Method: translated by eye. Kept: the two giant dark trees framing the clearing, the pink
+#   giant tree behind, pale sky, the dirt clearing and grass patches, both treehouses with
+#   lavender roofs, the log steps and ladder on the left, the stone fire pit, the stone pile
+#   at the right tree's foot, two dry saplings, the dark twisting roots and the leafy
+#   foreground twigs. Dropped: bark texture, most of the hanging sticks and scaffolding,
+#   individual pebbles, the grey knot on the pink tree, the fine leaf clusters on the sky.
+# Colours: pale sky → lightcyan, pink tree → lightred / red, dark trunks → brown / black,
+#   dirt → yellow with brown streaks, grass → lightgreen / green, lavender roofs →
+#   lightmagenta / magenta, purple roots → blue with lightblue sheen, stones → lightgrey /
+#   darkgrey, coals → black.
+scene "Treehouse Hollow"
+variants day
+
+fn leaf(x, y, len, h, c = green) {
+  # a single pointed leaf from its stalk end (x, y), `len` rows long on screen, heading h
+  let tx = x + sin(h) * len / 2
+  let ty = y - cos(h) * len
+  let mx = x + sin(h) * len / 4
+  let my = y - cos(h) * len / 2
+  let px = cos(h) * len / 8
+  let py = sin(h) * len / 4
+  shape([[x, y], [mx + px, my + py], [tx, ty], [mx - px, my - py]], c)
+  color lightgreen
+  stroke [[x, y], [mx, my]]
+}
+
+# ---- sky and the far clearing ------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 54
+}
+delay {
+  color yellow
+  rect 0, 50, 159, 167
+}
+
+# ---- the pink giant tree behind ---------------------------------------------------------
+shape(band([[72, 16], [62, 8], [50, 3], [38, -2]], 8, 3), lightred)
+shape(band([[88, 10], [100, 4], [114, -2]], 7, 3), lightred)
+shape([[68, -1], [94, -1], [92, 14], [94, 28], [98, 40], [104, 48], [112, 55],
+       [52, 56], [60, 50], [66, 42], [70, 30], [70, 16]], lightred)
+color red
+stroke [[74, 8], [73, 22], [71, 36], [64, 48], [58, 54]]
+stroke [[82, 18], [80, 34], [78, 46]]
+stroke [[90, 30], [94, 42], [100, 50]]
+stroke [[62, 6], [52, 2]]
+
+# ---- dark branches with leaves against the sky -------------------------------------------
+shape(band([[84, 24], [92, 20], [100, 22], [108, 16], [118, 10]], 4, 2), black)
+shape(band([[86, 42], [96, 38], [104, 36], [112, 30], [122, 28]], 4, 2), black)
+shape(band([[92, 22], [96, 30], [100, 36]], 3, 2), black)
+shape(band([[98, 37], [96, 46], [92, 52]], 2, 1), black)
+shape(band([[44, 6], [56, 4], [68, 0]], 2, 1), black)
+leaf 104, 21, 9, 200
+leaf 110, 15, 9, 150
+leaf 100, 37, 10, 200
+leaf 108, 33, 9, 150
+leaf 96, 46, 9, 210
+leaf 52, 5, 9, 150
+leaf 60, 3, 8, 210
+leaf 88, 22, 8, 20
+
+# ---- far grass along the foot of the pink tree -----------------------------------------
+shape([[40, 58], [46, 53], [60, 54], [76, 53], [94, 55], [112, 54], [118, 58], [100, 60],
+       [80, 59], [60, 60]], lightgreen)
+
+# ---- dirt: shade streaks ------------------------------------------------------------------
+color brown
+stroke [[64, 92], [76, 90]]
+stroke [[86, 118], [98, 116]]
+stroke [[40, 104], [48, 102]]
+stroke [[70, 150], [78, 148]]
+stroke [[96, 130], [104, 131]]
+
+# ---- cast shadows on the dirt under the right tree's root and the left tree ----------------
+shape([[80, 112], [96, 114], [112, 116], [118, 122], [100, 120], [86, 118]], brown, null)
+shape([[36, 92], [44, 98], [48, 106], [40, 104], [34, 98]], brown, null)
+
+# ---- grass patch in the middle ---------------------------------------------------------
+blobs([[54, 72, 8, 6], [64, 70, 9, 5], [74, 75, 8, 5], [58, 78, 9, 4], [46, 64, 5, 4]],
+      lightgreen, black, 0.3, 3)
+color green
+stroke [[50, 70], [52, 66]]
+stroke [[62, 76], [64, 70]]
+stroke [[74, 74], [76, 70]]
+# a root from the left tree crossing it
+shape(band([[38, 64], [50, 70], [62, 74], [74, 78]], 5, 1), brown)
+
+# ---- the left giant tree -------------------------------------------------------------------
+shape([[-1, -1], [39, -1], [41, 10], [38, 22], [35, 32], [36, 44], [40, 52], [44, 60],
+       [42, 66], [38, 72], [37, 84], [32, 94], [22, 100], [10, 96], [-1, 92]], brown)
+color black
+shape([[0, 30], [8, 24], [14, 34], [12, 52], [16, 70], [8, 82], [0, 80]], black, null)
+shape(band([[24, 20], [30, 24], [36, 30]], 5, 2), black, null)
+stroke [[20, 2], [22, 14], [18, 24]]
+stroke [[28, 4], [32, 16]]
+stroke [[16, 62], [18, 74], [14, 88]]
+stroke [[26, 60], [24, 66], [20, 70]]
+stroke [[6, 4], [4, 18]]
+# ladder up the trunk's edge
+color brown
+stroke [[39, -1], [40, 40]]
+stroke [[44, -1], [45, 40]]
+for y in range(3, 40, 6) {
+  stroke [[40, y], [44, y]]
+}
+# pole jutting out to the left treehouse
+shape(band([[30, 29], [42, 33], [50, 37]], 3, 2), blue)
+# the left treehouse: dark doorway, lavender roof with boards
+shape([[22, 52], [34, 50], [42, 56], [42, 70], [24, 72]], black)
+shape([[16, 44], [24, 36], [34, 39], [41, 45], [40, 52], [32, 57], [24, 56], [17, 51]],
+      lightmagenta)
+shape([[17, 51], [24, 49], [32, 51], [40, 52], [32, 57], [24, 56]], magenta, null)
+color yellow
+stroke [[26, 45], [24, 53]]
+stroke [[30, 45], [28, 54]]
+stroke [[34, 46], [33, 54]]
+color magenta
+stroke [[24, 40], [34, 42]]
+# log steps winding down
+fn step(x1, x2, y) {
+  shape([[x1, y + 1], [x1 + 2, y - 1], [x2 - 2, y - 1], [x2, y + 1], [x2 - 2, y + 3],
+         [x1 + 2, y + 3]], yellow)
+  color brown
+  stroke [[x1 + 2, y + 2], [x2 - 2, y + 2]]
+}
+step 24, 36, 72
+step 21, 34, 77
+step 18, 31, 82
+step 14, 27, 87
+step 3, 13, 85
+
+# ---- grey rock at the far left -----------------------------------------------------------
+boulder([[-1, 88], [8, 90], [14, 100], [16, 115], [12, 130], [6, 140], [-1, 142]], cut: 0.3)
+
+# ---- shaded grass, bottom left --------------------------------------------------------------
+shape([[-1, 142], [6, 140], [12, 128], [16, 112], [14, 100], [22, 100], [32, 96], [36, 102],
+       [42, 106], [46, 110], [38, 116], [30, 122], [28, 134], [34, 148], [42, 158], [52, 167],
+       [-1, 167]], green)
+color lightgreen
+stroke [[20, 106], [22, 100]]
+stroke [[34, 104], [36, 99]]
+stroke [[22, 140], [24, 134]]
+stroke [[8, 160], [10, 154]]
+stroke [[38, 154], [40, 148]]
+# a dark root twisting through it
+shape(band([[24, 118], [14, 130], [14, 146], [24, 144], [36, 150], [50, 160]], 7, 2), blue)
+shape(band([[-2, 156], [10, 152], [20, 158], [28, 168]], 6, 3), blue)
+color lightblue
+stroke [[16, 132], [16, 144]]
+stroke [[26, 143], [36, 148]]
+# a grey stone at the bottom edge
+boulder([[50, 160], [58, 154], [66, 156], [64, 167], [48, 167]])
+
+# ---- the right giant tree -----------------------------------------------------------------
+shape([[94, -1], [160, -1], [160, 150], [150, 142], [142, 128], [132, 120], [118, 120],
+       [112, 113], [100, 112], [84, 111], [86, 104], [100, 100], [110, 96], [114, 84],
+       [118, 70], [120, 54], [122, 40], [123, 24], [120, 14], [112, 10], [104, 8], [98, 4]],
+      brown)
+shape(blob(139, 28, 15, 20, 6, 0.2), black, null)
+shape([[128, 84], [142, 82], [150, 90], [152, 110], [146, 120], [134, 116], [124, 104]],
+      black, null)
+color black
+stroke [[104, 2], [112, 6], [118, 4]]
+stroke [[150, 30], [154, 50], [152, 70]]
+stroke [[120, 100], [124, 112]]
+stroke [[156, 4], [158, 20]]
+stroke [[156, 84], [154, 100], [156, 120]]
+stroke [[116, 86], [118, 96]]
+stroke [[90, 106], [102, 104]]
+# scaffolding of sticks up the trunk, and a hanging gourd
+color yellow
+stroke [[126, 20], [146, 18]]
+stroke [[128, 30], [146, 26]]
+stroke [[130, 16], [132, 44]]
+stroke [[140, 16], [142, 42]]
+color brown
+stroke [[126, 21], [146, 19]]
+shape(blob(148, 34, 2, 4, 3, 0.1), yellow)
+color black
+stroke [[148, 26], [148, 30]]
+# the right treehouse: lean-to of planks and a lavender roof
+shape([[106, 76], [118, 60], [128, 62], [118, 82]], yellow)
+color brown
+stroke [[110, 76], [120, 62]]
+stroke [[114, 78], [124, 63]]
+shape([[118, 54], [130, 47], [142, 50], [148, 60], [146, 72], [138, 80], [124, 82],
+       [120, 76], [122, 64]], lightmagenta)
+shape([[122, 72], [134, 74], [146, 72], [138, 80], [124, 82], [120, 76]], magenta, null)
+color magenta
+stroke [[128, 56], [138, 58]]
+stroke [[130, 64], [140, 66]]
+# a slatted fence beside it
+color yellow
+for x in [148, 151, 154] {
+  stroke [[x, 60], [x, 80]]
+}
+color brown
+stroke [[146, 66], [157, 64]]
+stroke [[146, 74], [157, 72]]
+# dry sticks dangling under the roof
+color yellow
+stroke [[126, 84], [124, 96], [126, 106]]
+stroke [[136, 84], [134, 100]]
+# stones heaped at its foot
+for s in [[120, 102, 8, 6, 1], [116, 108, 8, 6, 2], [126, 108, 8, 6, 3], [112, 114, 7, 5, 4],
+          [122, 114, 8, 6, 5]] {
+  rock(s[0], s[1], s[2], s[3], seed: s[4])
+}
+
+# ---- grass at the right tree's foot ---------------------------------------------------------
+shape([[112, 122], [120, 117], [132, 118], [142, 126], [148, 136], [130, 136], [116, 130]],
+      lightgreen)
+color green
+stroke [[124, 128], [126, 122]]
+stroke [[136, 132], [138, 126]]
+
+# ---- the right root curling down, and the foreground branch --------------------------------
+shape(band([[152, 76], [142, 92], [140, 110], [146, 126], [154, 140], [150, 152]], 8, 6), blue)
+color lightblue
+stroke [[143, 96], [142, 110], [146, 122]]
+shape(band([[70, 156], [88, 148], [104, 142], [120, 140], [136, 148], [150, 152], [161, 150]],
+           3, 7), darkgrey)
+color lightgrey
+stroke [[106, 141], [120, 139], [134, 146]]
+boulder([[138, 167], [146, 158], [156, 156], [160, 160], [160, 167]])
+
+# ---- the stone fire pit ------------------------------------------------------------------
+color black
+ellipse 58, 128, 17, 11
+shape(blob(56, 121, 10, 3, 4, 0.2), brown, null)
+color darkgrey
+stroke [[46, 127], [49, 126]]
+stroke [[56, 133], [59, 132]]
+stroke [[64, 126], [67, 127]]
+for i in 0..14 {
+  let a = i * 360 / 14 + 10
+  let cx = 58 + sin(a) * 18
+  let cy = 128 - cos(a) * 11
+  rock(cx, cy, 8, 6, seed: i + 1)
+}
+
+# ---- two dry saplings ----------------------------------------------------------------------
+color brown
+stroke [[100, 96], [100, 84], [98, 74]]
+stroke [[101, 96], [101, 84]]
+stroke [[100, 84], [104, 78]]
+stroke [[99, 78], [96, 74]]
+stroke [[112, 108], [110, 92], [112, 80], [110, 70]]
+stroke [[113, 108], [111, 92]]
+stroke [[110, 90], [106, 84]]
+stroke [[112, 82], [116, 76]]
+color red
+stroke [[96, 82]]
+color cyan
+stroke [[104, 83]]
+
+# ---- leafy foreground twigs ------------------------------------------------------------------
+shape(band([[80, 156], [92, 144], [104, 140]], 2, 1), black)
+shape(band([[112, 128], [110, 140], [114, 150]], 2, 1), black)
+leaf 84, 150, 14, 220
+leaf 88, 146, 14, 330
+leaf 96, 142, 12, 10
+leaf 100, 142, 14, 160
+leaf 110, 132, 12, 300
+leaf 112, 142, 13, 60
+leaf 113, 150, 12, 180
+leaf 124, 141, 12, 20
+leaf 132, 145, 13, 70
+leaf 80, 157, 13, 200
+leaf 44, 150, 12, 300
+leaf 52, 154, 13, 15
+leaf 58, 150, 12, 60
+
+frame()

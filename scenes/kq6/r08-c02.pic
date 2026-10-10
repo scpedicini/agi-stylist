@@ -1,0 +1,214 @@
+# Dungeon Cell
+# Source: King's Quest VI (VGA), reference/kq6/r08-c02.png (a stone prison cell
+#   in the castle dungeon, seen head-on); reframed with:
+#   pnpm grid reference/kq6/r08-c02.png --name kq6-r08-c02
+# Method: translated by eye. Kept: the dark rock surround the room is seen through, the
+#   radiating plank ceiling, the brick back wall and the two receding side walls, the arched
+#   stone door frame on the left wall with its carved keystone and the lit doorway, the wall
+#   torch, the plank cot on the right and its shadow, the flagstone floor.
+#   Dropped: the mottling of the rock, the faint torch glow on the bricks, individual brick
+#   shading, the fine carving detail. Moved: nothing.
+# Colours: dim slate-blue brick -> blue with black mortar and one lightblue torch-glow mass,
+#   lit stone door frame -> lightblue with blue joints, near-black rock -> black with
+#   darkgrey rock masses above and below and black crevices, maroon plank ceiling -> red with black/brown seams, flagstones ->
+#   darkgrey with black joints and lightgrey lit edges, lit doorway -> yellow, pale sage cot
+#   -> green with lightgreen lit edges, torch flame -> yellow/lightred/white.
+scene "Dungeon Cell"
+variants night
+
+# vanishing point of the room
+let vx = 92
+let vy = 84
+
+# the room's corners
+let bl = [47, 47]    # back wall top-left
+let br = [130, 47]   # back wall top-right
+let fl = 117         # back wall foot (left)
+let fr = 118         # back wall foot (right)
+
+# a point on the ray from the vanishing point through (x, y), at column x2
+fn ray(x, y, x2) {
+  return [x2, vy + (y - vy) * (x2 - vx) / (x - vx)]
+}
+# ... and at row y2
+fn rayy(x, y, y2) {
+  return [vx + (x - vx) * (y2 - vy) / (y - vy), y2]
+}
+
+# ---- back wall ---------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color blue
+  rect 0, 0, 159, 167
+}
+# the torch's glow on the back wall
+shape(blob(57, 71, 7, 15, 4, 0.18), lightblue, null)
+stones(47, 47, 130, 117, 5, 10, black)
+
+# ---- ceiling: maroon planks radiating from the back wall -------------------------------------
+delay 2 {
+  color red
+  rect 0, 0, 159, 46
+}
+for i in 0..20 {
+  let xt = -40 + i * 13 + (i % 3) * 2
+  let p = rayy(xt, 21, 47)
+  color i % 3 == 1 ? brown : black
+  stroke [xt, 21], p
+}
+
+# ---- side walls --------------------------------------------------------------------------------
+delay {
+  shape([[-2, 17], [47, 47], [47, fl], [-2, 147]], blue, null)
+}
+shape([[161, 13], [130, 47], [130, fr], [161, 140]], blue, null)
+# courses: lines from the back corners out towards the picture edge
+color black
+for y in range(52, 117, 5) {
+  stroke [47, y], ray(47, y, -2)
+  stroke [130, y], ray(130, y, 161)
+}
+# vertical joints, staggered, wider apart nearer the viewer
+let lxs = [43, 37, 29, 18, 7]
+let rxs = [134, 139, 145, 152]
+for i in 0..13 {
+  let y = 52 + i * 5
+  let k = i % 2
+  for j in range(k, len(lxs), 2) {
+    let x = lxs[j]
+    let a = ray(47, y, x)
+    let b = ray(47, y + 5, x)
+    stroke a, b
+  }
+  for j in range(k, len(rxs), 2) {
+    let x = rxs[j]
+    let a = ray(130, y, x)
+    let b = ray(130, y + 5, x)
+    stroke a, b
+  }
+}
+# black corner lines where the walls meet
+color black
+line 47, 47, 47, fl
+line 130, 47, 130, fr
+line 47, 47, 130, 47
+stroke [47, 47], [-2, 17]
+stroke [130, 47], [161, 13]
+
+# ---- floor: flagstones -------------------------------------------------------------------------
+let floor = [[47, fl], [130, fr], [161, 140], [161, 150], [-2, 150], [-2, 146]]
+shape(floor, darkgrey, null)
+# flag rows, wider apart towards the viewer: segments of varied length with a lit top edge
+# and a black line under it, joints aimed at the vanishing point
+let rows = [121, 126, 132, 139]
+let ri = 0
+for r in rows {
+  ri += 1
+  let a = [47 - (r - fl) * 49 / 29, r]
+  let b = [130 + (r - fr) * 31 / 22, r]
+  let x = a[0] + 1 + noise(ri, 0) * 4
+  let k = 0
+  while x < b[0] {
+    k += 1
+    let w = 9 + ri * 2 + noise(ri, k) * 8
+    let x2 = min(x + w, b[0] + 2)
+    let j = noise(ri + 7, k) < 0.4 ? 1 : 0
+    color lightgrey
+    stroke [x + 1, r + j], [x2 - 1, r + j]
+    color black
+    stroke [x, r + j + 1], [x2, r + j + 1]
+    # joint up to the row behind
+    let up = ri == 1 ? fl : rows[ri - 2]
+    stroke [x2, r + j + 1], rayy(x2, r + j + 1, up + 2)
+    x = x2 + 1 + noise(ri + 3, k) * 3
+  }
+}
+# two long cracks
+color black
+stroke [60, 128], [66, 131], [70, 137]
+stroke [112, 134], [118, 140], [117, 145]
+color black
+line 47, fl, 130, fr
+stroke [47, fl], [-2, 146]
+stroke [130, fr], [161, 140]
+
+# ---- the cot's shadow on the floor -----------------------------------------------------------
+shape([[86, 113], [134, 113], [140, 124], [92, 127], [84, 122]], black, null)
+
+# ---- the arched stone door frame on the left wall --------------------------------------------
+# outer frame: stone blocks
+let frame_pts = [[10, 138]] + [[10, 56], [12, 49], [16, 44], [22, 41], [29, 41], [36, 44],
+  [41, 50], [44, 58]] + [[44, 118], [10, 138]]
+shape(frame_pts, lightblue)
+# recess (reveal) inside the frame
+let rec = [[19, 133], [19, 62], [22, 55], [27, 51], [32, 51], [37, 55], [40, 62], [40, 119]]
+shape(rec, blue)
+# voussoir joints on the arch
+color blue
+line 13, 50, 19, 56
+line 18, 43, 22, 52
+line 26, 41, 27, 50
+line 34, 43, 32, 51
+line 40, 49, 37, 55
+line 10, 70, 19, 70
+line 10, 90, 19, 89
+line 10, 110, 19, 108
+line 40, 75, 44, 75
+line 40, 98, 44, 97
+# carved relief over the door: a little skull-and-dragon scribble
+color darkgrey
+line 22, 58, 25, 56, 29, 57, 33, 56, 36, 59
+line 24, 60, 26, 62, 28, 60
+line 31, 60, 33, 62, 35, 61
+color white
+line 26, 58, 27, 58
+line 31, 58, 32, 58
+# the lit doorway
+shape([[23, 68], [26, 66], [34, 66], [34, 119], [23, 130]], yellow)
+color black
+line 35, 66, 35, 119
+
+# ---- wall torch -------------------------------------------------------------------------------
+color black
+line 57, 66, 57, 76
+line 56, 67, 58, 67
+color brown
+line 56, 66, 58, 66
+shape([[55, 64], [56, 59], [57, 56], [58, 59], [59, 64]], lightred, null)
+shape([[56, 64], [57, 60], [58, 64]], yellow, null)
+color white
+line 57, 62, 57, 64
+
+# ---- the plank cot ----------------------------------------------------------------------------
+# legs
+shape([[83, 111], [85, 111], [85, 124], [83, 124]], green)
+shape([[135, 111], [137, 111], [137, 122], [135, 122]], green)
+shape([[91, 111], [93, 111], [93, 117], [91, 117]], green)
+shape([[127, 111], [129, 111], [129, 117], [127, 117]], green)
+# top and front rail
+shape([[87, 104], [130, 104], [137, 109], [82, 109]], green)
+shape([[82, 109], [138, 109], [138, 112], [82, 112]], green)
+color lightgreen
+line 83, 110, 137, 110
+line 84, 113, 84, 123
+line 136, 113, 136, 121
+color black
+line 82, 109, 137, 109
+for x in range(92, 132, 7) { line x, 105, x - 1, 108 }
+
+# ---- the rock surround -------------------------------------------------------------------------
+let hole = [[5, 22], [30, 21], [60, 23], [90, 21], [120, 22], [151, 21], [151, 60], [150, 100],
+  [151, 148], [120, 146], [80, 148], [40, 146], [5, 147], [4, 100], [5, 60]]
+surround(hole, black, black)
+# rock masses above and below the opening: darkgrey with black crevice wedges
+shape([[-2, -2], [161, -2], [161, 14], [140, 16], [118, 13], [96, 16], [70, 14], [45, 16],
+  [20, 13], [-2, 15]], darkgrey, null)
+shape([[-2, 167], [-2, 154], [25, 152], [55, 154], [85, 152], [115, 154], [140, 152],
+  [161, 154], [161, 169]], darkgrey, null)
+let cracks = [[[8, -1], [14, 6], [12, 13]], [[34, -1], [40, 7], [47, 14]], [[62, 2], [70, 8], [74, 14]],
+  [[88, -1], [92, 6], [99, 15]], [[108, 3], [116, 9], [118, 13]], [[134, -1], [137, 7], [143, 15]],
+  [[18, 168], [22, 161], [30, 154]], [[52, 168], [58, 160], [56, 154]], [[90, 168], [96, 159], [104, 153]],
+  [[128, 168], [126, 160], [133, 153]]]
+for c in cracks { shape(band(c, 3, 1), black, null) }
+frame()

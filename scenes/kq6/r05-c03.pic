@@ -1,0 +1,307 @@
+# Garden of Books
+# Source: King's Quest VI (VGA), reference/kq6/r05-c03.png (the book garden on
+#   the Isle of Wonder); reframed with:
+#   pnpm grid reference/kq6/r05-c03.png --name kq6-r05-c03
+# Method: translated by eye. Kept: blue sky through the canopy, four big tree crowns, the palm,
+#   the dark jungle with its ghostly book-trees, ferns and bushes, the sandy clearing with its
+#   cast shadows, the book heaps (left, right), the winding trail of book stacks, the little
+#   book house and book stair, the bookworm arch, the small pile, the near stack with the open
+#   book, the pale rock with its bonsai, the spider web, the big lavender book and the
+#   foreground grass. Dropped: individual titles, most loose books, leaf texture, the books
+#   stacked in the far right tree (kept as one tower).
+# Colours: sky → blue, crowns → green with black/lightgreen strokes, far jungle → cyan,
+#   book-trees → blue/lightblue, ferns → lightgreen, sand → yellow with brown shadows,
+#   books → red/blue/green/magenta/darkgrey with white page edges, pale rock → lightcyan/cyan,
+#   lavender book → magenta/lightmagenta, web → white.
+scene "Garden of Books"
+variants day
+
+let bookc = [red, blue, green, magenta, darkgrey, brown, lightblue, cyan, lightred]
+
+# one book lying flat in a stack: 2 coloured rows over a black row, page edge at one end
+fn slab(x, y, w, c, pages = 1) {
+  color black
+  rect x, y, x + w, y + 2
+  color c
+  rect x + 1, y, x + w - 1, y + 1
+  color white
+  if pages > 0 {
+    line x + w - 3, y + 1, x + w - 1, y + 1
+  } else {
+    line x + 1, y + 1, x + 3, y + 1
+  }
+}
+
+# a stack of n books standing on row ybot, centred on x
+fn stack(x, ybot, n, w = 8, seed = 1) {
+  for i in 0..n {
+    let ww = w + floor(noise(seed, i) * 4) - 2
+    let dx = floor((noise(seed + 1, i) - 0.5) * 3)
+    let c = bookc[floor(noise(seed + 2, i) * len(bookc))]
+    slab(x - ww / 2 + dx, ybot - 3 * (i + 1), ww, c, i % 2)
+  }
+}
+
+# a loose heap of tilted books inside the ellipse (cx, cy, rx, ry), back to front
+fn heap(cx, cy, rx, ry, n, seed = 1, cols = bookc, base = darkgrey) {
+  # the dark mound of buried books first, so the heap reads as one pile
+  shape(blob(cx, cy + 1, rx + 2, ry, seed, 0.25), base)
+  for i in 0..n {
+    let t = i / n
+    let y = cy - ry + t * 2 * ry
+    let x = cx + (noise(seed, i) - 0.5) * 2 * rx * (1 - abs(t - 0.5))
+    let w = 3 + floor(noise(seed + 1, i) * 3)
+    let h = 3 + floor(noise(seed + 2, i) * 2)
+    let k = floor((noise(seed + 3, i) - 0.5) * 9)
+    let c = cols[floor(noise(seed + 4, i) * len(cols))]
+    shape([[x - w, y + k / 2], [x + w, y - k / 2], [x + w, y - k / 2 + h], [x - w, y + k / 2 + h]], c)
+    color white
+    line x + w - 1, y - k / 2 + 1, x + w - 1, y - k / 2 + h - 1
+  }
+}
+
+# ---- sky -----------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color blue
+  rect 0, 0, 159, 70
+}
+
+# ---- far jungle (dark teal) with the ghostly book-trees -------------------------------------
+delay 2 {
+  blobs([[10, 50, 14, 10], [30, 48, 12, 9], [52, 46, 12, 10], [80, 38, 10, 10], [96, 38, 10, 10],
+         [120, 40, 14, 10], [142, 38, 14, 12], [70, 50, 20, 12], [120, 54, 30, 12],
+         [30, 58, 30, 10], [150, 52, 12, 14]], cyan)
+}
+delay {
+  color cyan
+  rect 0, 54, 159, 80
+}
+color black
+for i in 0..14 {
+  let x = 6 + i * 11 + noise(3, i) * 5
+  let y = 42 + noise(4, i) * 8
+  line x, y, x + 2, y + 4, x + 1, y + 8
+}
+# dim trunks in the far jungle
+color blue
+for x in [17, 40, 66, 84, 108, 126, 150] {
+  line x, 44, x + 1, 60, x, 74
+}
+# the book-trees: tall shelves of blue spines half lost in the shade
+fn booktree(x, top, bot) {
+  color blue
+  rect x, top, x + 4, bot
+  color lightblue
+  for y in range(top + 1, bot, 3) { line x + 1, y, x + 3, y }
+  color black
+  line x, top, x, bot
+}
+for b in [[2, 54], [12, 56], [22, 55], [30, 57], [44, 56], [52, 55], [86, 56], [92, 58],
+          [100, 57], [130, 52], [138, 55]] {
+  booktree(b[0], b[1], 72)
+}
+
+# ---- the palm ------------------------------------------------------------------------------
+palm(33, 68, 56, -1, 2, w: 5)
+
+# ---- the big tree crowns -------------------------------------------------------------------
+# trunks first, dark under the crowns
+color black
+line 12, 40, 14, 54
+line 60, 38, 58, 56
+line 61, 38, 59, 56
+line 116, 30, 114, 50
+line 117, 30, 115, 50
+blobs([[6, 22, 10, 10], [14, 32, 10, 9], [2, 38, 6, 8], [18, 20, 6, 6]], green, seed: 3)
+blobs([[50, 20, 10, 10], [62, 18, 10, 9], [72, 26, 8, 9], [54, 32, 14, 8], [44, 30, 6, 7]], green, seed: 5)
+blobs([[106, 18, 10, 9], [120, 12, 10, 9], [130, 22, 8, 9], [98, 28, 8, 7], [114, 28, 14, 7]], green, seed: 7)
+blobs([[150, 4, 12, 10], [142, 16, 8, 8], [156, 22, 6, 12], [146, 30, 8, 8]], green, seed: 9)
+# lit tops and shadow strokes so the crowns aren't flat domes
+fn crownmarks(cx, cy, s) {
+  color lightgreen
+  line cx - 6, cy - 4, cx - 2, cy - 7, cx + 3, cy - 6
+  line cx + 2, cy - 2, cx + 6, cy - 4
+  color black
+  line cx - 4, cy + 3, cx, cy + 5, cx + 4, cy + 3
+  line cx + 5, cy + 8, cx + 8, cy + 6
+}
+crownmarks 8, 22, 1
+crownmarks 54, 20, 1
+crownmarks 68, 22, 1
+crownmarks 112, 16, 1
+crownmarks 125, 18, 1
+crownmarks 150, 10, 1
+# book tower climbing the right-hand tree
+for i in 0..10 {
+  slab(144 + floor(noise(31, i) * 3), 46 - i * 3, 7, i % 2 == 0 ? red : brown, i % 2)
+}
+
+color yellow
+rect 0, 78, 159, 100
+
+# ---- undergrowth ---------------------------------------------------------------------------
+blobs([[8, 72, 12, 8], [28, 72, 12, 7], [48, 74, 12, 6], [86, 74, 14, 5], [108, 74, 12, 6]], green, seed: 11)
+fern(10, 82, 26, 18, 1, c: lightgreen, rib: green)
+fern(34, 80, 22, 14, 3, c: lightgreen, rib: green)
+fern(56, 80, 18, 10, 5, c: lightgreen, rib: green)
+# big bush on the right
+blobs([[132, 62, 14, 10], [148, 58, 12, 12], [120, 72, 10, 8], [140, 76, 16, 10],
+       [154, 80, 8, 14], [128, 80, 8, 6]], green, seed: 13)
+color lightgreen
+for i in 0..14 {
+  let x = 118 + noise(41, i) * 40
+  let y = 56 + noise(42, i) * 30
+  stroke x, y, x + 2, y - 2
+}
+
+# ---- the sandy clearing --------------------------------------------------------------------
+shape([[0, 88], [10, 84], [30, 82], [60, 80], [90, 79], [114, 80], [126, 86], [140, 92],
+       [159, 98], [159, 167], [0, 167]], yellow, null)
+
+# cast shadows on the sand
+shape([[8, 94], [20, 88], [40, 86], [62, 88], [66, 96], [50, 100], [24, 100]], brown, null)
+shape([[30, 128], [44, 120], [60, 114], [76, 112], [80, 118], [64, 122], [50, 128], [38, 132]], brown, null)
+shape([[66, 98], [74, 96], [80, 104], [78, 118], [70, 120], [64, 112]], brown, null)
+shape([[100, 132], [112, 128], [128, 130], [126, 138], [108, 138]], brown, null)
+shape([[110, 106], [126, 104], [150, 106], [154, 116], [130, 116]], brown, null)
+shape([[36, 167], [44, 156], [60, 150], [84, 148], [96, 156], [92, 167]], brown, null)
+color brown
+line 6, 104, 20, 102
+line 86, 140, 100, 142
+line 94, 92, 104, 96
+
+# ---- the left heap ------------------------------------------------------------------------
+heap(36, 89, 20, 7, 16, 5, [blue, lightblue, blue, cyan, magenta, green], blue)
+
+# ---- the winding trail of stacks (centre) --------------------------------------------------
+# tall red-and-purple tower at the back
+for i in 0..9 {
+  slab(78 + floor(noise(51, i) * 3) - 1, 78 - i * 3, 6, i < 3 ? red : (i % 2 == 0 ? magenta : lightred), i % 2)
+}
+stack 74, 86, 3, 9, 61
+stack 70, 92, 2, 10, 63
+stack 68, 98, 2, 9, 65
+stack 70, 104, 2, 10, 67
+stack 74, 110, 3, 9, 69
+stack 72, 118, 4, 10, 71
+
+# ---- book house and book stair (centre right) ---------------------------------------------
+stack 114, 54, 5, 7, 81
+color lightred
+rect 103, 60, 110, 74
+color white
+rect 105, 63, 108, 71
+color red
+line 106, 63, 106, 71
+color black
+outline [[103, 60], [110, 60], [110, 74], [103, 74]]
+shape([[100, 61], [106, 54], [113, 61]], magenta)
+color lightmagenta
+line 102, 60, 106, 56
+# the stair of yellow books
+for i in 0..9 {
+  slab(116 + i * 1.2 + floor(noise(91, i) * 2), 76 - i * 3.5, 9, i % 3 == 0 ? brown : yellow, i % 2)
+}
+# book ladder leaning down to the clearing
+shape(band([[110, 72], [118, 76], [124, 82]], 6, 5), yellow)
+color brown
+for i in 0..4 { line 112 + i * 3, 71 + i * 2, 111 + i * 3, 75 + i * 2 }
+stack 118, 92, 3, 9, 95
+stack 114, 100, 2, 10, 97
+heap(94, 96, 8, 4, 6, 15)
+heap(112, 104, 6, 3, 4, 17)
+
+# ---- the right heap ------------------------------------------------------------------------
+heap(140, 95, 16, 10, 20, 21)
+
+# ---- the bookworm arch ---------------------------------------------------------------------
+let spines = [red, white, magenta, green, red, white, lightred, magenta, white, green]
+for i in 0..26 {
+  let x = 125 + i
+  let top = 113 - sin(i / 26 * 180) * 2
+  color spines[i % len(spines)]
+  line x, top, x, top + 9
+}
+color black
+stroke arc(138, 118, 14, 6, 270, 450)
+line 125, 113, 125, 122
+color red
+rect 134, 118, 140, 130
+color black
+outline [[134, 118], [140, 118], [140, 130], [134, 130]]
+ellipse 136, 130, 2, 2
+
+# ---- the small pile on the sand ------------------------------------------------------------
+slab(104, 128, 16, red, 0)
+slab(106, 125, 12, darkgrey, 1)
+slab(108, 122, 10, cyan, 0)
+slab(110, 119, 8, green, 1)
+
+# ---- the near stack with the open book -----------------------------------------------------
+shape([[50, 167], [54, 156], [58, 142], [66, 138], [76, 142], [82, 154], [88, 167]], blue)
+for i in 0..9 {
+  let c = [red, green, blue, brown, red, darkgrey, green, magenta, blue][i]
+  slab(56 + floor(noise(101, i) * 4), 164 - i * 3, 22 - floor(noise(102, i) * 6), c, i % 2)
+}
+# the open book on top: two white pages with a black gutter, red cover beneath
+shape([[58, 132], [66, 128], [75, 132], [74, 138], [66, 136], [59, 139]], red)
+shape([[60, 130], [66, 127], [67, 134], [61, 137]], white)
+shape([[66, 127], [73, 130], [72, 136], [67, 134]], white)
+color lightgrey
+line 61, 132, 64, 130
+line 61, 134, 64, 132
+line 68, 130, 71, 132
+line 68, 132, 71, 134
+
+# ---- the pale rock and its bonsai (left) ---------------------------------------------------
+shape([[0, 104], [6, 106], [12, 116], [16, 130], [18, 146], [14, 158], [8, 162], [0, 164]], lightcyan)
+color cyan
+line 4, 112, 8, 124, 6, 136
+line 10, 130, 12, 144, 8, 154
+line 2, 140, 4, 150
+shape(band([[8, 162], [12, 146], [16, 132], [20, 122], [22, 110]], 6, 3), brown)
+shape(band([[18, 126], [24, 120], [30, 116]], 3, 2), brown)
+shape(band([[14, 136], [8, 130], [2, 128]], 3, 2), brown)
+blobs([[22, 106, 4, 2], [19, 108, 3, 2], [12, 112, 3, 2], [30, 114, 4, 2]], green, seed: 17)
+blobs([[4, 126, 3, 2], [6, 140, 3, 2]], green, seed: 19)
+color lightgreen
+line 20, 105, 24, 104
+line 28, 113, 32, 112
+line 10, 111, 13, 110
+
+# ---- the spider web ------------------------------------------------------------------------
+color white
+let wc = [34, 141]
+for a in range(0, 360, 36) {
+  stroke wc[0], wc[1], wc[0] + sin(a) * 16, wc[1] - cos(a) * 24
+}
+for r in [0.35, 0.65, 0.95] {
+  stroke arc(wc[0], wc[1], 16 * r, 24 * r, 0, 360, 36)
+}
+
+# ---- the pink book (bottom left) -----------------------------------------------------------
+shape([[13, 167], [14, 158], [21, 158], [22, 167]], lightmagenta)
+
+# ---- foreground grass and the big lavender book --------------------------------------------
+shape([[86, 167], [92, 158], [104, 152], [118, 146], [134, 140], [146, 130], [152, 118],
+       [159, 104], [159, 167]], green)
+color lightgreen
+for i in 0..18 {
+  let x = 92 + noise(111, i) * 66
+  let y = max(interp([[86, 167], [104, 152], [134, 140], [152, 118], [159, 104]], x) + 4, 0) + noise(112, i) * 10
+  stroke x, y, x + 1, y - 3
+}
+color red
+rect 88, 160, 100, 167
+rect 118, 158, 128, 167
+color black
+outline [[88, 160], [100, 160], [100, 168], [88, 168]]
+outline [[118, 158], [128, 158], [128, 168], [118, 168]]
+shape([[130, 167], [132, 150], [148, 139], [159, 142], [159, 167]], magenta)
+shape([[132, 150], [148, 139], [159, 142], [159, 146], [146, 152], [134, 156]], lightmagenta)
+color blue
+line 134, 157, 146, 153, 159, 147
+
+frame()

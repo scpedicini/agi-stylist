@@ -1,0 +1,258 @@
+# The Stair to the Gear
+# Source: Myst (1993) render, reference/myst/r16-c11.png; reframed with:
+#   pnpm grid reference/myst/r16-c11.png --crop 0,0,544,333 --name myst-r16-c11
+# Method: translated by eye. Kept: the pale sky, the dark rock framing the left edge, the
+#   orange-brown hill with its lit cliff and moss, the granite gear and its block housing on the
+#   summit, the summit and spiral railings (rope and wood with brass collars), the concrete
+#   spiral walkway and its curved walls, the dark stairwell sweeping down at lower left with lit
+#   treads and two wall lamps, the marker-switch box, the black rock at its foot, the far rocky
+#   ridges and the sea at lower right. Dropped: rock textures, most railing posts, the gear's
+#   housing details, the switch's knurling. Moved: nothing.
+# Colours: sky → lightcyan, framing rock → darkgrey with black creases, hill → brown with yellow
+#   lit faces, red shadow folds and green moss, gear → lightgrey/darkgrey with black grooves,
+#   concrete → lightgrey lit / darkgrey shade / white edges, deep shadow → black, rails and box
+#   → brown with yellow highlights and studs, switch → blue, sea → cyan with blue ripples.
+scene "The Stair to the Gear"
+variants day
+
+# ---- sky ----
+# Painted first, so everything else stands on it, but held back with delay: over the original
+# the viewer paints it last, filling in behind what's already there, after the sea.
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 167
+}
+
+# ---- sea (lower right, seen past the ridges) ----
+delay {
+  color cyan
+  rect 118, 126, 159, 167
+}
+color blue
+for r in [[146, 140, 3], [154, 143, 2], [138, 147, 3], [150, 149, 4], [130, 154, 3], [143, 156, 4], [155, 158, 3], [134, 162, 4], [148, 164, 4]] {
+  stroke r[0], r[1], r[0] + r[2], r[1]
+}
+
+# ---- far rocky ridges at right ----
+let ridge = [[116, 86], [124, 84], [130, 82], [134, 84], [140, 83], [145, 82], [150, 86],
+  [154, 84], [159, 87], [159, 134], [148, 136], [138, 139], [128, 144], [116, 152]]
+shape(ridge, brown)
+# lit ridges running down to the left
+color yellow
+stroke [[130, 83], [127, 92], [125, 102]]
+stroke [[145, 83], [141, 94], [137, 104], [134, 116]]
+stroke [[154, 85], [151, 96], [149, 108]]
+# shadow folds
+shape([[134, 86], [138, 96], [140, 112], [142, 128], [138, 138], [134, 120], [132, 100]], black, null)
+shape([[151, 88], [155, 100], [157, 116], [157, 132], [155, 134], [154, 112]], red, null)
+shape([[124, 96], [128, 110], [130, 130], [126, 144], [122, 128]], black, null)
+
+# ---- dark rock framing the left edge ----
+let leftrock = [[-1, 4], [3, 8], [6, 14], [8, 22], [12, 26], [15, 32], [18, 40], [19, 48],
+  [20, 55], [23, 57], [25, 63], [27, 72], [22, 80], [10, 86], [-1, 88]]
+shape(leftrock, darkgrey)
+color black
+stroke [[4, 12], [6, 30], [9, 46], [8, 62], [12, 80]]
+stroke [[13, 30], [14, 44], [17, 56], [18, 70]]
+
+# ---- the gear and its housing on the summit (behind the hill top) ----
+fn gear(cx, cy, rx, ry) {
+  let pts = []
+  for i in 0..72 {
+    let a = i * 5
+    let k = ((a + 10) % 36 < 20) ? 1.0 : 0.8
+    push(pts, [cx + sin(a) * rx * k, cy - cos(a) * ry * k])
+  }
+  return pts
+}
+let gc = [72, 36]
+shape(gear(gc[0], gc[1], 15, 34), lightgrey)
+color darkgrey
+stroke arc(gc[0], gc[1], 10, 22, 280, 440)
+color black
+stroke arc(gc[0], gc[1], 9, 19, 280, 440)
+stroke arc(gc[0], gc[1], 5, 11, 280, 440)
+color darkgrey
+stroke arc(gc[0], gc[1], 4, 9, 280, 440)
+# the granite housing beside it
+shape([[84, 22], [90, 19], [97, 19], [100, 22], [104, 26], [106, 38], [84, 38]], darkgrey)
+color lightgrey
+stroke [[85, 22], [90, 20], [97, 20], [100, 23]]
+color black
+stroke 93, 22, 93, 36
+stroke 100, 24, 100, 36
+
+# ---- the hill ----
+let hill = [[8, 86], [18, 76], [26, 70], [29, 62], [31, 50], [33, 40], [37, 32], [44, 29],
+  [52, 30], [58, 33], [66, 35], [78, 36], [88, 36], [96, 36], [102, 36], [112, 36], [120, 38], [122, 46],
+  [125, 58], [128, 70], [131, 80], [134, 88], [132, 104], [128, 124], [120, 144], [100, 152],
+  [70, 150], [30, 110], [8, 96]]
+shape(hill, brown)
+# moss on the cap
+shape([[37, 33], [44, 30], [52, 31], [56, 34], [50, 38], [44, 40], [38, 41]], green, null)
+shape([[98, 36], [104, 37], [104, 41], [99, 42]], green, null)
+# lit planes on the cliff face: tapering slivers, each with a crevice on its shadow side
+fn facet(path, w) {
+  shape(band(path, w, 1), yellow, null)
+  color black
+  stroke shift(path, 2, 0)
+}
+facet([[103, 38], [104, 52], [102, 70]], 5)
+facet([[110, 38], [111, 50], [109, 66], [107, 84]], 6)
+facet([[106, 72], [105, 82]], 3)
+facet([[34, 42], [32, 52], [30, 62]], 4)
+# shadow folds on the cliff
+shape([[117, 40], [120, 40], [122, 52], [123, 64], [125, 78], [121, 88], [120, 72], [118, 56]], red, null)
+color black
+stroke [[116, 42], [117, 58], [119, 74], [120, 88]]
+stroke [[113, 62], [114, 78], [113, 94]]
+
+# ---- summit railings ----
+color brown
+stroke [[42, 27], [46, 23], [52, 20], [62, 19], [74, 20], [76, 24]]
+stroke [[86, 21], [94, 23], [101, 25], [104, 30], [106, 34]]
+color yellow
+stroke [[47, 22], [52, 19], [62, 18], [72, 19]]
+stroke [[88, 20], [95, 22]]
+color brown
+for p in [[42, 27], [53, 21], [74, 21], [76, 24], [86, 22], [101, 26]] {
+  stroke p[0], p[1], p[0], p[1] + 8
+}
+
+# ---- upper spiral walkway ----
+# the curved wall turning behind the hill
+shape([[84, 36], [92, 36], [100, 40], [100, 64], [94, 76], [88, 70], [86, 52]], black)
+shape([[86, 40], [92, 40], [96, 46], [94, 60], [88, 62]], darkgrey, null)
+shape([[33, 43], [57, 41], [67, 39], [77, 36], [86, 33], [94, 30], [96, 42], [80, 50], [57, 54], [32, 55]], darkgrey)
+shape([[33, 43], [57, 41], [57, 54], [33, 55]], lightgrey)
+shape([[34, 43], [56, 41], [56, 43], [34, 45]], white, null)
+color black
+stroke [[57, 42], [57, 54]]
+stroke [[34, 55], [57, 54], [80, 50], [96, 43]]
+# rope railing along it
+let rope = [[57, 41], [67, 38], [77, 35], [86, 31], [91, 27], [93, 23]]
+color brown
+stroke rope
+stroke shift(rope, 0, 1)
+color black
+for p in along(rope, 4) { stroke p[0], p[1], p[0] - 1, p[1] + 1 }
+color brown
+stroke 58, 42, 58, 52
+stroke 79, 35, 79, 48
+
+# ---- middle tier: big curved wall and its shadow ----
+shape([[31, 56], [57, 55], [80, 51], [97, 44], [100, 56], [98, 66], [60, 74], [32, 78]], darkgrey)
+color lightgrey
+stroke [[32, 56], [57, 55]]
+shape([[58, 56], [80, 52], [97, 45], [98, 49], [80, 56], [60, 59]], lightgrey, null)
+color black
+stroke [[60, 74], [80, 69], [98, 66]]
+shape([[30, 76], [60, 72], [88, 66], [96, 74], [98, 96], [90, 110], [60, 100], [30, 88]], black)
+# dim lit hill facets in the shadow
+shape(band([[90, 74], [93, 90]], 3, 1), red, null)
+
+# ---- lower wooden railing with brass collars ----
+let rail = [[17, 71], [30, 75], [44, 81], [58, 87], [70, 93], [80, 99], [86, 103]]
+for p in [[28, 75], [46, 82], [66, 91]] {
+  color brown
+  rect p[0], p[1], p[0] + 1, p[1] + 14
+  color black
+  stroke p[0] + 2, p[1] + 2, p[0] + 2, p[1] + 14
+}
+shape(band(rail, 7, 6), brown)
+color yellow
+stroke offset(rail, -2)
+color red
+stroke offset(rail, 2)
+for p in [[28, 75], [46, 82], [66, 91]] {
+  color lightgrey
+  rect p[0], p[1] - 2, p[0] + 2, p[1] + 2
+  color black
+  stroke p[0] + 3, p[1] - 2, p[0] + 3, p[1] + 2
+}
+
+# ---- the dark stairwell, lower left ----
+shape([[-1, 86], [22, 88], [56, 94], [74, 104], [96, 112], [98, 167], [-1, 167]], black, null)
+# outer curved wall of the stairwell, lit lower down
+let wall_out = [[22, 88], [40, 90], [54, 92], [64, 97], [71, 105], [74, 116], [75, 130], [75, 157]]
+let wall_in = [[30, 96], [44, 98], [54, 100], [61, 106], [66, 114], [69, 126], [69, 152]]
+shape(wall_out + reverse(wall_in), lightgrey, null)
+shape(slice(wall_out, 0, 4) + reverse(slice(wall_in, 0, 4)), darkgrey, null)
+color white
+stroke slice(wall_out, 4)
+color lightgrey
+stroke slice(wall_out, 0, 5)
+# treads stepping down round the well: dim faces, lit lips, black risers
+fn tread(pts, lip) {
+  shape(pts, darkgrey, null)
+  color lightgrey
+  stroke lip
+  color black
+  stroke shift(lip, 0, 1)
+}
+tread([[24, 97], [36, 99], [38, 103], [28, 103]], [[28, 103], [38, 103]])
+tread([[34, 108], [52, 106], [58, 112], [42, 114]], [[42, 114], [58, 112]])
+tread([[36, 119], [60, 116], [64, 122], [42, 125]], [[42, 125], [64, 122]])
+tread([[34, 130], [64, 127], [67, 133], [40, 136]], [[40, 136], [67, 133]])
+tread([[34, 141], [66, 138], [68, 144], [38, 146]], [[38, 146], [68, 144]])
+shape([[33, 149], [69, 147], [75, 157], [33, 157]], lightgrey, null)
+color white
+stroke 44, 154, 74, 155
+color darkgrey
+stroke 34, 150, 60, 148
+# wall lamps
+color yellow
+rect 32, 98, 33, 99
+rect 54, 102, 55, 103
+color white
+stroke 32, 100, 33, 100
+stroke 54, 104, 55, 104
+# the near landing at upper left and the near wall's dark face
+shape([[-1, 82], [16, 86], [32, 95], [32, 99], [16, 91], [-1, 87]], darkgrey, null)
+color lightgrey
+stroke [[0, 82], [16, 86], [32, 95]]
+color black
+stroke 32, 99, 32, 167
+
+# ---- marker-switch box ----
+shape([[106, 95], [116, 113], [98, 113]], darkgrey)
+color lightgrey
+stroke [[106, 96], [99, 112]]
+# the switch: a blue drum with brass rings
+color blue
+rect 103, 101, 111, 104
+color lightblue
+stroke 104, 102, 110, 102
+color yellow
+stroke 104, 99, 104, 101
+stroke 107, 99, 107, 101
+stroke 110, 99, 110, 101
+color black
+stroke 102, 106, 112, 106
+shape([[98, 113], [116, 113], [117, 118], [97, 118]], darkgrey)
+# studded brass frame and wooden panel
+shape([[97, 118], [117, 118], [117, 152], [97, 152]], yellow)
+shape([[100, 122], [114, 122], [114, 149], [100, 149]], brown)
+color black
+for x in [103, 107, 111] { stroke x, 123, x, 148 }
+outline 100, 122, 114, 122, 114, 149, 100, 149
+color brown
+for y in range(120, 152, 3) {
+  stroke 98, y, 98, y
+  stroke 116, y, 116, y
+}
+for x in range(101, 115, 3) {
+  stroke x, 119, x, 119
+  stroke x, 151, x, 151
+}
+# granite base
+shape([[96, 152], [118, 152], [119, 167], [95, 167]], darkgrey)
+color lightgrey
+for p in [[98, 155], [104, 158], [110, 154], [115, 160], [100, 163], [108, 164]] { stroke p[0], p[1], p[0], p[1] }
+
+# ---- black rock at the box's foot ----
+shape([[118, 150], [124, 146], [134, 146], [141, 150], [142, 167], [118, 167]], black)
+color darkgrey
+stroke [[119, 150], [124, 147], [134, 147], [140, 151]]
+
+frame()

@@ -1,0 +1,153 @@
+# Crumbling Plaster Room
+# Source: King's Quest VI (VGA) - reference/kq6/r07-c10.png; reframed with:
+#   pnpm grid reference/kq6/r07-c10.png --name kq6-r07-c10
+# Method: translated by eye. Kept: yellow plaster walls, the dark timber frame (two posts,
+#   lintel, ceiling beam ends), the cracked plaster with brick showing through on the right
+#   wall, beside the right post and beside the left post, the plank floor with its skirting
+#   boards, and the grey stone steps in the foreground. Dropped: plaster mottling, wood grain,
+#   the faint stain on the back wall, most of the hairline cracks.
+# Colours: ochre plaster → yellow, dark timber → red with brown lit faces and black edges,
+#   ceiling → brown, orange plank floor → brown with black/red seams, blue-grey brick →
+#   lightgrey with darkgrey mortar, slate steps → lightgrey tops and darkgrey fronts.
+scene "Crumbling Plaster Room"
+variants lit
+
+# ---- plaster walls ------------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color yellow
+  rect 0, 0, 159, 167
+}
+
+# ---- brick showing through the plaster ---------------------------------------------------
+# right side wall: bricks in a box, then plaster painted back over everything outside the hole
+color lightgrey
+rect 114, 50, 159, 134
+stones(114, 50, 159, 134, 5, 7, darkgrey)
+let rhole = [[159, 56], [152, 64], [146, 69], [139, 72], [132, 78], [126, 81], [121, 85],
+             [119, 92], [120, 100], [120, 108], [124, 113], [129, 117], [132, 125],
+             [135, 119], [139, 117], [143, 122], [146, 128], [149, 121], [153, 118],
+             [156, 122], [158, 130], [159, 131]]
+shape([[114, 49], [159, 49]] + rhole + [[159, 135], [114, 135]], yellow, null)
+color black
+stroke rhole
+color brown
+stroke shift(slice(rhole, 0, 8), -1, -1)
+
+# back wall, beside the right post
+color lightgrey
+rect 82, 84, 101, 115
+stones(82, 84, 101, 115, 5, 7, darkgrey)
+let bhole = [[101, 86], [97, 89], [94, 91], [92, 96], [89, 100], [87, 105], [85, 110],
+             [84, 114]]
+shape([[81, 83], [101, 83]] + bhole + [[81, 115]], yellow, null)
+color black
+stroke bhole
+color brown
+stroke shift(slice(bhole, 0, 5), -1, 0)
+
+# left side wall, a sliver beside the left post
+shape([[31, 92], [29, 98], [28, 105], [27, 112], [28, 117], [31, 118]], lightgrey)
+color darkgrey
+line 28, 102, 31, 102
+line 28, 108, 31, 108
+line 28, 114, 31, 114
+
+# ---- cracks in the plaster ----------------------------------------------------------------
+color black
+line 0, 24, 3, 14, 8, 8, 12, 0
+line 3, 14, 0, 12
+line 42, 41, 44, 33, 46, 27, 50, 22, 56, 23, 60, 22, 66, 26, 70, 31
+line 50, 22, 53, 17
+line 60, 22, 64, 17, 68, 16
+line 74, 90, 80, 88, 85, 91, 89, 94
+line 80, 88, 82, 85
+line 30, 100, 28, 106, 25, 112, 23, 117, 20, 123, 17, 129
+line 25, 112, 21, 113
+line 141, 38, 140, 45, 138, 52, 137, 60, 134, 67, 131, 72, 131, 77
+line 137, 60, 140, 63
+
+# ---- ceiling and the timber frame ---------------------------------------------------------
+# ceiling strip above the lintel, with two beam ends
+shape([[27, 0], [118, 0], [109, 7], [36, 7]], brown)
+shape([[52, 0], [60, 0], [60, 6], [52, 6]], red)
+shape([[86, 0], [94, 0], [94, 6], [86, 6]], red)
+
+# lintel across the back of the room
+shape([[36, 6], [107, 6], [107, 15], [36, 15]], red)
+color brown
+line 37, 7, 106, 7
+color black
+line 42, 14, 101, 14
+
+# shadow cast on the back wall under the lintel
+color brown
+line 42, 16, 100, 16
+line 42, 16, 42, 112
+
+# left post: lit side face on the left, front face in shade
+shape([[29, 0], [41, 9], [41, 122], [31, 122], [31, 2]], red)
+shape([[30, 2], [34, 5], [34, 121], [31, 121]], brown, null)
+color black
+line 34, 6, 34, 120
+line 41, 15, 41, 115
+
+# right post: front face in shade, lit side face on the right
+shape([[118, 0], [111, 6], [111, 119], [101, 119], [101, 9], [107, 6]], red)
+shape([[108, 9], [110, 7], [110, 118], [108, 118]], brown, null)
+color black
+line 108, 9, 108, 117
+line 101, 15, 101, 114
+
+# ---- plank floor --------------------------------------------------------------------------
+shape([[0, 142], [36, 121], [107, 121], [145, 142], [159, 142], [159, 167], [0, 167]],
+      brown, null)
+# seams: rows spaced wider towards the viewer, alternating black and red
+let seams = [125, 129, 134, 140, 147, 155, 164]
+for i in 0..len(seams) {
+  let y = seams[i]
+  let k = min((y - 121) / 21, 1)
+  color i % 2 == 0 ? black : red
+  stroke [[36 - 36 * k + 2, y], [107 + 38 * k - 2, y]]
+}
+# staggered board ends
+color black
+for t in [[60, 121, 125], [88, 125, 129], [48, 129, 134], [72, 134, 140], [104, 134, 140],
+          [36, 140, 147], [92, 140, 147], [64, 147, 155], [120, 147, 155], [84, 155, 164]] {
+  line t[0], t[1] + 1, t[0] - 1, t[2] - 1
+}
+
+# skirting boards: along the back wall and down each side wall
+shape([[36, 115], [107, 115], [107, 121], [36, 121]], red)
+shape([[31, 117], [41, 117], [16, 146], [8, 142]], red)
+shape([[101, 115], [112, 117], [146, 140], [140, 144]], red)
+color brown
+line 32, 118, 10, 142
+line 112, 118, 144, 139
+
+# ---- stone steps in the foreground --------------------------------------------------------
+fn slab(top, front) {
+  shape(front, darkgrey)
+  shape(top, lightgrey)
+}
+# left
+slab([[0, 136], [11, 136], [14, 141], [0, 143]], [[0, 143], [14, 141], [14, 147], [0, 148]])
+slab([[0, 147], [26, 146], [29, 151], [0, 153]], [[0, 153], [29, 151], [29, 167], [0, 167]])
+slab([[27, 154], [43, 154], [44, 158], [28, 158]], [[28, 158], [44, 158], [44, 167], [28, 167]])
+slab([[46, 152], [75, 152], [77, 156], [46, 156]], [[46, 156], [77, 156], [77, 167], [46, 167]])
+# right
+slab([[142, 131], [159, 131], [159, 136], [138, 137]], [[138, 137], [159, 136], [159, 142], [138, 142]])
+slab([[126, 142], [159, 142], [159, 147], [122, 149]], [[122, 149], [159, 147], [159, 167], [122, 167]])
+slab([[108, 155], [130, 155], [132, 158], [108, 158]], [[108, 158], [132, 158], [132, 167], [108, 167]])
+# worn edges and cracks on the slabs
+color darkgrey
+line 5, 149, 12, 150
+line 60, 153, 66, 154
+line 140, 144, 148, 145
+line 116, 156, 121, 157
+color black
+line 14, 158, 18, 163
+line 140, 152, 143, 158
+
+frame()

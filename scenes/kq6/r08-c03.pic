@@ -1,0 +1,210 @@
+# Castle Domed Gallery
+# Source: King's Quest VI VGA background, reference/kq6/r08-c03.png
+#   (a vaulted gallery in the Castle of the Crown seen through a dark near arch); reframed with:
+#   pnpm grid reference/kq6/r08-c03.png --name kq6-r08-c03
+# Method: translated by eye. Kept: the dark near arch with its black soffit, both piers with
+#   their cornices, the recessed panel and lit baseboards, the shuttered niche and the two bells
+#   top left, the lit domed bay with its ring and two slate pendentives, the second arch on
+#   white pilasters, the far bay with its little dome, pendentives and end wall, the arched
+#   stair doorway on the left bay wall, the violet door and two stained-glass lancets on the
+#   right bay wall, the lit floor and the shaded near floor with its step line.
+# Dropped: the green mottling of the stone, the pendentive scrollwork, the stair treads'
+#   detail, the far end wall's faint panels, the floor speckle and reflections.
+# Colours: dark olive stone -> darkgrey with black shadow lines and lightgrey lit edges, near
+#   arch soffit -> black, pale mint walls -> lightgrey with white pilasters, rims and dome,
+#   slate pendentives -> blue with lightcyan scrolls, violet door -> blue with black lines,
+#   lit floor -> white, shaded near floor -> lightgrey with darkgrey joints, shutters -> brown,
+#   bells -> lightgrey/darkgrey, stained glass -> red / yellow / lightblue.
+scene "Castle Domed Gallery"
+variants lit
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn glass(x, y1, y2, w = 2) {
+  # a narrow stained-glass lancet: black lead frame, bands of red, yellow and lightblue
+  shape([[x, y1 + 1], [x + 1, y1], [x + w, y1 + 1], [x + w, y2], [x, y2]], black)
+  let cols = [red, yellow, lightblue, red]
+  let h = (y2 - y1 - 2) / 4
+  for i in 0..4 {
+    color cols[i]
+    let ya = y1 + 2 + i * h
+    for xx in range(x + 1, x + w) { line xx, ya, xx, ya + h - 1 }
+  }
+}
+
+fn bell(cx, top, bot) {
+  # a small hanging bell: knob, flared body, darker right side
+  shape([[cx - 1, top + 2], [cx + 1, top + 2], [cx + 2, top + 4], [cx + 2, bot - 3],
+    [cx + 3, bot], [cx - 3, bot], [cx - 2, bot - 3], [cx - 2, top + 4]], lightgrey)
+  color darkgrey
+  line cx + 1, top + 4, cx + 1, bot - 3, cx + 2, bot - 1
+  color lightgrey
+  line cx, top, cx, top + 2
+}
+
+# ---- backdrop: the pale bay walls --------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightgrey
+  rect 0, 0, 159, 167
+}
+
+# ---- far bay, seen through the second arch ---------------------------------------------------
+# its little dome
+shape(arc(100, 70, 16, 16, 270, 450, 10), white, null)
+color darkgrey
+stroke arc(100, 70, 14, 12, 280, 440, 10)
+# small pendentives
+shape([[86, 61], [93, 63], [89, 70]], blue)
+shape([[107, 63], [114, 61], [111, 70]], blue)
+# end wall with a rail and a base line, side wall corners
+shape([[86, 70], [114, 70], [114, 98], [86, 98]], lightgrey, null)
+color white
+line 87, 79, 113, 79
+color darkgrey
+line 87, 80, 113, 80
+line 86, 98, 114, 98
+line 86, 70, 86, 98
+line 114, 70, 114, 98
+# far floor, with the shadow under the second arch in front of it
+shape([[86, 99], [114, 99], [119, 105], [81, 105]], white, null)
+shape([[76, 105], [124, 105], [127, 109], [73, 109]], lightgrey, null)
+
+# ---- first (domed) bay -------------------------------------------------------------------------
+# lit walls high up, either side of the dome
+shape([[60, 30], [78, 40], [78, 72], [60, 66]], white, null)
+shape([[122, 40], [140, 30], [140, 64], [122, 72]], white, null)
+# the dome: white ceiling, lightgrey cap, white ring with a shade line under it
+shape(arc(100, 62, 40, 52, 270, 450, 10), white, null)
+shape(arc(100, 14, 31, 13, 0, 360, 15), lightgrey, null)
+color lightgrey
+stroke arc(100, 21, 37, 13, 240, 480, 10)
+color darkgrey
+stroke arc(100, 16, 31, 13, 255, 465, 15)
+
+# pendentives: slate triangles with a pale scroll
+shape([[70, 30], [88, 37], [77, 54]], blue)
+shape([[112, 37], [130, 30], [123, 54]], blue)
+color lightcyan
+stroke arc(79, 38, 3, 4, 0, 300, 30)
+stroke arc(121, 38, 3, 4, 60, 360, 30)
+line 78, 44, 78, 49
+line 122, 44, 122, 49
+
+# bay cornices, aimed back along the walls
+color darkgrey
+line 60, 68, 76, 74
+line 124, 74, 140, 67
+color white
+line 60, 66, 76, 72
+line 124, 72, 140, 65
+
+# second arch: white rim, darkgrey soffit band; its legs are the white pilasters
+let arch2 = [[78, 106]] + arc(100, 72, 22, 28, 270, 450, 10) + [[122, 106]]
+shape(band(arch2, 12), white)
+shape(band(offset(arch2, 3), 6), darkgrey, black)
+
+# arched stair doorway on the left bay wall, in a white stone frame
+shape(archway(66, 78, 5, 5, 119), white)
+shape(archway(66, 81, 3, 3, 116), darkgrey)
+color black
+line 63, 104, 69, 112
+line 63, 100, 69, 107
+color lightgrey
+line 63, 105, 68, 111
+color darkgrey
+stroke arc(66, 83, 5, 5, 270, 450, 30)
+
+# violet door on the right bay wall, and two stained-glass lancets high up
+shape([[127, 82], [131, 81], [131, 114], [127, 110]], blue)
+color black
+line 129, 83, 129, 111
+glass 129, 41, 58
+glass 133, 39, 57
+
+# ---- floor -------------------------------------------------------------------------------------
+# lit floor of the bay
+shape([[60, 121], [73, 109], [127, 109], [140, 118], [150, 132], [50, 134]], white, null)
+color lightgrey
+line 66, 116, 134, 116
+# shaded near floor: a few darkgrey streaks where the light fades, the step line
+color darkgrey
+line 70, 137, 82, 137
+line 112, 138, 128, 138
+line 56, 142, 66, 142
+line 90, 141, 104, 141
+line 132, 143, 146, 143
+line 40, 151, 159, 151
+line 30, 158, 159, 158
+line 40, 151, 24, 167
+
+# ---- the near frame: piers and the big arch ----------------------------------------------------
+let opening = arc(100, 60, 40, 52, 270, 450, 10) + [[140, 118], [170, 156], [170, 175],
+  [-10, 175], [-10, 150], [40, 150], [60, 124]]
+surround(opening, darkgrey)
+
+# arch soffit: a black band between the opening and the arch's front face
+let inner = arc(100, 60, 40, 52, 270, 450, 10)
+let outer = arc(100, 60, 57, 66, 270, 450, 10)
+shape(outer + reverse(inner), black, null)
+color darkgrey
+stroke arc(100, 60, 49, 59, 275, 445, 10)
+# lit rim of the arch's front face
+color lightgrey
+stroke arc(100, 60, 58, 67, 270, 360, 10)
+
+# pier feet: a black line where each pier meets the floor
+color black
+stroke [[-1, 150], [40, 150], [60, 124]]
+stroke [[140, 118], [160, 148]]
+
+# left pier: side face below the springing, its lit corner and the dark reveal line
+shape([[43, 60], [60, 60], [60, 124], [40, 150]], darkgrey, null)
+color lightgrey
+line 40, 58, 40, 149
+color black
+line 55, 66, 55, 124
+color lightgrey
+line 44, 134, 55, 123
+# left pier cornice: across the front face, then back along the side face
+shape([[0, 48], [40, 48], [60, 60], [60, 68], [40, 57], [0, 57]], darkgrey, null)
+color white
+line 0, 48, 40, 48, 60, 60
+color lightgrey
+line 0, 49, 40, 49, 60, 61
+color black
+line 0, 57, 40, 57, 60, 68
+# recessed panel on the front face
+color black
+line 26, 60, 26, 140
+color lightgrey
+line 0, 141, 26, 141
+line 27, 61, 27, 139
+
+# niche top left: arched window with a brown shutter, sill, and the two bells
+shape(archway(18, -2, 10, 8, 30), lightgrey)
+shape(archway(18, 1, 7, 6, 28), black)
+shape([[12, 6], [15, 3], [18, 2], [18, 28], [12, 28]], brown)
+color black
+line 15, 5, 15, 27
+line 12, 15, 18, 15
+shape([[9, 29], [28, 29], [28, 31], [9, 31]], lightgrey)
+shape([[10, 32], [27, 32], [27, 46], [10, 46]], black)
+bell 14, 33, 45
+bell 22, 33, 45
+shape([[8, 46], [29, 46], [29, 47], [8, 47]], lightgrey)
+
+# right pier: side face, lit corner, cornice slab, baseboard
+shape([[140, 60], [157, 60], [159, 147], [140, 118]], darkgrey, null)
+color black
+line 141, 66, 141, 118
+color lightgrey
+line 148, 58, 148, 128
+line 143, 119, 152, 129
+shape([[140, 60], [159, 49], [159, 58], [140, 68]], darkgrey, null)
+color white
+line 140, 60, 159, 49
+color black
+line 140, 68, 159, 58
+
+frame()

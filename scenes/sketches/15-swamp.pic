@@ -1,0 +1,276 @@
+# Misty Swamp at Dusk
+# Source: layout sketch tests/fixtures/sketches/holdout/15-swamp.png (hybrid: words plus brushstrokes);
+#   reframed with:
+#   pnpm grid tests/fixtures/sketches/holdout/15-swamp.png --crop 0,0,1024,768 --fit --name sketches-15-swamp
+# Brief: A misty swamp at dusk. The hut stands on stilts and has a lit lantern. Dead trees here
+#   and there.
+# Method: composed from a layout sketch. Labels: Hut on stilts → plank hut with a ragged thatch
+#   roof, a deck on four stilts, a ladder down to the boardwalk and a lit lantern hanging from
+#   the roof's left corner, filling the grey loop ~1 (x 74-108, y 50-86, label (92,68) inside,
+#   stilts' feet on the swamp at y 86); Swamp → the green fill ~2, dark marsh from the far shore
+#   (y 79-91) to the bottom, with reed clumps; Water (left) → pool on blue fill ~5 around
+#   (22,110); Water (right) → pool on blue fill ~7 around (114,122); Boardwalk → plank walkway on
+#   low posts along brown line ~3 from the foot of the hut's ladder (73,88) to the bottom edge
+#   (27,168), narrowing with distance; Stumps x4 → four broken stumps, one on each olive dab
+#   ~4 (119,96), ~6 (52,105), ~8 (19,144), ~9 (137.5,155), sized by depth.
+#   Geometry: green fill ~2 → swamp outline (its top edge is the far shore, y 91 at the left,
+#   stepping up to y 79 at x 37-41 and sloping to y 86 at the right); blue fills ~5, ~7 →
+#   pools; brown line ~3 → boardwalk's centre line; grey loop ~1 → the hut's extent (guide
+#   mark, not painted); olive dabs → stumps.
+# Stage: horizon y 66 (chosen; hidden behind the far swamp woods)
+# Interpreted: the empty top of the sketch is dusk sky (flat bands, yellow low to blue at the
+#   top) over a far line of blue swamp woods with dead spikes, whose foot is the swamp's top
+#   edge. Dusk → variant dusk: land dark (green marsh, blue far woods), pools blue with lightred
+#   sky glints and a few lily pads. Mist → edge-less lightgrey blobs in pieces along the far
+#   shore and the woods, round the stilts' feet, and a few wisps over the middle ground, kept
+#   off the stumps and the hut itself.
+#   "Dead trees here and there" (no positions) → three tall darkgrey bare trees placed clear of
+#   the sketched things: far left (9,97), left of the hut behind the stump on dab ~6 (58,95),
+#   and right (150,106). The lantern's light → a lightred halo round it, lit plank lines on
+#   the near end of the hut's wall, and a glow on the ground at the ladder's foot where the
+#   boardwalk ends; the hut's window is lit too (invented). "Stumps x4" sits by dab ~9 but the
+#   sketch has four olive dabs: one stump per dab. Brushstroke colours agree with the brief.
+scene "Misty Swamp at Dusk"
+variants dusk
+
+let hz = 66
+
+# ---------------------------------------------------------------- sky (dusk bands)
+color blue
+rect 0, 0, 159, 8
+color magenta
+rect 0, 9, 159, 19
+color red
+rect 0, 20, 159, 30
+color lightred
+rect 0, 31, 159, 43
+color yellow
+rect 0, 44, 159, 95
+
+# ---------------------------------------------------------------- far swamp woods
+# one mass of round far crowns across the back, foot down behind the far shore
+let far = []
+for i in 0..17 {
+  push(far, [i * 10 - 2, 66 + noise(3, i) * 5, 7 + noise(4, i) * 3, 9 + noise(5, i) * 4])
+  push(far, [i * 10 + 3, 80, 8, 10])
+}
+blobs(far, blue, black, 0.18, 4)
+# dead spikes sticking up out of the far woods
+color black
+for s in [[14, 58, 0], [47, 56, 1], [112, 57, -1], [137, 55, 1]] {
+  line s[0], 66, s[0] + s[2], s[1]
+  line s[0] + s[2], s[1] + 4, s[0] + s[2] + 2, s[1] + 2
+}
+
+# mist over the far woods
+blobs([[10, 72, 12, 3], [24, 70, 10, 2.5], [50, 69, 11, 3], [62, 71, 8, 2], [112, 71, 12, 3],
+       [126, 69, 10, 2.5], [152, 70, 10, 3]], lightgrey, null, 0.1, 2)
+
+# ---------------------------------------------------------------- the swamp (green fill ~2)
+let shore = [[-1, 90.5], [28, 90.5], [34, 89], [37, 84], [40, 79], [60, 80], [80, 81],
+             [100, 82.5], [130, 84], [157, 85.6], [161, 86]]
+shape(shore + [[161, 169], [-1, 169]], green)
+
+# murky patches and tussocks
+color darkgrey
+for m in [[60, 92, 8], [128, 104, 10], [70, 152, 8], [100, 160, 10], [140, 128, 6]] {
+  line m[0], m[1], m[0] + m[2], m[1]
+}
+color cyan
+for t in [[44, 96], [96, 96], [8, 128], [84, 134], [150, 116], [56, 160], [118, 150], [150, 162]] {
+  line t[0], t[1], t[0] - 1, t[1] - 2
+  line t[0] + 2, t[1], t[0] + 2, t[1] - 3
+  line t[0] + 4, t[1], t[0] + 5, t[1] - 2
+}
+
+# ---------------------------------------------------------------- pools (blue fills ~5, ~7)
+let pool_l = [[12, 100.5], [24, 102.5], [32.6, 106], [33.4, 109.3], [30.5, 113.6], [33.8, 116.9],
+              [33.7, 119.8], [22, 118.5], [12.1, 115.4], [11.6, 112.5], [16, 108], [11.3, 104]]
+let pool_r = [[112.4, 109.9], [127.4, 114.3], [127.4, 120.9], [130.7, 124.4], [129.1, 127.4],
+              [118.7, 129.6], [116.3, 135.5], [100.7, 131.6], [100.9, 125], [97.6, 121.3],
+              [98.5, 118.5], [110.5, 116.5]]
+shape(pool_l, blue)
+shape(pool_r, blue)
+# sky glints and ripples
+color lightred
+line 16, 104, 22, 104
+line 20, 113, 28, 113
+line 104, 122, 114, 122
+line 108, 130, 114, 130
+line 116, 113, 122, 113
+color lightblue
+line 24, 108, 29, 108
+line 15, 117, 20, 117
+line 118, 126, 125, 126
+line 102, 127, 106, 127
+# lily pads
+color lightgreen
+rect 26, 116, 28, 116
+rect 120, 118, 122, 118
+rect 110, 133, 112, 133
+
+# reeds at the pool edges
+reeds(31, 104, 8, 3, lightgreen, brown, 2)
+reeds(8, 119, 9, 2, lightgreen, brown, 5)
+reeds(126, 114, 8, 3, lightgreen, brown, 7)
+reeds(97, 133, 10, 3, lightgreen, brown, 3)
+
+# ---------------------------------------------------------------- the lantern's glow on the ground
+blobs([[75, 89, 9, 2.5]], lightred, null, 0.1, 1)
+blobs([[75, 89, 5, 1.5]], yellow, null, 0.1, 1)
+
+# ---------------------------------------------------------------- dead trees (far)
+baretree(9, 97, 1.1, 3, darkgrey, 0.55)
+baretree(58, 95, 0.8, 5, darkgrey, 0.55)
+
+# ---------------------------------------------------------------- the hut on stilts (grey loop ~1)
+# the lantern's halo, behind the hut (the wall and deck cut it off on the right and below)
+blobs([[76, 68, 4.5, 6.5]], lightred, null, 0.1, 1)
+# stilts and braces
+color darkgrey
+line 79, 79, 86, 85
+line 86, 79, 79, 85
+line 97, 79, 104, 85
+line 104, 79, 97, 85
+for sx in [78, 86, 96, 104] {
+  color brown
+  rect sx, 78, sx, 86
+  color black
+  rect sx + 1, 78, sx + 1, 86
+}
+# deck
+shape([[74, 75], [108, 75], [108, 77], [74, 77]], brown)
+color black
+line 74, 78, 108, 78
+# walls (vertical planks)
+shape([[79, 62], [104, 62], [104, 75], [79, 75]], brown)
+color black
+for x in range(88, 104, 3) { line x, 63, x, 74 }
+# the near end of the wall lit by the lantern
+color yellow
+for x in [82, 85] { line x, 63, x, 74 }
+line 75, 75, 84, 75
+# door
+shape([[85, 66], [89, 66], [89, 74], [85, 74]], darkgrey)
+color black
+line 88, 70, 88, 70
+# lit window
+shape([[94, 65], [100, 65], [100, 70], [94, 70]], yellow)
+color brown
+line 97, 66, 97, 69
+line 95, 67, 99, 67
+# ragged thatch roof
+let roof = [[73, 63], [76, 59], [82, 50], [101, 50], [107, 59], [110, 63], [106, 62], [102, 64],
+            [98, 62], [94, 64], [90, 62], [86, 64], [82, 62], [78, 64]]
+shape(roof, darkgrey)
+color black
+for x in range(81, 104, 4) {
+  line x + 1, 52, x - 1, 60
+}
+color lightgrey
+line 83, 51, 100, 51
+# ladder from the deck down to the boardwalk's end
+color brown
+line 75, 78, 73, 88
+line 78, 78, 76, 88
+color yellow
+line 75, 81, 77, 81
+line 74, 84, 76, 84
+line 74, 87, 76, 87
+
+# ---------------------------------------------------------------- the lantern
+# hanging from the roof's left corner on a short chain
+color black
+line 76, 63, 76, 64
+pixmap(75, 65, [
+  ".k.",
+  "kkk",
+  "kYk",
+  "kWk",
+  "kYk",
+  "kkk"
+], "kYW", [black, yellow, white])
+
+# ---------------------------------------------------------------- the boardwalk (brown line ~3)
+let bw = [[73.3, 87.6], [81.2, 99], [79.8, 107.1], [64.5, 123.7], [41.6, 139], [36.6, 146.2],
+          [27, 168.1], [25, 174]]
+
+fn walk_edges(path, wc, step = 1) {
+  let l = []
+  let r = []
+  for p in along(path, step) {
+    let hw = wc * groundscale(p[1], hz)
+    let sx = p[2] * 2
+    let sy = p[3]
+    let n = sqrt(sx * sx + sy * sy)
+    sx = sx / n
+    sy = sy / n
+    push(l, [p[0] - sy * hw, p[1] + sx * hw])
+    push(r, [p[0] + sy * hw, p[1] - sx * hw])
+  }
+  return [l, r]
+}
+
+let ed = walk_edges(bw, 8)
+let deck = ed[0] + reverse(ed[1])
+# side face and posts under the deck
+shape(shift(deck, 0, 1.5), darkgrey)
+shape(deck, brown)
+# planks across, closer together further away
+let acc = 0
+for i in 0..len(ed[0]) {
+  let a = ed[0][i]
+  let b = ed[1][i]
+  let g = groundscale((a[1] + b[1]) / 2, hz)
+  acc += 1 / max(g, 0.45)
+  if acc >= 3.2 && abs(a[0] - b[0]) + abs(a[1] - b[1]) > 3 {
+    acc = 0
+    color black
+    stroke a[0], a[1], b[0], b[1]
+  }
+}
+# posts at the deck's sides
+for i in range(6, len(ed[0]), 14) {
+  for e in [ed[0][i], ed[1][i]] {
+    let g = groundscale(e[1], hz)
+    color black
+    rect e[0], e[1] + 1, e[0], e[1] + 1 + round(3 * g)
+  }
+}
+# lantern light on the boardwalk's far end
+color lightred
+line 72, 88, 75, 88
+
+# ---------------------------------------------------------------- stumps x4 (olive dabs)
+fn snag(x, y, s, seed = 1) {
+  let w = 5 * s
+  let h = 6 * s
+  let top = []
+  for k in 0..=4 {
+    push(top, [x + w / 2 - k * w / 4, y - h - noise(seed, k) * h * 0.5])
+  }
+  let body = [[x - w / 2 - s, y], [x - w / 2, y - h * 0.4]] + reverse(top) + [[x + w / 2, y - h * 0.4], [x + w / 2 + s, y]]
+  shape(body, brown)
+  if s > 0.9 {
+    color darkgrey
+    stroke x + w / 4, y - h * 0.8, x + w / 4, y - 1
+    color black
+    stroke x - w / 4, y - h * 0.6, x - w / 4, y - 2
+  }
+}
+snag(118.8, 96, 0.8, 2)
+snag(51.7, 105, 0.9, 5)
+snag(18.8, 144.5, 1.5, 3)
+snag(137.5, 155.5, 1.8, 7)
+
+# ---------------------------------------------------------------- dead tree (right)
+baretree(150, 106, 1.2, 2, darkgrey, 0.55)
+
+# ---------------------------------------------------------------- mist
+# along the far shore, round the stilts' feet, and wisps over the middle ground
+blobs([[8, 92, 10, 3], [22, 91, 9, 2.5], [48, 84, 10, 3], [62, 85, 8, 2.5], [92, 87, 9, 2],
+       [104, 86, 8, 2.5], [126, 89, 12, 3], [142, 88, 8, 2.5]], lightgrey, null, 0.1, 6)
+blobs([[24, 128, 10, 2.5], [36, 127, 8, 2], [94, 143, 10, 2.5], [108, 142, 10, 2],
+       [60, 117, 9, 2], [70, 116, 7, 1.6], [150, 134, 9, 2]], lightgrey, null, 0.1, 8)
+
+frame()

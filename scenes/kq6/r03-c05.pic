@@ -1,0 +1,394 @@
+# Village Street
+# Source: King's Quest VI (VGA), reference/kq6/r03-c05.png (the village on the
+#   Isle of the Crown: Ali's bookshop and the pawn shop); reframed with:
+#   pnpm grid reference/kq6/r03-c05.png --name kq6-r03-c05
+# Method: translated by eye. Kept: blue sky, palms and a dark cypress behind the roofs, the
+#   arched town wall with its onion-domed gate pillar and tower, the striped awning, Ali's
+#   two-storey bookshop (shuttered windows, tiled lean-to roof, arched sign, door, window,
+#   stairs, bench), the Pawn Shoppe (sign board, door, grilled window, shutter, back house
+#   with tiled roof), the long diagonal shadow across the sand, the blue pots, steps, chest and
+#   clay jugs, and the ferns and basket pot in the left foreground.
+#   Dropped: the leaning shield, the lantern, the lettering (scribbles stand in), the little
+#   notice's text, the stone texture of the street, the second pot on the bench.
+# Colours: sky → lightblue, sunlit adobe → yellow, brightest lit faces → white, shaded adobe
+#   and wood → brown, shutters → brown, tiles → red with lightred joints, glazed pots →
+#   lightblue/blue, sand → yellow with a brown shadow band, foliage → green/lightgreen.
+scene "Village Street"
+variants day
+
+# ---- sky -------------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color lightblue
+  rect 0, 0, 159, 90
+}
+
+# ---- ground (sand) -----------------------------------------------------------------------------
+delay 2 {
+  color yellow
+  rect 0, 84, 159, 167
+}
+# the long shadow the shops throw across the street
+delay {
+  shape([[38, 86], [159, 86], [159, 152], [130, 139], [100, 124], [80, 113], [64, 104],
+         [50, 96]], brown, null)
+}
+
+# ---- palms and trees behind the roofs ---------------------------------------------------------
+fn frond(x, y, dx, dy, c = green) {
+  # a drooping leaf: arches up in the middle, thick at the middle, pointed at the tip
+  shape([[x, y], [x + dx * 0.5, y + dy * 0.5 - 4], [x + dx, y + dy], [x + dx * 0.5, y + dy * 0.5 - 1]],
+        c)
+}
+fn palm(x, y, bx, by) {
+  # trunk from the base (bx, by) up to the crown (x, y)
+  color brown
+  line bx, by, (x + bx) / 2 + 1, (y + by) / 2, x, y
+  line bx + 1, by, (x + bx) / 2 + 2, (y + by) / 2, x + 1, y
+  color black
+  line bx + 2, by, (x + bx) / 2 + 3, (y + by) / 2, x + 2, y
+  frond x, y, -11, 7
+  frond x, y, 11, 8
+  shape(blob(x, y, 7, 5, x, 0.35), green)
+  color lightgreen
+  line x - 5, y + 1, x - 1, y - 2, x + 3, y - 1
+  line x - 2, y + 3, x + 2, y + 1, x + 5, y + 3
+  color black
+  line x - 4, y + 3, x + 1, y + 4
+}
+palm 13, 6, 14, 40
+palm 72, 12, 68, 60
+palm 64, 20, 62, 60
+palm 146, 10, 146, 40
+palm 153, 16, 154, 40
+palm 136, 14, 138, 40
+
+# dark cypress between Ali's and the pawn shop's back house
+shape(blob(132, 27, 5, 22, 3, 0.3), green)
+color black
+line 130, 8, 129, 20, 130, 30, 129, 44
+line 132, 16, 133, 20
+line 131, 34, 133, 38
+line 134, 24, 134, 28
+
+# ---- far-left white house with the striped awning ---------------------------------------------
+shape([[-2, 4], [3, 4], [3, 2], [6, 2], [6, 4], [9, 4], [9, 96], [-2, 98]], white)
+color black
+rect 2, 17, 4, 26
+# awning: red with white stripes running down the slope, scalloped hem
+shape([[-2, 50], [4, 50], [14, 60], [14, 66], [-2, 66]], red)
+color white
+for x in [1, 2, 6, 7, 11, 12] {
+  line x, 51 + max(0, x - 4), x, 65
+}
+color black
+outline -2, 50, 4, 50, 14, 60, 14, 66, -2, 66
+line 0, 66, 2, 64, 4, 66, 6, 64, 8, 66, 10, 64, 12, 66, 14, 64
+# doorway under the awning
+color brown
+rect 0, 67, 6, 88
+color black
+line 6, 67, 6, 88
+
+# ---- tower behind the wall ------------------------------------------------------------------
+shape([[29, 8], [35, 8], [35, 54], [29, 54]], yellow)
+shape(blob(32, 7, 4, 4, 2, 0.05), yellow)
+color brown
+line 34, 9, 34, 54
+line 31, 12, 33, 12
+color black
+rect 31, 15, 31, 18
+
+# ---- town wall with the Moorish arch -------------------------------------------------------
+shape([[9, 22], [22, 22], [36, 25], [48, 28], [56, 30], [56, 88], [9, 90]], yellow)
+# the opening (sky seen through it)
+let opening = [[19, 88], [19, 50], [17, 46], [18, 42], [22, 39], [27, 37], [30, 34], [33, 37],
+               [37, 40], [40, 44], [39, 48], [37, 50], [37, 86]]
+shape(opening, lightblue, null)
+# what's beyond: the tower again, a tree, and the far wall with a door
+shape([[29, 34], [35, 34], [35, 54], [29, 54]], yellow, null)
+color brown
+line 34, 36, 34, 54
+shape(blob(24, 50, 6, 7, 5, 0.3), green)
+color lightgreen
+line 21, 48, 24, 46
+line 25, 52, 27, 50
+shape([[19, 56], [37, 54], [37, 86], [19, 88]], brown, null)
+color black
+rect 26, 62, 30, 84
+color yellow
+polygon 19, 84, 37, 82, 37, 87, 19, 89
+# brown moulding round the arch
+color brown
+line opening
+line shift(opening, -1, 0)
+color black
+line shift(opening, -2, 0)
+# notice on the wall
+shape([[41, 62], [46, 62], [46, 74], [41, 74]], white)
+color red
+line 42, 64, 45, 64
+color lightblue
+line 42, 67, 45, 67
+line 42, 70, 44, 70
+# top edge of the wall
+color brown
+line 9, 23, 22, 23, 36, 26, 48, 29, 56, 31
+
+# ---- gate pillar with onion dome -------------------------------------------------------------
+shape([[52, 22], [65, 22], [65, 90], [52, 90]], yellow)
+color brown
+rect 52, 23, 54, 89
+rect 62, 23, 64, 89
+color black
+line 52, 22, 52, 90
+line 65, 22, 65, 90
+# dome
+shape([[51, 22], [50, 18], [53, 14], [57, 12], [58, 9], [59, 12], [63, 14], [66, 18], [66, 22]],
+      yellow)
+color brown
+line 61, 14, 64, 18, 64, 21
+line 51, 22, 66, 22
+
+# leafy tree beside the pillar
+shape(blob(70, 62, 7, 14, 8, 0.35), green)
+shape(blob(69, 80, 6, 9, 9, 0.35), green)
+color lightgreen
+line 68, 56, 71, 52
+line 69, 66, 72, 62
+line 68, 76, 71, 72
+color black
+line 71, 78, 70, 92
+
+# ---- Ali's bookshop ---------------------------------------------------------------------------
+# upper floor, front (left) face: receding to the left
+let ali_front = [[74, 50], [74, 24], [92, 12], [110, 2], [110, 50]]
+shape(ali_front, yellow)
+# right face (sunlit)
+shape([[110, 2], [129, 12], [129, 54], [112, 54], [112, 108], [100, 108], [100, 50], [110, 50]],
+      white)
+color lightgrey
+line 111, 4, 111, 50
+# roof beams sticking out of the parapets
+color brown
+for i in 0..7 {
+  let x = 77 + i * 5
+  let y = 22 - (x - 74) * 0.58
+  line x, y, x - 2, y - 2
+}
+for i in 0..4 {
+  let x = 113 + i * 4
+  let y = 3 + (x - 110) * 0.5
+  line x, y, x + 2, y - 2
+}
+# shuttered windows, upper floor
+fn shutters(x1, y1, x2, y2, slope = 0) {
+  # opening from x1..x2, tops sloping by `slope` rows per column; shutters either side
+  let w = x2 - x1
+  shape([[x1, y1], [x2, y1 + slope * w], [x2, y2 + slope * w], [x1, y2]], black, null)
+  shape([[x1 - 3, y1 + 1], [x1 - 1, y1], [x1 - 1, y2], [x1 - 3, y2 - 1]], brown)
+  shape([[x2 + 1, y1 + slope * w], [x2 + 3, y1 + slope * w], [x2 + 3, y2 + slope * w - 1],
+         [x2 + 1, y2 + slope * w]], brown)
+}
+shutters 79, 23, 82, 39, -0.6
+shutters 89, 17, 92, 36, -0.6
+shutters 99, 12, 102, 33, -0.6
+shutters 120, 18, 125, 34, 0.3
+# red cloth hanging over the sill
+shape([[98, 26], [104, 24], [104, 34], [99, 37]], red)
+color lightred
+line 100, 28, 103, 27
+# lean-to tiled roof over the shop front
+let roof = [[63, 65], [70, 52], [100, 40], [101, 53], [72, 65]]
+shape(roof, red)
+color lightred
+line 69, 56, 100, 44
+line 67, 60, 100, 48
+color black
+for i in 0..6 {
+  let x = 75 + i * 5
+  line x, 50 - i * 2, x - 3, 64 - i * 2.2
+}
+# shop front below the roof
+shape([[68, 65], [100, 53], [100, 100], [68, 98]], yellow)
+color brown
+line 69, 66, 99, 54
+# window with red frame and light panes
+shape([[71, 66], [80, 64], [80, 82], [71, 82]], red)
+shape([[72, 68], [79, 66], [79, 81], [72, 81]], lightcyan, null)
+color black
+line 75, 67, 75, 81
+line 72, 74, 79, 73
+# door with a rug hanging in it
+shape([[85, 62], [93, 60], [93, 96], [85, 96]], black)
+shape([[87, 64], [91, 63], [91, 80], [87, 80]], red, null)
+color lightred
+line 88, 67, 90, 67
+line 88, 72, 90, 72
+line 88, 77, 90, 77
+# arched "Ali's Books" sign
+shape([[85, 58], [85, 50], [87, 46], [91, 44], [95, 45], [98, 49], [98, 56]], brown)
+color yellow
+line 87, 52, 89, 50, 90, 52
+line 91, 49, 92, 51, 94, 49, 95, 51
+line 87, 55, 92, 54, 96, 53
+# bench / table with X brace and a pot on it
+shape([[60, 88], [76, 90], [76, 93], [60, 91]], brown)
+color black
+line 61, 92, 61, 104
+line 75, 93, 75, 106
+line 62, 93, 74, 104
+line 62, 103, 74, 94
+shape(blob(66, 85, 4, 3, 2, 0.05), lightblue)
+color black
+line 64, 83, 68, 83
+# stairs up to the door, with the white side wall
+for i in 0..4 {
+  let y = 97 + i * 4
+  shape([[72 - i * 2, y], [86, y - 1], [86, y + 3], [72 - i * 2, y + 4]], yellow)
+  color brown
+  line 73 - i * 2, y + 3, 85, y + 2
+}
+shape([[80, 104], [88, 92], [92, 92], [92, 114], [80, 114]], white)
+color lightgrey
+line 81, 106, 89, 94
+
+# ---- the pawn shop ----------------------------------------------------------------------------
+# back house with tiled roof
+shape([[136, 34], [159, 26], [159, 54], [136, 54]], yellow)
+shape([[134, 36], [143, 26], [159, 20], [159, 28], [138, 37]], red)
+color lightred
+line 140, 31, 159, 23
+color black
+rect 142, 39, 144, 42
+rect 151, 37, 153, 40
+# little minaret
+shape([[128, 24], [131, 24], [131, 50], [128, 50]], lightgrey)
+shape(blob(129.5, 22, 2, 3, 1, 0.05), lightgrey)
+# shop front
+shape([[110, 52], [159, 48], [159, 112], [110, 104]], yellow)
+color brown
+line 111, 55, 159, 51
+# beams over the front
+color black
+for i in 0..8 {
+  let x = 114 + i * 6
+  let y = 52 - (x - 110) * 0.08
+  line x, y, x + 3, y - 1
+}
+# sign board
+shape([[115, 56], [154, 55], [154, 67], [115, 68]], brown)
+color yellow
+line 116, 57, 153, 56
+color black
+line 118, 60, 118, 65
+line 118, 60, 121, 61, 118, 63
+line 123, 63, 126, 62, 125, 65, 123, 64
+line 128, 62, 129, 65, 131, 62, 133, 65, 134, 62
+line 136, 59, 136, 65
+line 136, 62, 138, 62
+line 141, 61, 139, 62, 142, 64, 140, 65
+line 144, 63, 146, 63, 146, 66
+line 148, 63, 150, 62, 151, 64
+# door
+shape([[112, 72], [129, 71], [129, 106], [112, 104]], lightgrey)
+shape([[116, 74], [127, 73], [127, 104], [116, 103]], red, null)
+color black
+line 116, 74, 116, 103
+line 117, 74, 127, 73
+# shutter and grilled window
+shape([[131, 72], [138, 71], [138, 100], [131, 100]], brown)
+color black
+line 134, 73, 134, 99
+shape([[140, 70], [157, 69], [157, 100], [140, 101]], lightcyan)
+color darkgrey
+line 141, 80, 144, 77, 147, 80, 150, 77, 153, 80, 156, 77
+line 141, 90, 144, 87, 147, 90, 150, 87, 153, 90, 156, 87
+line 148, 70, 148, 100
+shape([[157, 70], [159, 70], [159, 100], [157, 100]], brown)
+
+# streaks in the sunlit sand
+color brown
+line 10, 110, 26, 108
+line 30, 124, 52, 121
+line 56, 140, 80, 138
+line 92, 152, 120, 156
+line 20, 140, 34, 139
+
+# ---- props in front of the shops -------------------------------------------------------------
+# big blue pot by Ali's corner
+shape(blob(105, 112, 6, 5, 4, 0.05), lightblue)
+color blue
+line 101, 114, 104, 116, 108, 116
+color white
+line 102, 110, 102, 112
+shape([[101, 107], [109, 107], [108, 109], [102, 109]], black, null)
+# steps up to the pawn shop door
+for i in 0..4 {
+  let y = 104 + i * 6
+  let x = 114 - i * 3
+  shape([[x, y], [x + 14, y - 2], [x + 15, y + 3], [x + 1, y + 5]], yellow)
+  color brown
+  line x + 2, y + 3, x + 14, y + 1
+  line x + 2, y + 4, x + 14, y + 2
+}
+# tall vase
+shape([[128, 106], [131, 106], [130, 110], [133, 116], [132, 124], [127, 124], [126, 116],
+       [129, 110]], lightblue)
+color blue
+line 131, 112, 131, 122
+# chest with brass bands
+shape([[134, 118], [148, 114], [154, 119], [154, 131], [140, 136], [134, 131]], brown)
+color black
+line 134, 122, 148, 118, 154, 122
+line 148, 118, 148, 114
+color yellow
+line 137, 121, 137, 134
+line 145, 119, 145, 132
+rect 141, 124, 142, 126
+shape(blob(144, 113, 4, 2, 6, 0.05), lightblue)
+color black
+line 142, 112, 146, 112
+# clay jugs
+shape(blob(153, 132, 4, 7, 7, 0.1), yellow)
+shape(blob(158, 140, 4, 7, 9, 0.1), yellow)
+color brown
+line 155, 128, 156, 134, 154, 138
+line 159, 136, 159, 144
+
+# ---- left foreground: ferns and a basket pot ----------------------------------------------------
+fn fern(x, y, dx, dy, c = green) {
+  # one broad fern leaf from (x, y) to (x + dx, y + dy), with a midrib in the partner colour
+  frond x, y, dx, dy, c
+  color c == green ? lightgreen : green
+  line x + dx * 0.15, y + dy * 0.15 - 1, x + dx * 0.5, y + dy * 0.5 - 2, x + dx * 0.85, y + dy * 0.85
+}
+shape(blob(3, 125, 8, 30, 6, 0.3), green)
+fern 0, 104, 10, -10, lightgreen
+fern 0, 118, 16, -14
+fern 0, 128, 18, -6, lightgreen
+fern 0, 136, 20, 0
+fern 2, 146, 22, 6, lightgreen
+fern 4, 150, 26, 2
+# basket pot
+shape(blob(6, 159, 9, 10, 3, 0.05), brown)
+color yellow
+line 0, 154, 14, 154
+line 0, 160, 15, 160
+line 0, 165, 14, 165
+for i in 0..4 {
+  let x = 1 + i * 4
+  line x, 151, x + 1, 167
+}
+# low fern and blue pot along the bottom edge
+shape(blob(34, 168, 16, 9, 5, 0.35), green)
+fern 24, 167, 2, -18
+fern 26, 167, 18, -12, lightgreen
+fern 30, 167, 24, -6
+fern 26, 167, -10, -12, lightgreen
+shape(blob(54, 168, 7, 5, 2, 0.05), lightblue)
+color blue
+line 49, 166, 58, 166
+
+frame()

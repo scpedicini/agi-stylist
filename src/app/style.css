@@ -1,0 +1,252 @@
+/* The look is the PC that King's Quest ran on: the IBM fonts (VGA 8×16 for text, the BIOS 8×8 that
+   AGI printed with for titles), only the sixteen EGA colours, and hard square frames. */
+@font-face { font-family: 'IBM VGA'; src: url('/fonts/Px437_IBM_VGA8.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'IBM BIOS'; src: url('/fonts/Px437_IBM_BIOS.ttf') format('truetype'); font-display: block; }
+:root {
+  color-scheme: dark;
+  /* EGA */
+  --black: #000; --blue: #0000aa; --red: #aa0000; --grey: #aaaaaa; --dark-grey: #555555;
+  --light-green: #55ff55; --light-red: #ff5555; --yellow: #ffff55; --white: #fff;
+  --bg: var(--black);
+  --fg: var(--grey);
+  --bright: var(--white);
+  --frame: var(--red);
+  /* both fonts are only crisp at whole multiples of their 8-pixel grid */
+  font-family: 'IBM VGA', monospace;
+  font-size: 16px;
+  line-height: 16px;
+  /* every control (buttons, the picker, the compare toggle) shares one height */
+  --ctl: 32px;
+  --stage-frame: 4px;
+  /* the source pane's narrowest, beside the stage */
+  --source-min: 360px;
+  /* everything above and below the stage (status line, tagline, toolbar, status, margins), which a
+     stage no taller than the window leaves room for */
+  --chrome: 156px;
+  /* the widest stage whose height fits the window */
+  --fit: calc((100vh - var(--chrome)) * 320 / 168 + 2 * var(--stage-frame));
+  --pad: 20px;
+}
+@supports (height: 1svh) { :root { --fit: calc((100svh - var(--chrome)) * 320 / 168 + 2 * var(--stage-frame)); } }
+@media (pointer: coarse) { :root { --ctl: 44px; } }
+@media (max-width: 600px) { :root { --pad: 12px; } }
+* { box-sizing: border-box; }
+html { scrollbar-gutter: stable; }
+[hidden] { display: none !important; }
+.fonts-loading body { visibility: hidden; }
+body { margin: 0; background: var(--bg); color: var(--fg); scrollbar-color: var(--grey) var(--black); }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+/* the header is KQ's status line: a white bar of black BIOS-font text across the top of the screen */
+header { display: flex; align-items: center; gap: 24px; height: 32px; padding: 0 var(--pad); background: var(--white); color: var(--black); font-family: 'IBM BIOS', monospace; }
+header h1 { margin: 0; font-size: 16px; font-weight: normal; line-height: 16px; flex: 1; white-space: nowrap; }
+#where { white-space: nowrap; }
+/* the BIOS font is 16px a character here: a phone's status line has room for the name and Intro only */
+@media (max-width: 600px) { #where { display: none; } }
+@media (pointer: coarse) { header { height: var(--ctl); } header button#welcome-open { height: var(--ctl); } }
+header button#welcome-open { height: 24px; padding: 0 8px; border: 0; background: var(--white); color: var(--black); font: inherit; }
+header button#welcome-open:hover, header button#welcome-open:focus-visible { background: var(--black); color: var(--white); outline: none; }
+/* the footer: a credit line, white on black, under the gallery */
+footer { padding: 8px var(--pad); line-height: 16px; text-align: center; background: var(--black); color: var(--white); font-family: 'IBM BIOS', monospace; }
+footer a { color: var(--white); }
+footer a:hover, footer a:focus-visible { background: var(--white); color: var(--black); text-decoration: none; outline: none; }
+.tagline { margin: 8px var(--pad) 0; color: var(--fg); }
+/* The stage always fills the room it has. On a wide window it sits beside the source, as big as fits
+   the window's height, and the source takes the rest of the width. Narrower, the stage spans the page
+   with the source below it; a short landscape screen (a phone on its side) centres a stage no taller
+   than the window. */
+main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 12px var(--pad); align-items: start; }
+.viewer { min-width: 0; }
+@media (max-height: 500px) and (orientation: landscape) {
+  /* the picture is sized so the toolbar row and the picture fit the screen's height together */
+  .viewer { justify-self: center; width: min(100%, calc((100vh - 24px - var(--ctl)) * 320 / 168 + 2 * var(--stage-frame))); }
+  @supports (height: 1svh) { .viewer { width: min(100%, calc((100svh - 24px - var(--ctl)) * 320 / 168 + 2 * var(--stage-frame))); } }
+  /* while the toolbar keeps the page's whole width for its one row, centred over the picture
+     (main's content width, not 100vw, which counts the scrollbar gutter) */
+  main { container-type: inline-size; }
+  .toolbar { width: 100cqi; margin-left: calc((100% - 100cqi) / 2); }
+}
+@media (min-width: 1200px) {
+  /* Side by side, the viewer and the source share rows (toolbar | stage | status | compare), so the
+     script window starts and ends level with the picture's frame, however many rows the toolbar
+     wraps to, with its header just above it as the toolbar's last row is above the picture. */
+  main { grid-template-columns: minmax(0, var(--fit)) minmax(var(--source-min), 1fr); grid-template-rows: repeat(4, auto); row-gap: 0; }
+  .viewer { grid-row: 1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); }
+  main .source { grid-row: 1 / 3; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); height: auto; }
+  main .source-head { align-self: end; margin-bottom: 8px; }
+  /* as tall as the picture beside it, never taller (its own text doesn't size the row) */
+  main :is(#source, #editor) { grid-row: 2; contain: size; }
+}
+/* The stage's size is reserved up front by its aspect ratio so the page doesn't reflow when the
+   script arrives and p5 creates the canvas, which then stretches to fill it. */
+/* framed like KQ's inventory pictures: black, in a thick red border */
+/* p5 sets touch-action: none on every canvas on the page once it starts, which stops a finger
+   dragged over the picture (or a thumbnail) from scrolling the page. Nothing here is drawn by touch. */
+canvas { touch-action: auto !important; }
+#stage { box-sizing: content-box; width: calc(100% - 2 * var(--stage-frame)); aspect-ratio: 320 / 168; border: var(--stage-frame) solid var(--frame); background: var(--black); position: relative; }
+/* focused only by script (closing the title screen, painting, a thumbnail by keyboard) to keep the
+   reader's place for the next Tab; it isn't a control, and an outline would ring the red frame */
+#stage:focus { outline: none; }
+#stage canvas { image-rendering: pixelated; display: block; position: relative; width: 100% !important; height: 100% !important; }
+/* an original picture sits under the (then partly transparent) canvas, stretched to the same frame */
+#original { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+#original.smooth { image-rendering: auto; }
+#original.loading { visibility: hidden; }
+/* an AGI message window: white, with a red rule inset from its edge, and black BIOS-font text */
+#rasterize {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1;
+  padding: 16px 24px; border: 0; border-radius: 0; background: var(--white); color: var(--black);
+  box-shadow: inset 0 0 0 4px var(--white), inset 0 0 0 6px var(--red);
+  font-family: 'IBM BIOS', monospace; font-size: 16px; line-height: 16px;
+  /* one line (centred at 50%, it would otherwise wrap at half the picture's width) */
+  white-space: nowrap;
+}
+@media (max-width: 400px) { #rasterize { padding: 12px 16px; } }
+#rasterize:hover, #rasterize:focus-visible { background: var(--black); color: var(--white); box-shadow: inset 0 0 0 4px var(--black), inset 0 0 0 6px var(--red); outline: none; }
+#rasterize:disabled { color: var(--dark-grey); cursor: progress; }
+/* "Click to paint it" with a mouse, "Tap to paint it" on a touch screen */
+.touch-word { display: none; }
+@media (pointer: coarse) { .pointer-word { display: none; } .touch-word { display: inline; } }
+#boot-status, #noscript {
+  position: absolute; inset: 0; margin: 0; padding: 20px; display: grid; place-items: center; text-align: center;
+  color: var(--bright); font-family: 'IBM BIOS', monospace;
+  animation: blink 1.2s steps(2, jump-none) infinite;
+}
+#boot-status.error, #noscript { color: var(--light-red); animation: none; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #boot-status { animation: none; } }
+/* until the script has filled them in, keep the half-built controls and panes out of sight */
+body.booting .toolbar > *, body.booting #welcome-open, body.booting .status, body.booting .source-head, body.booting #gallery, body.booting footer { visibility: hidden; }
+.boot-compare body.booting #compare[hidden] { display: flex !important; }
+/* Groups wrap as whole units, so a narrow screen gets the same rows whatever the scene. */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 8px; }
+.group, .actions { display: flex; gap: 6px; align-items: center; }
+.nav { flex: 1 1 240px; max-width: 340px; min-width: 0; }
+/* sized by the layout, never by its longest scene name (which would re-wrap the toolbar once filled in) */
+#scene-select { flex: 1; width: 0; min-width: 0; }
+/* flat black keys with hard borders; a chosen one is inverted, like a highlighted AGI menu item */
+button, select { background: var(--black); color: var(--fg); border: 2px solid var(--dark-grey); border-radius: 0; padding: 4px 8px; font: inherit; cursor: pointer; }
+/* the toolbar's and panes' controls all share one height */
+:is(.toolbar, .source-head) :is(button, select) { height: var(--ctl); padding: 0 8px; line-height: 16px; }
+button:hover, select:hover { border-color: var(--grey); color: var(--bright); }
+button[aria-pressed='true'] { background: var(--grey); border-color: var(--grey); color: var(--black); }
+/* a transport button with nothing to do just now (still focusable, so focus isn't lost) */
+button[aria-disabled='true'], button[aria-disabled='true']:hover { border-color: var(--dark-grey); color: var(--dark-grey); cursor: default; }
+select { appearance: none; padding-right: 24px; background: var(--black) no-repeat right 8px center / 8px 4px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 4' shape-rendering='crispEdges'%3E%3Cpath fill='%23aaaaaa' d='M0 0h8v1H7v1H6v1H5v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E"); }
+select option, select optgroup { background: var(--black); color: var(--fg); }
+/* icon buttons are square, so glyphs of different widths (❚❚ / ▶) never move their neighbours */
+button.icon { width: var(--ctl); padding: 0; flex: none; }
+/* previous / next scene: chunky pixel arrows (the font's own ← → are only a few pixels wide), drawn
+   in the button's text colour so they light up on hover like the rest */
+#prev, #next { font-size: 0; display: inline-flex; align-items: center; justify-content: center; }
+#prev::before, #next::before { content: ''; display: block; width: 16px; height: 14px; background: currentColor; -webkit-mask: var(--arrow) center / contain no-repeat; mask: var(--arrow) center / contain no-repeat; }
+#prev { --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 7' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1H3zM2 1h2v1H2zM1 2h7v1H1zM0 3h8v1H0zM1 4h7v1H1zM2 5h2v1H2zM3 6h1v1H3z'/%3E%3C/svg%3E"); }
+#next { --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 7' shape-rendering='crispEdges'%3E%3Cpath d='M4 0h1v1H4zM4 1h2v1H4zM0 2h7v1H0zM0 3h8v1H0zM0 4h7v1H0zM4 5h2v1H4zM4 6h1v1H4z'/%3E%3C/svg%3E"); }
+.seg { display: inline-flex; gap: 2px; }
+.check { display: inline-flex; gap: 8px; align-items: center; height: var(--ctl); color: var(--bright); cursor: pointer; }
+/* a square box that fills in when ticked */
+.check input { appearance: none; margin: 0; width: 16px; height: 16px; border: 2px solid var(--grey); background: var(--black); cursor: pointer; }
+.check input:checked { background: var(--grey); box-shadow: inset 0 0 0 2px var(--black); }
+/* room for two variant buttons is kept even when a scene has none, so switching never re-wraps the toolbar */
+#variants { min-width: calc(10ch + 38px); }
+#variants:not(:empty) { border-left: 2px solid var(--dark-grey); padding-left: 10px; }
+.status { display: flex; gap: 16px; margin-top: 6px; color: var(--fg); line-height: 16px; min-height: 16px; white-space: nowrap; }
+#title { color: var(--bright); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#status-compare { display: none; }
+/* a fixed slot, so the count ticking up while painting doesn't push the stats along */
+#progress { min-width: 16ch; text-align: right; font-variant-numeric: tabular-nums; }
+/* the speed dropdown is for phones (below); wider screens use the buttons */
+#speed-select { display: none; }
+
+/*
+ * Phones. Speed becomes a dropdown (the phone's own picker), the day/night variants are left to
+ * bigger screens, every button is one square size, and the controls sit on a fixed grid that never
+ * re-wraps. Upright, two rows on one grid, so the right-hand buttons line up (the scene picker keeps
+ * the full width, so names up to ~19 characters show whole), with compare moved down beside the
+ * scene's title under the picture:   ← [scene ▾] →  /  [speed: paint ▾] ▐◄ ▌▐ +1
+ * (one instruction back and skip to the end are left to bigger screens and the keyboard).
+ * On its side (short screens): all of it on one row, so the picture fits under it.
+ */
+@media (max-width: 600px), (max-height: 500px) and (orientation: landscape) {
+  .tagline { display: none; }
+  .toolbar .group, .toolbar .actions { display: contents; }
+  #speeds, #variants, #back, #end { display: none; }
+  #speed-select { display: block; }
+  .toolbar :is(button, select) { min-width: 0; }
+  .toolbar button.icon { width: var(--ctl); }
+}
+@media (max-width: 600px) {
+  .toolbar { display: grid; grid-template-columns: var(--ctl) minmax(0, 1fr) repeat(3, var(--ctl)); gap: 8px 6px; }
+  #prev { grid-area: 1 / 1; }
+  #scene-select { grid-area: 1 / 2 / 2 / 5; width: auto; }
+  #next { grid-area: 1 / 5; }
+  .toolbar .check { display: none; }
+  #speed-select { grid-area: 2 / 1 / 3 / 3; width: auto; }
+  #start { grid-area: 2 / 3; }
+  #pause { grid-area: 2 / 4; }
+  #step { grid-area: 2 / 5; }
+}
+@media (min-width: 601px) and (max-height: 500px) and (orientation: landscape) {
+  .toolbar { flex-wrap: nowrap; gap: 4px; }
+  #scene-select { flex: 1 1 0; width: 0; min-width: calc(8ch + 32px); }
+  /* as wide as its longest choice, "speed: instant" */
+  #speed-select { flex: none; width: calc(14ch + 36px); }
+  .check { margin: 0 4px 0 8px; }
+}
+@media (max-width: 600px) {
+  .status { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 16px 16px; gap: 2px 12px; }
+  /* compare sits at the right end of the title's line; its hit area reaches past the 16px row */
+  #status-compare { display: inline-flex; box-sizing: content-box; height: 16px; padding: 14px 0; margin: -14px 0; justify-self: end; }
+  #progress { min-width: 0; text-align: left; }
+}
+/* three panels sized to fit exactly under the stage */
+#compare { display: flex; gap: 8px; margin-top: 10px; }
+#compare figure { margin: 0; flex: 1; min-width: 0; }
+#compare canvas { image-rendering: pixelated; border: 2px solid var(--frame); display: block; width: 100%; height: auto; background: var(--black); }
+/* one line, so a long score arriving later can't wrap and push the page down (it's in the title too) */
+#compare figcaption { color: var(--fg); text-align: center; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* laid over the foot of the source pane, so diagnostics neither push the page down nor resize the editor */
+#messages {
+  position: absolute; left: 1px; right: 1px; bottom: 1px; max-height: 40%; overflow: auto; z-index: 1;
+  padding: 6px 10px; background: var(--black); border-top: 2px solid var(--grey);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+#messages:empty { display: none; }
+#messages .error { color: var(--light-red); }
+#messages .warning { color: var(--yellow); }
+.source { position: relative; min-width: 0; display: flex; flex-direction: column; height: clamp(260px, 60vh, 576px); }
+/*
+ * Upright screens in the one-column layout (phones and tablets held upright): the script window takes
+ * the rest of the screen, so the header, toolbar, picture, status line and the whole script window fit
+ * on it together, however many rows the toolbar takes. main is at least the screen less the header
+ * tall, and the script window (sized by its row, not its text: contain) fills what the viewer leaves.
+ */
+@media (max-width: 1199px) and (orientation: portrait) {
+  .tagline { display: none; }
+  main { min-height: calc(100vh - var(--ctl)); grid-template-rows: auto minmax(180px, 1fr); }
+  @supports (height: 1svh) { main { min-height: calc(100svh - var(--ctl)); } }
+  main .source { contain: size; height: auto; align-self: stretch; }
+}
+/* Tablets held upright: compare moves from the toolbar to the end of the line under the picture, as on phones. */
+@media (min-width: 601px) and (max-width: 1199px) and (orientation: portrait) {
+  .toolbar .check { display: none; }
+  #status-compare { display: inline-flex; box-sizing: content-box; height: 16px; padding: 14px 0; margin: -14px 0; order: 1; }
+}
+.source-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+#source-path { flex: 1; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a DOS text window: double-ruled, black, grey text; the line being painted is lit in EGA blue */
+#source, #editor { flex: 1; min-height: 0; margin: 0; overflow: auto; background: var(--black); color: var(--fg); border: 6px double var(--grey); padding: 4px 0; font: inherit; line-height: 16px; }
+#editor { color: var(--bright); padding: 4px 8px; resize: none; white-space: pre; outline: none; }
+#source .ln { display: block; padding: 0 8px; white-space: pre; }
+#source .ln::before { content: attr(data-n); display: inline-block; width: 5ch; color: var(--dark-grey); }
+#source .ln.current { background: var(--blue); color: var(--bright); }
+#source .ln.current::before { color: var(--grey); }
+#gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(164px, 40vw), 1fr)); gap: 10px; padding: 8px var(--pad) 30px; }
+/* the gallery is KQ's inventory screen: pictures in red frames on light green */
+#gallery { background: var(--light-green); color: var(--black); margin-top: 24px; padding-top: 16px; }
+#gallery h2 { grid-column: 1 / -1; margin: 16px 0 0; font-family: 'IBM BIOS', monospace; font-size: 16px; line-height: 16px; font-weight: normal; color: var(--black); }
+#gallery a { color: var(--black); text-decoration: none; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#gallery a:hover { text-decoration: underline; }
+#gallery a.active { color: var(--blue); }
+#gallery canvas, #gallery img { image-rendering: pixelated; display: block; width: calc(100% - 8px); max-width: 160px; height: auto; aspect-ratio: 160 / 84; box-sizing: content-box; border: 4px solid var(--red); margin: 0 auto 4px; background: var(--black); }
+#gallery img { image-rendering: auto; }
+#gallery a.active :is(canvas, img) { border-color: var(--yellow); }

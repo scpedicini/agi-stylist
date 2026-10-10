@@ -1,0 +1,278 @@
+# Shipwreck Beach
+# Source: King's Quest VI background, reference/kq6/r03-c01.png;
+#   reframed with: pnpm grid reference/kq6/r03-c01.png --name kq6-r03-c01
+# Method: translated by eye. Kept: blue sky and cloud, distant mountain, teal sea, the wrecked
+#   hull and its leaning mast, a palm, the low rocky spit, the big grooved sandstone cliff with
+#   its grass cap, the dark jungle hill behind, the shadowed gully, the right grass bank and
+#   ferns, the lower-right cliff, the sand cove, the grey boulder with dark wreckage, the
+#   driftwood log, a beach rock and two bits of driftwood. Dropped: the second small palm, the
+#   rigging, the rocks out in the sea, most fern and grass texture. Moved: nothing.
+# Colours: sky → blue, cloud → white/lightgrey, mountain → lightblue with a lightcyan lit face,
+#   sea → cyan with lightcyan ripples, sandstone → yellow face / brown shadow and grooves,
+#   grass cap and bank → lightgreen with green strokes, jungle and fern shade → green with black,
+#   sand → yellow with a brown wet edge, boulder → lightgrey/darkgrey, wreckage → darkgrey/black,
+#   wood → brown.
+scene "Shipwreck Beach"
+variants day
+
+# ---- sky, cloud, mountain --------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color blue
+  rect 0, 0, 159, 64
+}
+cloud(36, 38, 40, 2)
+shape([[12, 64], [18, 58], [24, 53], [31, 47], [35, 49], [40, 54], [46, 59], [52, 64]], lightblue)
+shape([[31, 47], [35, 49], [40, 54], [46, 59], [50, 63], [41, 61], [36, 55]], lightcyan, null)
+
+# ---- the sea ---------------------------------------------------------------------------------
+delay 2 {
+  color cyan
+  rect 0, 64, 159, 167
+}
+color lightcyan
+for r in [[2, 92, 12], [4, 104, 8], [0, 146, 14], [20, 152, 16], [6, 160, 10], [46, 158, 14],
+          [56, 140, 12], [30, 134, 10], [64, 148, 8]] {
+  line r[0], r[1], r[0] + r[2], r[1]
+}
+
+# ---- the dark jungle hill behind everything --------------------------------------------------
+delay {
+  shape([[56, 40], [58, 30], [66, 24], [80, 18], [92, 16], [100, 10], [108, 4], [114, 0],
+         [134, 0], [138, 6], [146, 12], [152, 8], [159, 9], [159, 72], [56, 72]], green)
+}
+color black
+line 112, 10, 116, 20, 114, 30
+line 122, 6, 124, 18
+line 132, 12, 136, 24
+line 144, 16, 146, 26
+line 152, 14, 154, 24
+# deep shade where the jungle closes over the gully
+shape(blob(122, 42, 12, 10, 6, 0.2), black, null)
+# jungle mass left of the cliff
+shape(blob(56, 58, 8, 22, 4, 0.25), green)
+color black
+line 52, 44, 54, 56, 52, 64
+
+# ---- the gully: shadowed sand wall right of the cliff ----------------------------------------
+shape([[94, 60], [104, 54], [112, 50], [122, 50], [130, 54], [136, 64], [134, 80], [128, 94],
+       [94, 94]], brown)
+color black
+line 118, 54, 112, 64, 106, 74
+line 126, 56, 120, 68, 114, 80
+line 132, 64, 126, 76, 122, 88
+color yellow
+line 116, 52, 109, 60, 104, 68
+line 124, 54, 117, 66
+
+# ---- the big sandstone cliff -----------------------------------------------------------------
+let cliff = [[58, 46], [60, 42], [70, 40], [85, 38], [100, 36], [110, 32], [114, 36], [117, 44],
+             [121, 50], [124, 53], [116, 55], [106, 57], [100, 62], [96, 72], [96, 90], [80, 92],
+             [62, 90], [59, 75], [57, 60]]
+shape(cliff, yellow)
+# the shaded side under the curl
+shape([[98, 38], [104, 44], [110, 52], [116, 55], [106, 57], [100, 62], [96, 72], [96, 90],
+       [82, 92], [86, 70], [92, 54]], brown, null)
+# grooves hanging from the top edge, fanning to the right on the curl
+color brown
+for g in [[63, 43, 62, 66], [68, 41, 67, 60], [73, 40, 74, 70], [78, 39, 77, 58], [83, 38, 84, 64],
+          [88, 38, 88, 52], [94, 37, 94, 48], [107, 34, 109, 44], [111, 33, 114, 44],
+          [114, 38, 118, 48]] {
+  line g[0], g[1], g[2], g[3]
+  if abs(g[2] - g[0]) <= 1 { line g[0] + 1, g[1], g[2] + 1, g[3] - 4 }
+}
+# columns in the shadow, light ribs on the lit lower face
+color black
+line 88, 60, 87, 90
+line 92, 56, 91, 90
+color yellow
+line 86, 64, 85, 88
+line 90, 58, 89, 86
+color brown
+line 66, 72, 65, 88
+line 72, 76, 72, 90
+line 78, 70, 79, 90
+color black
+outline cliff
+
+# ---- grass cap on the cliff ------------------------------------------------------------------
+for b in [[62, 33, 8, 6, 1], [74, 29, 9, 7, 2], [86, 27, 9, 7, 3], [98, 27, 9, 6, 4],
+          [109, 27, 7, 5, 5]] {
+  shape(blob(b[0], b[1], b[2], b[3], b[4], 0.3), lightgreen)
+}
+for b in [[62, 33, 8, 6, 1], [74, 29, 9, 7, 2], [86, 27, 9, 7, 3], [98, 27, 9, 6, 4],
+          [109, 27, 7, 5, 5]] {
+  shape(blob(b[0], b[1] + 1, b[2] - 1, b[3] - 1, b[4], 0.3), lightgreen, null)
+}
+shape([[56, 36], [70, 33], [90, 31], [112, 29], [116, 33], [110, 34], [100, 37], [85, 39],
+       [70, 41], [58, 43]], lightgreen, null)
+color green
+line 64, 32, 70, 30
+line 78, 26, 84, 25
+line 92, 24, 98, 23
+line 102, 28, 108, 27
+# tufts hanging over the lip
+for t in [[60, 42], [66, 41], [72, 40], [79, 39], [86, 38], [93, 37], [100, 36], [107, 34], [113, 33]] {
+  shape([[t[0] - 2, t[1]], [t[0] + 2, t[1]], [t[0], t[1] + 3]], green, null)
+}
+color black
+line 57, 43, 70, 41, 85, 39, 100, 37, 110, 34, 116, 33
+
+# ---- right grass bank ------------------------------------------------------------------------
+shape([[124, 54], [128, 44], [136, 37], [146, 33], [159, 30], [159, 74], [146, 72], [134, 68],
+       [126, 62]], lightgreen)
+color green
+line 130, 48, 140, 42, 152, 40
+line 128, 58, 138, 54, 150, 52
+line 136, 66, 146, 64, 156, 62
+
+# ---- the wreck -------------------------------------------------------------------------------
+color brown
+line 39, 14, 31, 34, 25, 50, 18, 68
+line 40, 14, 32, 34, 26, 50, 19, 68
+color black
+line 32, 21, 39, 25
+color white
+line 33, 26, 30, 30, 31, 36
+line 35, 27, 34, 33
+color lightgrey
+line 32, 29, 32, 38
+color lightgrey
+line 27, 45, 29, 53, 31, 61
+# hull, bow up on the left
+shape([[2, 54], [8, 55], [14, 60], [20, 66], [26, 72], [20, 77], [0, 78], [0, 58]], brown)
+color black
+line 2, 58, 8, 60, 14, 65, 20, 70
+line 6, 66, 6, 76
+line 12, 66, 12, 76
+color yellow
+line 3, 56, 9, 57, 15, 62
+
+# ---- palm -------------------------------------------------------------------------------------
+color brown
+line 46, 62, 47, 50, 46, 38, 46, 22
+line 47, 62, 48, 50, 47, 38, 47, 22
+fn palm_leaf(x, y, dx, dy) {
+  shape([[x, y], [x + dx / 2, y - 2], [x + dx, y + dy], [x + dx / 2, y + 1]], green, black)
+}
+palm_leaf 46, 22, -10, 7
+palm_leaf 47, 22, 10, 7
+palm_leaf 46, 21, -7, -2
+palm_leaf 47, 21, 7, -2
+palm_leaf 46, 22, -3, 9
+
+# ---- the low rocky spit ----------------------------------------------------------------------
+shape([[0, 82], [10, 78], [22, 74], [35, 70], [45, 64], [55, 60], [60, 66], [64, 80], [64, 94], [40, 88],
+       [25, 87], [10, 89], [0, 90]], brown)
+shape([[0, 82], [10, 78], [22, 74], [35, 70], [45, 64], [55, 60], [57, 61], [46, 66], [36, 72],
+       [22, 76], [10, 80], [0, 84]], yellow, null)
+color yellow
+line 8, 86, 16, 83
+line 22, 82, 30, 79
+color black
+line 14, 84, 20, 81
+line 0, 90, 10, 89, 25, 87, 40, 85, 62, 84
+shape(blob(50, 60, 9, 4, 3, 0.3), lightgreen)
+color green
+line 46, 60, 50, 58, 54, 60
+color darkgrey
+rect 8, 70, 11, 72
+rect 18, 70, 20, 71
+
+# ---- sand cove -------------------------------------------------------------------------------
+shape([[45, 94], [60, 89], [80, 92], [96, 90], [100, 94], [128, 94], [126, 105], [120, 125],
+       [116, 145], [112, 167], [95, 167], [90, 160], [86, 153], [90, 148], [92, 140], [86, 131],
+       [75, 125], [60, 121], [45, 119], [28, 121], [22, 118], [35, 112], [44, 104]], yellow, null)
+# shadow line along the cliff foot
+color brown
+line 52, 94, 60, 91, 80, 94, 96, 92, 128, 96
+# wet edge
+color brown
+line 22, 119, 28, 122, 45, 120, 60, 122, 75, 126, 86, 132, 93, 140, 91, 148, 87, 153, 91, 160, 96, 167
+color black
+line 21, 120, 28, 123, 45, 121, 60, 123, 75, 127, 85, 133, 92, 140, 90, 148, 86, 153, 90, 160, 95, 167
+
+# ---- boulder and dark wreckage ---------------------------------------------------------------
+# broken ribs of the ship, half in the water
+shape([[10, 128], [14, 108], [18, 98], [22, 106], [26, 92], [29, 102], [34, 98], [34, 112],
+       [28, 124], [20, 132]], darkgrey)
+color black
+line 14, 124, 18, 104
+line 20, 126, 25, 98
+line 26, 122, 31, 104
+shape([[30, 86], [36, 79], [42, 80], [48, 86], [52, 100], [51, 110], [42, 113], [33, 110], [30, 100]], lightgrey)
+shape([[30, 86], [36, 79], [37, 90], [36, 104], [40, 113], [33, 110], [30, 100]], darkgrey)
+color white
+line 42, 82, 46, 88, 48, 96
+color black
+line 37, 90, 36, 104, 40, 112
+
+# fern by the boulder
+color green
+line 52, 96, 54, 86, 58, 80
+line 53, 96, 58, 88, 63, 86
+line 51, 94, 50, 84
+color lightgreen
+line 55, 84, 57, 82
+line 58, 90, 61, 87
+
+# ---- driftwood log ---------------------------------------------------------------------------
+color brown
+line 6, 142, 26, 132, 50, 118
+line 6, 143, 26, 133, 50, 119
+line 22, 134, 40, 126
+color black
+line 6, 144, 26, 134, 50, 120
+
+# ---- right ferns and lower-right cliff -------------------------------------------------------
+# dark undergrowth behind the fronds
+shape([[159, 62], [134, 64], [130, 84], [124, 100], [120, 118], [116, 140], [159, 140]], green)
+# a fern frond from its base (x, y), arching out to its tip (x + dx, y + dy), toothed underneath
+fn frond(x, y, dx, dy) {
+  let pts = []
+  for t in 0..=6 {
+    push(pts, [x + dx * t / 6, y + dy * t * t / 36 - 4 * sin(t * 30)])
+  }
+  for t in 0..=6 {
+    let u = 6 - t
+    let tooth = u % 2 == 0 ? 2 : 5
+    push(pts, [x + dx * u / 6, y + dy * u * u / 36 - 4 * sin(u * 30) + tooth * sin(u * 30) + 1])
+  }
+  shape(pts, lightgreen)
+  color green
+  line x, y, x + dx / 2, y + dy / 4 - 3, x + dx, y + dy
+}
+frond 159, 78, -26, 12
+frond 152, 90, -24, 14
+frond 159, 98, -30, 16
+frond 150, 110, -28, 16
+frond 159, 118, -32, 18
+frond 148, 128, -26, 12
+frond 140, 82, 14, 8
+frond 136, 104, 18, 10
+shape([[118, 140], [130, 136], [140, 138], [159, 134], [159, 167], [112, 167]], brown)
+color yellow
+line 113, 166, 119, 140
+color black
+for x in [126, 134, 142, 150, 156] {
+  line x, 140, x - 2, 152, x - 1, 167
+}
+color yellow
+for x in [130, 138, 146, 153] {
+  line x, 146, x, 160
+}
+
+# ---- small beach things ----------------------------------------------------------------------
+shape([[100, 106], [104, 101], [110, 100], [116, 102], [118, 107], [100, 108]], darkgrey)
+color lightgrey
+line 104, 102, 110, 101
+color brown
+line 58, 104, 67, 101
+line 64, 111, 69, 115
+line 75, 158, 87, 152
+color black
+line 58, 105, 67, 102
+line 64, 112, 69, 116
+
+frame()

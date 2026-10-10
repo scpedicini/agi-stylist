@@ -1,0 +1,202 @@
+# Graveyard on the Hill
+# Source: layout sketch tests/fixtures/sketches/holdout/07-graveyard.png; reframed with: pnpm grid tests/fixtures/sketches/holdout/07-graveyard.png --crop 0,0,1024,768 --fit --name sketches-07-graveyard
+# Brief: The church is small with a crooked steeple. The ghost is pale and wispy. Iron gate.
+#   Sketch note: "misty night".
+# Method: composed from a layout sketch. Labels:
+#   CHURCH → small stone chapel, gable front with an arched door, a short side nave, a belfry
+#     over the front gable and a black spire bent to the right with a leaning cross; centred on
+#     x 87 (mass x 77-99), base on the hill crest y 82, steeple tip y ~29.
+#   DEAD_TREE → leafless darkgrey tree, trunk base (136,93) on the right-hand slope.
+#   GHOST_FLOATING_LEFT → pale white ghost, head and reaching arm to the left, wispy lightcyan
+#     tail trailing right; visual centre (47,44), in the sky.
+#   GATE (extent box x 9-31, y 103-140) → black wrought-iron gate (spear-tipped bars, arched
+#     top rail) between two lightgrey stone pillars, filling the box; base y 140.
+#   GRAVES x5 → five lightgrey headstones (three round-topped, one stone cross, one pointed
+#     slab), four on darkgrey grave mounds, spread around (84,122) at x 60-114, bases y 120-131.
+#   NOTE: misty night → followed (night palette, mist), not drawn.
+#   Geometry: hill outline (0,114) (31,103) (66,83) (100,79) (160,103); sky above it, the
+#   graveyard hill below. The hill line passes behind the gate (the box's bottom is its base).
+# Interpreted: night sky blue with a few stars; moon invented at (18,15) (upper left, away from every label) so
+#   the stones and church are lit from the left; mist = smooth lightgrey banks lying on the hill
+#   line (behind the church, tree and gate), one wisp on the slope and a bank along the bottom;
+#   ground green; church windows dark (no lights asked for); variant "night" (only one).
+scene "Graveyard on the Hill"
+variants night
+
+let hill = [[0, 113.75], [31.25, 102.8], [65.6, 83.1], [100, 78.75], [160, 102.8]]
+
+# ---------- sky ----------
+color blue
+rect 0, 0, 159, 167
+stars(14, 2, 30, 5, white)
+moon(18, 15, 6)
+# a thin mist streak across the moon
+blobs([[22, 19, 12, 1.5]], lightgrey, null, 0.1)
+
+# ---------- mist lying on the horizon (the hill covers its lower half) ----------
+blobs([
+  [10, 108, 18, 5], [36, 98, 16, 4], [56, 86, 14, 4], [92, 77, 22, 3],
+  [124, 86, 18, 4], [150, 96, 14, 4]
+], lightgrey, null, 0.1)
+
+# ---------- the hill ----------
+shape(hill + [[160, 168], [0, 168]], green)
+color black
+stroke hill
+
+# ---------- far mist wisp on the slope ----------
+blobs([[52, 98, 14, 2], [66, 96, 8, 1.5]], lightgrey, null, 0.1)
+
+# ---------- church (small, crooked steeple) ----------
+fn church() {
+  # side nave, in shadow (moon on the left)
+  shape([[93, 66], [100, 63], [100, 81], [93, 82]], darkgrey)
+  # roof over the nave
+  shape([[85, 56], [93, 53], [102, 63], [93, 66]], black, black)
+  color darkgrey
+  line 87, 57, 94, 54
+  # gable front, lit
+  shape([[77, 66], [85, 56], [93, 66], [93, 82], [77, 82]], lightgrey)
+  # belfry on the gable
+  shape([[82, 45], [88, 45], [88, 58], [82, 58]], lightgrey)
+  color darkgrey
+  rect 87, 46, 87, 57
+  color black
+  rect 84, 48, 86, 54
+  color brown
+  rect 84, 50, 86, 52
+  # crooked spire, bent over to the right
+  shape([[81, 45], [83, 39], [86, 34], [90, 29], [89, 35], [89, 40], [89, 45]], black)
+  color darkgrey
+  line 84, 43, 85, 38, 88, 33
+  # leaning cross on the tip
+  color black
+  line 90, 29, 92, 24
+  line 90, 26, 93, 27
+  # door and windows
+  shape(archway(85, 72, 2.5, 3, 82), black)
+  color brown
+  line 85, 74, 85, 81
+  color black
+  rect 84, 61, 86, 63
+  shape(lancet(96, 68, 1, 75, 3), black, null)
+  # stone courses on the front
+  color darkgrey
+  line 78, 70, 81, 70
+  line 89, 70, 92, 70
+  line 78, 77, 81, 77
+  line 89, 77, 92, 77
+}
+church()
+
+# ---------- dead tree ----------
+baretree(136, 93, 0.95, 2, darkgrey)
+
+# ---------- the ghost, floating left ----------
+fn ghost(cx, cy) {
+  # wispy tail streaks trailing right (behind the body)
+  color lightcyan
+  stroke cx + 3, cy + 9, cx + 7, cy + 12, cx + 10, cy + 13
+  stroke cx + 1, cy + 11, cx + 4, cy + 14, cx + 7, cy + 15
+  stroke cx + 6, cy + 6, cx + 10, cy + 8, cx + 12, cy + 8
+  # body: head on the left, tapering tail to the right
+  shape([
+    [cx - 6, cy - 9], [cx - 4, cy - 13], [cx - 1, cy - 14], [cx + 1, cy - 12],
+    [cx + 2, cy - 8], [cx + 4, cy - 3], [cx + 7, cy + 2], [cx + 10, cy + 5],
+    [cx + 8, cy + 6], [cx + 9, cy + 9], [cx + 5, cy + 8], [cx + 4, cy + 11],
+    [cx + 1, cy + 8], [cx - 1, cy + 10], [cx - 2, cy + 5], [cx - 4, cy],
+    [cx - 6, cy - 4]
+  ], white, lightcyan)
+  # arm reaching forward (left)
+  shape([[cx - 4, cy - 4], [cx - 9, cy - 5], [cx - 12, cy - 7], [cx - 10, cy - 4],
+    [cx - 5, cy - 1]], white, lightcyan)
+  # face: hollow eyes and an open mouth
+  color black
+  rect cx - 5, cy - 10, cx - 5, cy - 9
+  rect cx - 2, cy - 10, cx - 2, cy - 9
+  rect cx - 4, cy - 6, cx - 3, cy - 5
+}
+ghost(47, 44)
+
+# ---------- graves x5 ----------
+fn headstone(x, base, w, h, lean = 0) {
+  # round-topped stone, lit on the left, shaded on the right
+  let pts = archway(x, base - h, w, 3, base)
+  if lean != 0 {
+    let leaned = []
+    for p in pts { push(leaned, [p[0] + lean * (base - p[1]) / h, p[1]]) }
+    pts = leaned
+  }
+  shape(pts, lightgrey)
+  color darkgrey
+  line x + w - 1 + lean * 0.8, base - h + 3, x + w - 1, base - 1
+  # a small engraved cross
+  line x + lean * 0.6, base - h + 3, x + lean * 0.4, base - h + 7
+  line x - 1 + lean * 0.5, base - h + 4, x + 1 + lean * 0.5, base - h + 4
+}
+fn cross_stone(x, base, h) {
+  shape([[x - 1, base - h], [x + 1, base - h], [x + 1, base - h + 3], [x + 3, base - h + 3],
+    [x + 3, base - h + 5], [x + 1, base - h + 5], [x + 1, base], [x - 1, base],
+    [x - 1, base - h + 5], [x - 3, base - h + 5], [x - 3, base - h + 3], [x - 1, base - h + 3]],
+    lightgrey)
+  color darkgrey
+  line x + 1, base - h + 6, x + 1, base - 1
+}
+fn mound(x, base, w) {
+  shape([[x - w, base], [x - w + 2, base + 2], [x + w - 2, base + 2], [x + w, base]], darkgrey)
+}
+
+mound(60, 128, 5)
+headstone(60, 128, 3, 12)
+cross_stone(73, 120, 13)
+mound(87, 131, 6)
+headstone(87, 131, 4, 14)
+mound(101, 121, 4)
+shape([[97, 121], [97, 111], [101, 108], [105, 111], [105, 121]], lightgrey)
+color darkgrey
+line 104, 111, 104, 120
+line 101, 111, 101, 115
+line 100, 112, 102, 112
+mound(114, 129, 4)
+headstone(114, 129, 3, 11)
+
+# ---------- iron gate between stone pillars ----------
+fn pillar(x1, x2, top, bottom) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], lightgrey)
+  color darkgrey
+  line x2 - 1, top + 1, x2 - 1, bottom - 1
+  line x1 + 1, top + 10, x2 - 2, top + 10
+  line x1 + 1, top + 20, x2 - 2, top + 20
+  # cap and ball finial
+  shape([[x1 - 1, top - 2], [x2 + 1, top - 2], [x2 + 1, top], [x1 - 1, top]], darkgrey)
+  shape([[x1 + 1, top - 5], [x2 - 1, top - 5], [x2 - 1, top - 2], [x1 + 1, top - 2]], lightgrey)
+}
+fn gate(x1, x2, top, bottom) {
+  color black
+  # rails
+  line x1, bottom - 3, x2, bottom - 3
+  line x1, top + 12, x2, top + 12
+  line x1, top + 22, x2, top + 22
+  # arched top rail
+  let rim = arc((x1 + x2) / 2, top + 8, (x2 - x1) / 2, 6, 270, 450, 15)
+  line rim
+  # bars rising through the arched rail to spear tips
+  for x in range(x1 + 1, x2, 2) {
+    let ytop = interp(rim, x) - 2
+    line x, ytop, x, bottom - 1
+    line x - 1, ytop + 1, x + 1, ytop + 1
+  }
+  # centre seam and scroll
+  line (x1 + x2) / 2, top + 3, (x1 + x2) / 2, bottom - 1
+  color darkgrey
+  line x1 + 2, top + 17, (x1 + x2) / 2 - 1, top + 15, x2 - 2, top + 17
+}
+gate(13, 27, 103, 139)
+pillar(9, 13, 108, 140)
+pillar(27, 31, 108, 140)
+
+# ---------- mist bank along the bottom ----------
+blobs([[60, 158, 24, 4], [100, 156, 22, 4], [138, 160, 22, 4], [20, 162, 18, 3]],
+  lightgrey, null, 0.1)
+
+frame()

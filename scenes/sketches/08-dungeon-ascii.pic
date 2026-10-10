@@ -1,0 +1,294 @@
+# Dungeon Cell
+# Source: pasted ASCII layout (a copy is tests/fixtures/sketches/holdout/08-dungeon-ascii.txt); reframed with:
+#   pnpm grid tests/fixtures/sketches/holdout/08-dungeon-ascii.txt --name sketches-08-dungeon-ascii
+# Brief: a dungeon cell of rough grey stone. The torches are lit. The chest is open and full of gold.
+# Method: composed from a layout sketch. Labels: TORCH (left) → lit torch (brown stick, red and
+#   yellow flame) in an iron bracket on the left wall, flame tip to stick foot rows 5-28 at x 13,
+#   with a lightgrey/yellow glow on the stone round it; IRON DOOR → arched darkgrey iron door with
+#   black bands, rivets, a ring and a barred grille, in a lightgrey stone arch on the back wall,
+#   x 65-83, rows 3-36 (centre (74,20)); TORCH (right) → the same on the right wall at x 143;
+#   SKELETON → white skeleton slumped against the foot of the left wall, left wrist chained up
+#   to a ring, x 19-34, rows 64-94, label (27,84) on its ribs, sitting on the floor at y≈92;
+#   CHEST → open brown chest with darkgrey iron straps and a yellow lock, heaped with gold
+#   (yellow, a white glint), lid thrown back, x 95-115, base y 92, label on its front;
+#   PIT OF SPIKES → a black pit lying flat in the floor with a lightgrey rim, x 33-86,
+#   rows 140-163 (centre (59,151)), two rows of grey spikes (one red tip) inside; RAT → small
+#   lightgrey rat with a pink tail, facing left, x 117-131, rows 148-154 (centre (124,151)).
+#   Geometry: no lines inside the frame; the frame is the screen edge (guide mark, not drawn).
+# Interpreted: no back wall was drawn, so I chose room(34, 0, 126, 36): the IRON DOOR sits on a
+#   low back wall whose foot (y 36) is its sill, the two TORCHes at the far left and right fall
+#   on the side walls, and everything in the lower rows stands on the floor. The ceiling is out
+#   of view above the frame. "Rough grey stone" → darkgrey stone blocks with black mortar in
+#   uneven courses on every wall; the floor is black stone flags with darkgrey joints so it
+#   stays apart from the walls. "Torches are lit" → the guide's dim dungeon with torches
+#   (variant night, though the light is warm): a lightgrey outer and yellow inner glow on the
+#   side walls round each flame; the skeleton's bones away from the left torch are lightgrey.
+#   Inventions: the manacle and chain for the skeleton, three gold coins spilled by the chest,
+#   the inner far wall of the pit. Brief and sketch agree; no open questions.
+# | +------------------------------------------+
+# | | TORCH        [IRON DOOR]          TORCH  |
+# | |                                          |
+# | |   SKELETON              CHEST            |
+# | |                                          |
+# | |        [PIT OF SPIKES]        RAT        |
+# | +------------------------------------------+
+scene "Dungeon Cell"
+variants night
+
+let BX1 = 34
+let BX2 = 126
+let BY2 = 36
+let r = room(BX1, 0, BX2, BY2)
+
+# ---------- walls and floor ----------
+shape(r[0], darkgrey, null)
+shape(r[1], darkgrey, null)
+shape(r[2], darkgrey, null)
+shape(r[4], black, null)
+
+# torch glow on the side walls (before the mortar, so the joints run across it)
+fn glow(x, y) {
+  blobs([[x, y, 15, 26]], lightgrey, null, 0.1, 3)
+  blobs([[x, y - 2, 8, 14]], yellow, null, 0.1, 5)
+}
+glow(13, 15)
+glow(146, 15)
+# keep the glow off the back wall and the floor
+shape(r[0], darkgrey, null)
+shape(r[4], black, null)
+
+# back wall: rough courses of stone
+color black
+let cy = 6
+let course = 0
+while cy < BY2 {
+  stroke BX1, cy, BX2, cy
+  cy += 6
+}
+for k in 0..6 {
+  let x = BX1 + 3 + (k % 2) * 5 + noise(11, k) * 3
+  while x < BX2 - 2 {
+    stroke x, k * 6 + 1, x, k * 6 + 5
+    x += 9 + noise(12, x + k) * 4
+  }
+}
+
+# side walls: courses run from the back corner out to the picture's edge
+let fr = [0, 0.17, 0.33, 0.5, 0.67, 0.83, 1]
+for k in 1..6 {
+  stroke BX1, BY2 * fr[k], 0, 167 * fr[k]
+  stroke BX2, BY2 * fr[k], 159, 167 * fr[k]
+}
+fn bot(t) { return BY2 + (167 - BY2) * t }
+for k in 0..6 {
+  let ts = k % 2 == 0 ? [0.2, 0.5, 0.82] : [0.06, 0.35, 0.66]
+  for t in ts {
+    let tt = t + noise(21, k) * 0.05
+    let xl = BX1 * (1 - tt)
+    let xr = BX2 + (159 - BX2) * tt
+    let y1 = fr[k] * bot(tt) + 1
+    let y2 = fr[k + 1] * bot(tt) - 1
+    stroke xl, y1, xl, y2
+    stroke xr, y1, xr, y2
+  }
+}
+
+# floor: black flagstones with darkgrey joints
+color darkgrey
+for i in 1..6 {
+  let s = i / 6
+  let d = depth(BX1, 0, BX2, BY2, s * sqrt(s))
+  stroke d[0], d[3], d[2], d[3]
+}
+for i in 1..7 {
+  let f = i / 7
+  stroke BX1 + (BX2 - BX1) * f, BY2, 159 * f, 167
+}
+
+# room edges
+color black
+line BX1, 0, BX1, BY2, BX2, BY2, BX2, 0
+stroke BX1, BY2, 0, 167
+stroke BX2, BY2, 159, 167
+
+# ---------- the iron door (back wall) ----------
+shape(archway(74, 1, 12, 8, 36), lightgrey)
+color darkgrey
+line 63, 9, 61, 7
+line 66, 4, 65, 1
+line 74, 1, 74, 3
+line 82, 4, 83, 1
+line 85, 9, 87, 7
+line 62, 18, 61, 18
+line 86, 18, 87, 18
+line 62, 27, 61, 27
+line 86, 27, 87, 27
+shape(archway(74, 3, 9, 6, 36), darkgrey)
+color black
+line 66, 13, 82, 13
+line 65, 24, 83, 24
+line 65, 33, 83, 33
+line 74, 3, 74, 9
+line 74, 16, 74, 36
+# barred grille
+color black
+rect 71, 7, 77, 11
+color darkgrey
+line 73, 7, 73, 11
+line 75, 7, 75, 11
+# rivets and the ring
+color lightgrey
+plot 67, 15
+plot 81, 15
+plot 67, 26
+plot 81, 26
+plot 67, 35
+plot 81, 35
+color black
+line 78, 19, 79, 18, 80, 19, 80, 21, 79, 22, 78, 21, 78, 19
+color lightgrey
+plot 79, 20
+
+# ---------- torches ----------
+fn torch(x, y, dir) {
+  # iron bracket
+  color black
+  rect x - 1, y + 4, x + 1, y + 5
+  line x - dir * 2, y + 2, x - dir * 2, y + 8
+  # stick, leaning out from the wall
+  shape([[x - 1, y - 1], [x + 1, y - 1], [x + 1, y + 9], [x, y + 10], [x - 1, y + 9]], brown)
+  # flame
+  shape([[x - 3, y - 2], [x - 2, y - 6], [x - 1, y - 10], [x, y - 13], [x + 1, y - 10], [x + 2, y - 7], [x + 3, y - 2]], lightred, black)
+  shape([[x - 1, y - 3], [x - 1, y - 6], [x, y - 9], [x + 1, y - 6], [x + 1, y - 3]], yellow, null)
+  color white
+  line x, y - 5, x, y - 4
+}
+torch(13, 18, 1)
+torch(143, 18, -1)
+
+# ---------- skeleton chained to the left wall ----------
+# chain from an iron ring on the wall down to the manacle
+color lightgrey
+line 19, 56, 19, 57
+line 20, 59, 20, 60
+color black
+plot 19, 58
+plot 20, 61
+pixmap(19, 62, [
+  "d...............",
+  "d...............",
+  "dd.....www......",
+  "ddw...wwwww.....",
+  "..w...wwwww.....",
+  "...w..kkwkk.....",
+  "...w..kkwkk.....",
+  "...w..wwkww.....",
+  "....w..www......",
+  "....w..wkw......",
+  "....w...w.......",
+  "....wwwwwwwww...",
+  "........w...w...",
+  ".....www.www.w..",
+  "........w....w..",
+  ".....www.www.w..",
+  "........w....w..",
+  "......ww.ww..w..",
+  "........w....w..",
+  ".......w.w...w..",
+  "........w....w..",
+  "........w...w...",
+  "........w...w...",
+  "......wwwww.ww..",
+  ".....w.www.w....",
+  ".....ww...ww....",
+  "....w.......w...",
+  "...w.........w..",
+  "..w...........w.",
+  "..w...........w.",
+  ".ww...........ww"
+], "wkd", [white, black, darkgrey])
+# bones on the side away from the left torch in shadow
+color lightgrey
+line 31, 75, 31, 82
+line 30, 77, 30, 77
+line 30, 79, 30, 79
+
+# ---------- open chest full of gold ----------
+# lid, thrown back
+shape([[97, 78], [96, 67], [114, 67], [113, 78]], brown)
+color black
+line 99, 70, 111, 70
+line 99, 70, 99, 77
+line 111, 70, 111, 77
+line 99, 77, 111, 77
+color darkgrey
+line 101, 67, 101, 78
+line 109, 67, 109, 78
+# body
+shape([[95, 79], [115, 79], [115, 92], [95, 92]], brown)
+color red
+line 96, 91, 114, 91
+color darkgrey
+rect 98, 80, 99, 91
+rect 111, 80, 112, 91
+color black
+line 95, 83, 115, 83
+# gold heaped above the rim
+shape([[96, 79], [97, 76], [100, 74], [104, 73], [108, 73], [111, 74], [113, 76], [114, 79]], yellow)
+color brown
+plot 100, 77
+plot 104, 75
+plot 108, 76
+plot 111, 77
+sparkle(106, 74, white, 2)
+# lock
+color yellow
+rect 104, 84, 106, 87
+color black
+plot 105, 86
+# spilled coins
+color yellow
+line 92, 93, 93, 93
+line 117, 94, 118, 94
+line 89, 95, 90, 95
+
+# ---------- pit of spikes ----------
+let pit = [[39, 140], [80, 140], [86, 163], [33, 163]]
+shape(pit, black, darkgrey)
+# far inner wall of the pit, seen from above
+shape([[40, 141], [79, 141], [79, 147], [40, 147]], darkgrey, null)
+color black
+line 40, 144, 79, 144
+for x in [45, 53, 61, 69, 76] { stroke x, 141, x, 143 }
+for x in [49, 57, 65, 73] { stroke x, 145, x, 147 }
+# rim stones
+color lightgrey
+line 39, 139, 80, 139
+line 33, 164, 86, 164
+line 38, 140, 32, 163
+line 81, 140, 87, 163
+# spikes, lit from the left: back row then front row
+fn spike(x, tip, base, hw) {
+  shape([[x - hw, base], [x, tip], [x, base]], lightgrey, null)
+  shape([[x, tip], [x + hw, base], [x + 1, base]], darkgrey, null)
+  color white
+  plot x, tip
+}
+for x in [44, 52, 60, 68, 76] { spike(x, 146, 154, 2) }
+for x in [40, 48, 56, 64, 72, 80] { spike(x, 149, 162, 2.5) }
+color red
+plot 56, 149
+plot 56, 150
+
+# ---------- rat ----------
+pixmap(117, 148, [
+  "....r.ggg......",
+  "...gggggggg....",
+  ".ggggggggggd...",
+  "gkgggggggggdd..",
+  "rgggggggggddrr.",
+  "..gdgggggddd..r",
+  "...d....d....r."
+], "kgdr", [black, lightgrey, darkgrey, lightred])
+
+frame()

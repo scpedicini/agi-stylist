@@ -1,0 +1,188 @@
+# Farmyard with Well and Duck Pond
+# Source: layout sketch tests/fixtures/sketches/04-farm-extents.png; reframed with: pnpm grid tests/fixtures/sketches/04-farm-extents.png --crop 0,0,1280,720 --fit --name sketches-04-farm-extents
+# Brief: The farmhouse is white with a thatched roof. A stone well with a wooden bucket. Ducks on
+#   the pond. The fence is wooden.
+# Method: composed from a layout sketch. Labels: HOUSE (extent box x 19-56, y 40-98) → white
+#   cottage with a yellow thatched roof filling the box, walls y 68-98, roof y 40-70;
+#   FENCE → wooden post-and-rail fence standing on the drawn fence line, (65,89) to the right
+#   edge at (159,84), posts 9 rows tall so the label sits on the fence; WELL (extent circle x 69-81,
+#   y 98-122) → round stone well with two wooden posts, a crossbeam and a little roof, and a wooden
+#   bucket hanging on its rope; POND (extent ellipse x 106-144, y 121-150) → blue pond with a mud
+#   rim filling the ellipse, three white ducks on it; TREE → green deciduous tree, trunk at x 154
+#   standing on the horizon (y 70), crown running off the right edge.
+#   Geometry: horizon line y 70 (meadow below, distant hills above), fence line (65,89)-(159,84).
+# Interpreted: TREE's label is cut by the right edge; I read it as one tree at the edge, trunk
+#   under the visible part of the word (x 154), standing on the horizon line just below it.
+#   The horizon line crosses the HOUSE box: the house stands in front of the horizon with its
+#   base on the box's bottom edge (y 98). Defaults: daylight, blue sky, lightgreen meadow,
+#   lightblue distant hills (no dark treeline, so the TREE stands out). Inventions: two clouds,
+#   a brown door and two windows on the house, a small stone chimney (its top pokes 2 rows above the box), three ducks
+#   (the brief says "ducks", no count), a few reeds at the pond's edge.
+scene "Farmyard with Well and Duck Pond"
+variants day
+
+let hz = 70
+
+# ---- sky and far hills ----
+sky(hz, blue)
+cloud(92, 14, 30, 2)
+cloud(128, 26, 22, 5)
+hills(50, hz, lightblue, 4, null)
+ground(hz, lightgreen)
+ridge(hz, green, 3)
+
+# ---- the tree on the horizon (right edge) ----
+tree(154, hz, 0.85, 3)
+
+# ---- the farmhouse (extent x 19-56, y 40-98) ----
+fn house() {
+  # whitewashed walls
+  shape([[21, 66], [54, 66], [54, 98], [21, 98]], white)
+  # wall shade under the eaves and on the right end
+  color lightgrey
+  line 22, 71, 53, 71
+  rect 52, 72, 53, 97
+
+  # thatched roof: rounded hip with soft eaves
+  let roof = [[27, 44], [30, 41], [45, 41], [48, 44], [57, 66], [56, 70], [52, 71],
+              [38, 72], [23, 71], [19, 70], [18, 66]]
+  shape(roof, yellow)
+  # thatch strokes
+  color brown
+  for i in 0..8 {
+    let tx = 29 + i * 2.5
+    let bx = 21 + i * 4.6
+    line tx, 44, bx, 68
+  }
+  line 25, 52, 50, 52
+  line 22, 60, 53, 60
+  # ridge
+  color brown
+  line 30, 42, 45, 42
+  # stone chimney through the thatch on the right slope
+  shape([[43, 38], [47, 38], [47, 47], [43, 47]], lightgrey)
+  color darkgrey
+  line 44, 41, 46, 41
+  line 44, 44, 46, 44
+  color yellow
+  line 42, 48, 48, 48
+
+  # door
+  shape([[34, 80], [41, 80], [41, 97], [34, 97]], brown)
+  color black
+  line 39, 89, 39, 89
+  color yellow
+  line 37, 81, 37, 96
+
+  # windows
+  shape([[24, 77], [30, 77], [30, 87], [24, 87]], lightcyan)
+  shape([[45, 77], [51, 77], [51, 87], [45, 87]], lightcyan)
+  color black
+  line 27, 77, 27, 87
+  line 24, 82, 30, 82
+  line 48, 77, 48, 87
+  line 45, 82, 51, 82
+  # shutters
+  color brown
+  rect 22, 77, 23, 87
+  rect 52, 77, 52, 87
+  rect 43, 77, 44, 87
+  rect 31, 77, 32, 87
+  # doorstep
+  color darkgrey
+  line 33, 98, 42, 98
+}
+house()
+
+# ---- the wooden fence along the drawn line ----
+let fx1 = 65
+let fy1 = 89
+let fx2 = 162
+let fy2 = 84
+fn fy(x) { return fy1 + (fy2 - fy1) * (x - fx1) / (fx2 - fx1) }
+fn fence_wood() {
+  let h = 9
+  # rails (black edge under brown)
+  for k in [0.75, 0.35] {
+    color black
+    stroke fx1, fy(fx1) - h * k + 1, fx2, fy(fx2) - h * k + 1
+    color brown
+    stroke fx1, fy(fx1) - h * k, fx2, fy(fx2) - h * k
+  }
+  # posts
+  let x = fx1
+  while x < 160 {
+    let y = fy(x)
+    shape([[x - 1, y - h - 1], [x + 1, y - h - 1], [x + 1, y], [x - 1, y]], brown)
+    x += 8
+  }
+}
+fence_wood()
+
+# ---- the stone well (extent x 69-81, y 98-122) ----
+fn well() {
+  # wooden posts
+  shape([[69, 100], [70, 100], [70, 112], [69, 112]], brown)
+  shape([[80, 100], [81, 100], [81, 112], [80, 112]], brown)
+  # little roof
+  shape([[75, 96], [83, 102], [67, 102]], brown)
+  color black
+  line 71, 101, 79, 101
+  # rope and bucket
+  color darkgrey
+  line 75, 102, 75, 104
+  shape([[73, 105], [77, 105], [76, 109], [74, 109]], brown)
+  color black
+  line 74, 107, 76, 107
+  # stone drum
+  shape([[68, 112], [82, 112], [82, 121], [68, 121]], lightgrey)
+  color darkgrey
+  line 69, 115, 81, 115
+  line 69, 118, 81, 118
+  for x in [72, 76, 80] { line x, 113, x, 114 }
+  for x in [70, 74, 78] { line x, 116, x, 117 }
+  for x in [72, 76, 80] { line x, 119, x, 120 }
+  # shaded right side
+  color darkgrey
+  line 81, 113, 81, 120
+  # dark opening on top
+  color black
+  ellipse 75, 112, 6, 1
+  color darkgrey
+  line 71, 112, 79, 112
+}
+well()
+
+# ---- the pond (extent ellipse x 106-144, y 121-150) ----
+fn duck(x, y, f) {
+  # body with an upturned tail
+  shape([[x - 6 * f, y - 4], [x - 4 * f, y - 2], [x + 1 * f, y - 2], [x + 5 * f, y - 2],
+         [x + 4 * f, y + 1], [x - 4 * f, y + 1], [x - 6 * f, y - 1]], white)
+  # neck and head
+  shape([[x + 1 * f, y - 2], [x + 1 * f, y - 6], [x + 2 * f, y - 8], [x + 4 * f, y - 8],
+         [x + 5 * f, y - 6], [x + 4 * f, y - 4], [x + 4 * f, y - 2]], white)
+  # bill and eye
+  color yellow
+  rect min(x + 5 * f, x + 7 * f), y - 6, max(x + 5 * f, x + 7 * f), y - 5
+  color black
+  line x + 3 * f, y - 6, x + 3 * f, y - 6
+  # wing line
+  color lightgrey
+  line x - 3 * f, y - 1, x + 2 * f, y - 1
+  # ripple under it
+  color lightblue
+  line x - 6 * f, y + 2, x + 5 * f, y + 2
+}
+
+shape(blob(125, 135.5, 20, 15.5, 2, 0.05, 24), brown)
+shape(blob(125, 135.5, 18, 13.5, 2, 0.05, 24), blue, null)
+color lightblue
+line 124, 128, 131, 128
+line 110, 139, 115, 139
+line 129, 146, 136, 146
+duck(115, 133, 1)
+duck(135, 139, -1)
+duck(120, 146, 1)
+reeds(141, 128, 10, 3)
+
+frame()

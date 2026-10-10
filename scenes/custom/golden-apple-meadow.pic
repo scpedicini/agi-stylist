@@ -1,0 +1,85 @@
+# A grassy meadow with a single apple tree in the centre. One of its apples is golden.
+scene "Golden Apple Meadow"
+variants day, night
+
+# --- sky, distant mountains, far forest ---
+sky 18
+hills 9, 31, lightblue, seed: 4
+treeline 26, 36, green, seed: 6
+ground 34
+ridge 35
+
+if variant == "day" {
+  cloud 28, 7, 30, seed: 2
+  cloud 122, 10, 24, seed: 5
+}
+
+# --- meadow details: grass tufts and flowers ---
+fn tuft(x, y) {
+  color green
+  line x - 1, y  x - 2, y - 2
+  line x, y  x, y - 3
+  line x + 1, y  x + 2, y - 2
+}
+for k in 0..22 {
+  let tx = 6 + noise(31, k) * 148
+  let ty = 46 + noise(32, k) * 116
+  if abs(tx - 80) > 26 || ty > 140 || ty < 60 {
+    tuft(tx, ty)
+  }
+}
+flowers 6, 120, 50, 162, 14, seed: 3
+flowers 110, 120, 154, 162, 14, seed: 9
+
+# --- the apple tree, centre stage ---
+let tx = 80
+let ty = 136
+color green
+ellipse tx + 3, ty + 1, 22, 4          # shadow on the grass
+tree tx, ty, 1.5, seed: 6
+
+# apples: 2 columns x 3 rows so they read as round at the 2:1 pixel aspect
+fn apple(x, y, c = red) {
+  color c
+  rect x, y, x + 1, y + 2
+}
+
+fn golden_apple(x, y, twinkle = white) {
+  # bigger than the red apples (3 columns x 5 rows) with a black outline so it stands out
+  color black
+  polygon x, y - 1  x + 2, y - 1  x + 3, y  x + 3, y + 4  x + 2, y + 5  x, y + 5  x - 1, y + 4  x - 1, y
+  color yellow
+  rect x, y, x + 2, y + 4
+  color brown
+  line x + 1, y - 3  x + 1, y - 2      # stem
+  color white
+  line x, y  x, y + 1                  # glint
+  color twinkle                        # sparkle around it
+  line x - 3, y + 2
+  line x + 5, y + 2
+  line x + 1, y - 5
+  line x + 1, y + 7
+}
+
+let apples = [[66, 52], [75, 49], [90, 50], [97, 62], [62, 70], [72, 82], [86, 76],
+              [94, 90], [68, 96], [82, 100], [100, 78]]
+for a in apples {
+  apple a[0], a[1]
+}
+let gx = 80
+let gy = 66
+golden_apple gx, gy
+
+# a couple of windfalls in the grass
+apple 66, 140
+apple 98, 142
+
+# --- night: dim everything, then relight the moon, stars and the glowing golden apple ---
+if variant == "night" {
+  night()                                  # also dims the apples and silhouettes the trunk
+  moon 132, 8, 5
+  stars 30, 1, 10
+  golden_apple gx, gy, yellow
+}
+
+frame

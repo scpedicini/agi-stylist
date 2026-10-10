@@ -1,0 +1,318 @@
+# Castle Hedge Maze Fountain
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c11.png; reframed with:
+#   pnpm grid reference/kq6/r05-c11.png --name kq6-r05-c11
+# Method: translated by eye. Kept: blue sky with billowing clouds, the grey mountain, dark
+#   pine woods left and right, the white castle with its towers and dark door, the far maze
+#   lawns with hedge rows and cone topiaries, the iron trellis arch with a hedge block behind
+#   it, the long dark hedge wall curving behind the fountain, the two-tier stone fountain and
+#   its cast shadow, the winding tan path, the two lawns, the lit left hedge with blue
+#   flowers in its shade, the dark right hedge with blue flowers.
+#   Dropped: leaf texture, most of the maze's small hedge segments, the trellis's fine
+#   scrollwork (a heart and a few loops kept), the castle's tiny windows (a few kept),
+#   the cloud's lavender shading.
+#   Moved: nothing.
+# Colours: pale blue sky → blue, clouds → white over lightgrey, mountain → lightblue with a
+#   cyan shade side, far pines → cyan, white castle → white lit face / lightgrey shaded towers,
+#   lawns → lightgreen, hedges → green with black shade and lightgreen leaf strokes, tan path →
+#   yellow with brown streaks, fountain shadow → brown, stone fountain → lightgrey / darkgrey /
+#   white, water → cyan with lightcyan, iron trellis → lightgrey with darkgrey, blue flowers →
+#   blue / lightblue.
+scene "Castle Hedge Maze Fountain"
+variants day
+
+# ---- sky and clouds ---------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color blue
+  rect 0, 0, 159, 44
+}
+
+fn cumulus(list, seed0) {
+  blobs(list, lightgrey, null, 0.2, seed0)
+  let lit = []
+  for p in list { push(lit, [p[0] - 2, p[1] - 2, p[2] * 0.85, p[3] * 0.8]) }
+  blobs(lit, white, null, 0.2, seed0 + 7)
+}
+# left cloud bank over the mountain
+cumulus([[8, 4, 14, 7], [28, 3, 14, 6], [46, 6, 12, 6], [18, 12, 14, 5], [36, 13, 12, 4],
+         [56, 4, 8, 4]], 3)
+# the big bank behind the castle and to its right
+cumulus([[96, 2, 18, 5], [118, 4, 14, 6], [124, 14, 10, 6], [112, 22, 10, 5], [138, 2, 10, 4]], 11)
+cumulus([[150, 14, 9, 3], [140, 17, 7, 2]], 21)
+
+# ---- mountain and far pine woods ---------------------------------------------------------
+shape([[16, 36], [26, 26], [34, 20], [40, 16], [44, 16], [50, 21], [58, 26], [66, 30], [66, 38],
+       [16, 38]], lightblue)
+shape([[44, 16], [50, 21], [58, 26], [64, 30], [58, 31], [52, 27], [47, 21]], cyan, null)
+color lightcyan
+line 40, 17, 37, 24
+line 42, 18, 41, 26
+
+fn woods(list, seed0) {
+  blobs(list, green, black, 0.3, seed0)
+  color black
+  for p in list {
+    stroke p[0] + 1, p[1] - p[3] + 3, p[0] + 2, p[1] + 1, p[0] + 4, p[1] + 3
+  }
+  color lightgreen
+  for p in list {
+    stroke p[0] - 2, p[1] - p[3] + 3, p[0] - 3, p[1] - p[3] + 5
+  }
+}
+woods([[2, 26, 4, 8], [8, 24, 4, 8], [14, 27, 4, 7], [20, 25, 4, 7], [26, 30, 4, 6],
+       [31, 33, 4, 5], [6, 34, 7, 5], [18, 35, 8, 5], [32, 38, 8, 3]], 30)
+woods([[116, 34, 5, 4], [124, 32, 5, 5], [132, 31, 5, 5], [140, 32, 5, 5], [147, 28, 4, 7],
+       [154, 22, 4, 10], [158, 26, 3, 9], [136, 37, 14, 3]], 40)
+
+# ---- far maze lawns ----------------------------------------------------------------------
+color lightgreen
+rect 0, 38, 159, 64
+
+# the castle on the far lawn
+fn castle() {
+  # front (lit) block with a crenellated top
+  shape([[63, 12], [100, 13], [100, 40], [63, 40]], white)
+  color white
+  for i in 0..9 { rect 64 + i * 4, 10, 65 + i * 4, 12 }
+  # left round tower edge
+  shape([[63, 10], [67, 10], [67, 40], [63, 40]], white)
+  color lightgrey
+  line 66, 11, 66, 39
+  # right towers and the wall between them, in shade
+  shape([[100, 13], [105, 13], [105, 40], [100, 40]], lightgrey)
+  shape([[105, 17], [110, 17], [110, 40], [105, 40]], white)
+  shape([[110, 18], [116, 18], [116, 40], [110, 40]], lightgrey)
+  color darkgrey
+  line 104, 14, 104, 39
+  line 115, 19, 115, 39
+  # door and a few windows
+  shape(archway(93, 32, 1, 2, 40), black, null)
+  color darkgrey
+  for w in [[70, 20], [78, 22], [86, 18], [74, 30], [96, 24], [89, 27], [107, 25]] {
+    line w[0], w[1], w[0], w[1] + 1
+  }
+  # ground line
+  color green
+  line 62, 40, 117, 40
+}
+castle()
+
+# hedge rows of the maze, back to front
+fn hedge_row(x1, x2, y, h, slope = 0) {
+  shape([[x1, y + slope], [x2, y], [x2, y + h], [x1, y + h + slope]], green)
+  color lightgreen
+  line x1 + 2, y + slope + 1, x2 - 2, y + 1
+}
+hedge_row(-2, 40, 44, 3, 1)
+hedge_row(0, 34, 50, 4, 2)
+hedge_row(70, 160, 41, 2)
+hedge_row(64, 92, 46, 3)
+hedge_row(118, 160, 46, 3, 1)
+hedge_row(140, 160, 52, 3)
+hedge_row(130, 160, 55, 4)
+
+fn cone(x, y, h) {
+  shape([[x, y - h], [x + 1, y - h / 2], [x + 1, y], [x - 1, y], [x - 1, y - h / 2]], black, null)
+  color green
+  line x, y - 2, x, y - h + 2
+}
+cone(76, 57, 8)
+cone(98, 56, 9)
+cone(103, 55, 8)
+cone(114, 56, 10)
+cone(118, 53, 8)
+cone(128, 56, 9)
+cone(135, 53, 7)
+
+# ---- ground: tan path, then the lawns ----------------------------------------------------
+color yellow
+rect 0, 64, 159, 167
+
+# left lawn (the left hedge covers its far side)
+shape([[0, 54], [16, 58], [36, 60], [40, 80], [47, 90], [43, 100], [44, 110], [50, 118],
+       [63, 126], [70, 130], [63, 136], [55, 145], [45, 155], [38, 168], [0, 168]], lightgreen)
+# bottom-right lawn
+shape([[78, 168], [84, 156], [90, 146], [98, 137], [106, 129], [114, 125], [124, 123],
+       [134, 121], [142, 120], [142, 168]], lightgreen)
+color green
+line 20, 108, 30, 110
+line 26, 122, 38, 124
+line 100, 150, 112, 152
+line 118, 140, 132, 141
+line 96, 162, 108, 163
+
+# path streaks
+color brown
+for s in [[50, 114, 10], [56, 122, 12], [64, 132, 8], [62, 142, 10], [56, 150, 12],
+          [50, 158, 14], [46, 165, 12], [84, 118, 14], [104, 116, 16], [122, 113, 12],
+          [92, 124, 10], [74, 140, 8], [70, 154, 6], [138, 98, 6], [130, 110, 8]] {
+  line s[0], s[1], s[0] + s[2], s[1] - 1
+}
+
+# fountain's cast shadow on the path
+shape(blob(76, 104, 26, 7, 4, 0.08), brown, null)
+
+# ---- back hedge wall, curving round behind the fountain ----------------------------------
+let wall_top = [[56, 58], [80, 59], [104, 59], [124, 58], [140, 59], [150, 62], [159, 66]]
+shape(wall_top + [[159, 92], [150, 88], [140, 84], [120, 82], [96, 81], [72, 81], [56, 82]], green)
+# shaded lower part of the wall
+shape([[56, 72], [70, 74], [90, 72], [110, 74], [130, 72], [148, 74], [159, 78], [159, 92],
+       [150, 88], [140, 84], [120, 82], [96, 81], [72, 81], [56, 82]], black, null)
+color lightgreen
+for i in 0..9 {
+  let x = 60 + i * 11 + noise(5, i) * 4
+  line x, interp(wall_top, x) + 2, x + 4, interp(wall_top, x) + 3
+}
+color black
+for i in 0..8 {
+  let x = 60 + i * 12 + noise(6, i) * 5
+  line x, 65 + noise(7, i) * 3, x + 3, 67 + noise(8, i) * 3
+}
+color green
+for i in 0..7 {
+  let x = 62 + i * 14 + noise(9, i) * 5
+  line x, 76 + noise(10, i) * 3, x + 3, 77 + noise(11, i) * 2
+}
+
+# ---- the stone fountain -----------------------------------------------------------------
+fn fountain() {
+  # lower bowl
+  let bowl = [[61, 89], [63, 95], [69, 101], [80, 105], [100, 107], [118, 105], [130, 100],
+              [136, 95], [139, 89]]
+  shape(bowl, lightgrey)
+  shape([[120, 90], [139, 89], [136, 95], [130, 100], [118, 105], [108, 106], [116, 98]],
+        darkgrey, null)
+  color white
+  line 66, 96, 74, 100, 86, 103, 100, 104
+  # carved ribs round the bowl
+  color darkgrey
+  for x in [70, 79, 88, 97, 106] {
+    line x, interp(bowl, x) - 1, x - 1, 95
+  }
+  color lightgrey
+  for x in [115, 124, 131] {
+    line x, interp(bowl, x) - 1, x - 1, 95
+  }
+  # thick rim: lit top, white front lip, then the pool inside
+  color lightgrey
+  ellipse 100, 88, 39, 5
+  color black
+  stroke arc(100, 88, 39, 5, 270, 450)
+  color white
+  stroke arc(100, 88, 38, 5, 100, 260, 10)
+  color darkgrey
+  stroke arc(100, 87, 34, 3, 280, 440, 10)
+  color cyan
+  ellipse 100, 88, 33, 2
+  color lightcyan
+  line 70, 88, 82, 88
+  line 114, 88, 126, 88
+  # pedestal
+  shape([[95, 80], [104, 80], [103, 88], [96, 88]], darkgrey)
+  color black
+  line 101, 81, 101, 87
+  # upper basin: a shallow bowl with a shaded underside
+  shape([[82, 78], [86, 82], [92, 84], [106, 84], [112, 82], [116, 78]], lightgrey)
+  shape([[100, 84], [106, 84], [112, 82], [116, 78], [106, 80]], darkgrey, null)
+  color lightgrey
+  ellipse 99, 77, 17, 3
+  color black
+  stroke arc(99, 77, 17, 3, 270, 450)
+  color white
+  stroke arc(99, 77, 16, 3, 100, 260, 15)
+  color cyan
+  ellipse 99, 77, 13, 1
+  color lightcyan
+  line 92, 77, 96, 77
+}
+fountain()
+
+# ---- trellis arch with the hedge block behind it -----------------------------------------
+shape([[41, 54], [54, 54], [54, 81], [41, 81]], green)
+shape([[55, 60], [58, 60], [58, 82], [55, 82]], black, null)
+color lightgreen
+rect 42, 55, 53, 57
+line 43, 62, 46, 66
+line 49, 70, 52, 73
+color black
+line 41, 72, 54, 74
+
+fn arch() {
+  let outer = archway(48, 36, 11, 10, 82)
+  let inner = archway(48, 39, 8, 8, 82)
+  # draw the frame: a lightgrey band between two black lines
+  color lightgrey
+  for d in [0, 1, 2] { stroke archway(48, 37 + d, 10 - d, 9 - d, 82) }
+  color black
+  stroke outer
+  stroke inner
+  # post lattice
+  color darkgrey
+  for y in range(46, 82, 4) {
+    line 38, y, 39, y + 2
+    line 57, y, 58, y + 2
+  }
+  # crown scrolls and a heart
+  stroke arc(44, 43, 3, 3, 0, 300, 30)
+  stroke arc(52, 43, 3, 3, 60, 360, 30)
+  color lightgrey
+  plot 47, 42
+  plot 49, 42
+  plot 48, 44
+  color darkgrey
+  line 47, 41, 46, 42, 48, 45, 50, 42, 49, 41, 48, 42, 47, 41
+}
+arch()
+
+# ---- right dark hedge with blue flowers --------------------------------------------------
+let rh = [[159, 84], [150, 88], [144, 96], [141, 104], [140, 120], [139, 140], [138, 168],
+          [159, 168]]
+shape(rh, green)
+# shaded face towards the path, and a few deep pockets
+shape([[150, 88], [144, 96], [141, 104], [140, 120], [139, 140], [138, 168], [145, 168],
+       [145, 140], [146, 116], [147, 102], [152, 92]], black, null)
+for b in [[154, 112, 4, 6], [151, 134, 4, 7], [156, 152, 3, 6]] {
+  shape(blob(b[0], b[1], b[2], b[3], b[0] + b[1], 0.3), black, null)
+}
+color lightgreen
+line 148, 90, 152, 88
+line 152, 95, 156, 93
+line 154, 102, 157, 100
+line 150, 124, 153, 122
+line 154, 144, 157, 142
+for i in 0..10 {
+  let x = 142 + noise(51, i) * 15
+  let y = 106 + noise(52, i) * 58
+  shape(blob(x, y, 2, 2, 60 + i, 0.3), blue, null)
+  color lightblue
+  line x - 1, y - 1, x, y - 1
+}
+
+# ---- left lit hedge mass with blue flowers in its shade ----------------------------------
+blobs([[6, 66, 12, 6], [18, 70, 10, 5], [27, 75, 6, 5], [8, 80, 12, 10], [8, 96, 12, 10],
+       [10, 112, 12, 10], [20, 124, 12, 8], [32, 134, 10, 7], [34, 144, 9, 7],
+       [18, 146, 16, 12], [6, 160, 10, 8], [20, 162, 8, 5]], green, black, 0.25, 70)
+# shade: a dark crease and the dark foot where the flowers grow
+color black
+stroke 2, 74, 6, 84, 8, 98, 4, 108
+stroke 16, 120, 24, 130, 34, 138
+shape(blob(12, 152, 12, 10, 80, 0.25), black, null)
+for i in 0..9 {
+  let x = 2 + noise(81, i) * 22
+  let y = 140 + noise(82, i) * 20
+  shape(blob(x, y, 2, 2, 90 + i, 0.3), blue, null)
+  color lightblue
+  line x - 1, y - 1, x, y - 1
+}
+# lit leaf strokes
+color lightgreen
+for i in 0..18 {
+  let x = 4 + noise(83, i) * 28
+  let y = 64 + noise(84, i) * 70
+  if x > 18 && y > 84 && y < 116 { continue }
+  if y > 136 && x < 26 { continue }
+  line x, y, x + 3, y - 2
+}
+
+frame()

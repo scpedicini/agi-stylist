@@ -1,0 +1,405 @@
+# Pawn Shop
+# Source: King's Quest VI VGA background, reference/kq6/r03-c11.png
+#   (the pawn shop on the Isle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r03-c11.png --name kq6-r03-c11
+# Method: translated by eye. Kept: the dark ceiling band, the peach plaster soffit with its
+#   little window, the dark left wall and its sunlit doorway, the cream right wall with its
+#   shadowed beam and bottle alcove, the back shelving with a wheel, vase, shield and jars, the
+#   stuffed bear on its plinth, the plank floor, the counter with a teapot, the spear and
+#   halberd blade, the hanging cauldron and horn, the hanging skeleton, and in front the suit of
+#   armour, drum, barrel, crystal ball, small chest, broom, candles, urn and bench.
+# Dropped: the hatchet and basket by the bear, the loose boards in the foreground, most shelf
+#   clutter, wood grain, plaster texture, the upper-left skylight.
+# Colours: dark ceiling band → black, peach soffit → yellow with brown shading, cream right
+#   wall → white with lightgrey and yellow texture, dark maroon walls → red with black shadow,
+#   shelving and counter wood → brown with yellow edges, plank floor → yellow with brown seams,
+#   bear fur → brown with yellow highlights, bones → white with lightblue shade, lavender-lit metal
+#   rims → lightblue, dark armour and urn → blue/darkgrey with lightblue rims, drum → red with a yellow
+#   head, candles → white with lightgrey, crystal ball → lightmagenta.
+scene "Pawn Shop"
+variants lit
+
+# ---- walls and ceiling --------------------------------------------------------------------
+# back and left walls in shadow
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color red
+  rect 0, 0, 159, 110
+}
+# plank floor
+delay {
+  color yellow
+  rect 0, 104, 159, 167
+}
+
+# dark ceiling band along the top
+color black
+rect 0, 0, 159, 8
+
+# right wall, cream plaster, from the corner at x=122
+shape([[120, 9], [159, 9], [159, 112], [122, 108]], white, null)
+color lightgrey
+line 128, 14, 134, 14
+line 146, 18, 154, 18
+line 150, 44, 156, 44
+line 126, 70, 128, 70
+line 154, 104, 158, 104
+line 124, 80, 127, 80
+line 124, 92, 127, 92
+line 140, 40, 145, 40
+color yellow
+line 140, 12, 146, 12
+line 126, 52, 126, 58
+line 157, 60, 157, 70
+# shadowed beam running diagonally across the top of the right wall
+shape([[116, 44], [159, 25], [159, 33], [124, 50], [116, 50]], red)
+color black
+line 117, 50, 124, 50, 159, 34
+# corner where back wall meets right wall
+color black
+line 122, 50, 122, 108
+
+# the peach plaster soffit: front face and slanted left side
+shape([[32, 8], [118, 8], [118, 44], [32, 44]], yellow)
+shape([[14, 8], [32, 8], [32, 44], [27, 46]], yellow)
+color brown
+line 32, 9, 32, 43
+line 40, 41, 116, 41
+line 50, 18, 56, 18
+line 74, 28, 82, 28
+line 98, 16, 104, 16
+line 62, 36, 68, 36
+line 18, 14, 22, 26
+# little window in the side of the soffit
+shape([[25, 21], [29, 21], [29, 34], [25, 33]], lightcyan)
+# soffit right side face, lit
+shape([[116, 8], [121, 8], [121, 44], [116, 44]], white)
+color black
+line 32, 45, 117, 45
+
+# ---- the sunlit doorway on the left wall --------------------------------------------------
+shape([[11, 61], [19, 61], [19, 103], [11, 103]], white)
+shape([[11, 88], [15, 84], [19, 86], [19, 103], [11, 103]], yellow, null)
+color brown
+line 20, 61, 20, 104
+
+# ---- back shelving ------------------------------------------------------------------------
+shape([[76, 47], [122, 47], [122, 104], [76, 104]], brown)
+# dark shelf backs
+for b in [[78, 49, 101, 63], [106, 49, 120, 63], [78, 68, 101, 82], [106, 68, 120, 82],
+          [78, 87, 101, 101], [106, 87, 120, 101]] {
+  color black
+  rect b[0], b[1], b[2], b[3]
+}
+# shelf edges
+for y in [64, 83, 102] {
+  color yellow
+  line 77, y, 121, y
+}
+color yellow
+line 103, 47, 103, 102
+line 77, 47, 77, 102
+
+# shelf goods: ship's wheel, chests, globe and pots up top
+color yellow
+line arc(84, 57, 4, 6, 0, 360, 30)
+line 84, 50, 84, 63
+line 80, 57, 88, 57
+shape([[92, 56], [100, 56], [100, 63], [92, 63]], brown)
+color yellow
+line 92, 56, 100, 56
+shape(blob(110, 58, 3, 5, 3, 0.05, 10), lightred)
+shape(blob(117, 58, 3, 5, 4, 0.05, 10), brown)
+# crossed tools, white vase and blue platter on the middle shelf
+color lightgrey
+line 80, 70, 88, 81
+line 88, 70, 80, 81
+shape([[94, 69], [97, 69], [99, 73], [99, 80], [97, 82], [94, 82], [92, 80], [92, 73]], white)
+color lightgrey
+line 97, 72, 97, 80
+shape([[107, 71], [114, 69], [116, 80], [108, 82]], blue)
+color lightcyan
+line 109, 73, 113, 72
+shape(blob(118, 78, 2, 4, 2, 0.05, 8), lightgrey)
+# bottom shelf: a basket and a teapot
+shape([[80, 94], [89, 94], [88, 101], [81, 101]], brown)
+color yellow
+line 81, 96, 88, 96
+line 82, 99, 87, 99
+
+# ---- the bear's alcove: posts and plinth --------------------------------------------------
+for x in [41, 74] {
+  shape([[x, 46], [x + 2, 46], [x + 2, 106], [x, 106]], brown)
+  color yellow
+  line x, 47, x, 105
+}
+shape([[39, 104], [76, 104], [79, 109], [36, 109]], brown)
+color red
+line 40, 106, 76, 106
+
+# ---- plank floor: seams converging on the back of the room ---------------------------------
+color brown
+for x in [-80, -55, -32, -12, 6, 22, 37, 51, 64, 77, 90, 104, 119, 135, 153, 173, 196, 222] {
+  let vx = 62
+  let vy = 70
+  # seam from the floor's back edge (y 110) to the bottom of the picture
+  let t1 = (110 - vy) / (167 - vy)
+  stroke vx + (x - vx) * t1, 110, x, 167
+}
+# staggered board ends
+color brown
+for j in [[30, 116, 40], [70, 122, 82], [100, 114, 112], [16, 132, 30], [86, 142, 102],
+          [56, 152, 72], [118, 128, 132]] {
+  line j[0], j[1], j[0] + 4, j[1] - 1
+}
+color black
+line 21, 104, 122, 104
+line 122, 108, 159, 112
+
+# ---- the stuffed bear ----------------------------------------------------------------------
+fn bear() {
+  # body and legs
+  blobs([[59, 82, 13, 20], [52, 99, 7, 7], [66, 99, 7, 7], [59, 66, 10, 9]], brown)
+  # raised arms
+  shape(band([[50, 70], [46, 60], [47, 51]], 8, 6), brown)
+  shape(band([[68, 70], [72, 60], [71, 51]], 8, 6), brown)
+  # paws
+  shape(blob(47, 51, 3, 4, 2, 0.15, 10), yellow)
+  shape(blob(71, 51, 3, 4, 5, 0.15, 10), yellow)
+  # head with ears
+  shape(blob(53, 49, 2, 3, 7, 0.1, 8), brown)
+  shape(blob(65, 49, 2, 3, 8, 0.1, 8), brown)
+  shape(blob(59, 55, 5, 8, 3, 0.08, 14), brown)
+  color yellow
+  line 54, 51, 54, 56
+  # lit muzzle and open mouth
+  shape([[56, 57], [62, 57], [63, 62], [59, 64], [55, 62]], yellow)
+  shape([[57, 60], [61, 60], [60, 63], [58, 63]], red)
+  color black
+  line 56, 53
+  line 62, 53
+  line 58, 57, 60, 57
+  # fur highlights on the lit left side, belly and leg lines
+  color yellow
+  line 48, 75, 47, 88
+  line 52, 72, 51, 82
+  line 55, 50, 58, 49
+  line 47, 97, 48, 103
+  color black
+  line 59, 84, 59, 92
+  line 55, 92, 52, 94
+  line 63, 92, 66, 94
+  line 70, 74, 71, 88
+  # big lit haunches and feet
+  shape(blob(50, 98, 5, 7, 4, 0.1, 12), brown)
+  shape(blob(68, 98, 5, 7, 6, 0.1, 12), brown)
+  color yellow
+  line 47, 94, 46, 100
+  line 65, 94, 64, 100
+  shape([[45, 103], [55, 103], [55, 106], [45, 106]], yellow)
+  shape([[63, 103], [73, 103], [73, 106], [63, 106]], yellow)
+}
+bear()
+
+# ---- the counter with a teapot -------------------------------------------------------------
+shape([[96, 96], [122, 95], [134, 106], [110, 108]], yellow)
+color brown
+line 100, 98, 124, 97
+line 103, 101, 128, 100
+line 106, 104, 131, 103
+shape([[96, 96], [110, 108], [110, 126], [97, 117]], brown)
+shape([[110, 108], [134, 106], [134, 124], [110, 127]], brown)
+color yellow
+line 111, 109, 133, 107
+color black
+line 116, 110, 116, 125
+line 122, 109, 122, 125
+line 128, 108, 128, 124
+line 103, 104, 103, 120
+# teapot
+shape(blob(115, 94, 4, 5, 6, 0.05, 12), lightcyan, black)
+color cyan
+line 113, 96, 117, 96
+color black
+line 119, 92, 122, 90
+line 111, 92, 109, 95
+
+# ---- bottle alcove on the right wall (behind the skeleton) -------------------------------
+shape([[129, 51], [156, 48], [156, 102], [129, 101]], brown)
+color black
+rect 131, 53, 154, 61
+rect 131, 65, 154, 74
+rect 131, 78, 154, 87
+rect 131, 91, 154, 99
+for b in [[133, 61, cyan], [137, 61, green], [149, 61, lightcyan], [134, 74, green],
+          [142, 74, lightcyan], [151, 74, cyan], [133, 87, lightcyan], [146, 87, green],
+          [140, 99, cyan], [151, 99, lightcyan]] {
+  shape([[b[0], b[1] - 5], [b[0] + 2, b[1] - 5], [b[0] + 2, b[1]], [b[0], b[1]]], b[2], null)
+  color b[2]
+  line b[0] + 1, b[1] - 7, b[0] + 1, b[1] - 6
+}
+color yellow
+line 130, 62, 155, 62
+line 130, 75, 155, 75
+line 130, 88, 155, 88
+line 130, 100, 155, 100
+
+# ---- halberd blade and spear on the left ---------------------------------------------------
+shape([[33, 47], [24, 60], [22, 76], [25, 90], [33, 100], [31, 86], [33, 70], [37, 58]],
+      darkgrey)
+color lightblue
+line 32, 49, 25, 61, 23, 76, 26, 89, 32, 98
+color black
+line 34, 72, 26, 74
+# the spear: a leaf blade at the top and a long shaft running off the bottom
+shape([[45, 0], [47, 6], [46, 15], [44, 19], [42, 15], [42, 6]], darkgrey)
+color lightblue
+line 45, 1, 43, 7, 43, 15
+color black
+line 43, 19, 46, 19
+color black
+stroke [[44, 20], [14, 167]]
+color lightblue
+stroke [[45, 20], [15, 167]]
+
+# ---- hanging cauldron and horn, top left ---------------------------------------------------
+color black
+line 3, 9, 6, 25
+line 15, 9, 13, 25
+shape([[0, 27], [17, 26], [18, 32], [16, 40], [11, 45], [5, 45], [1, 41]], brown)
+shape(blob(9, 27, 9, 2, 2, 0.02, 12), black, darkgrey)
+color yellow
+line 3, 31, 3, 39
+line 5, 30, 5, 34
+color black
+line 14, 31, 13, 41
+# brass horn hanging in a curve
+shape(band([[14, 22], [16, 34], [17, 42]], 2, 3), yellow)
+shape(blob(19, 47, 3, 5, 3, 0.1, 10), yellow)
+shape(blob(19, 47, 1.5, 3, 3, 0.05, 8), brown, null)
+
+# ---- the hanging skeleton ------------------------------------------------------------------
+fn bone(pts, w, w2) {
+  shape(band(pts, w, w2), white)
+}
+# spine off the top, with vertebra notches
+bone([[143, 0], [143, 19]], 8, 7)
+color lightblue
+line 145, 2, 145, 17
+color black
+line 141, 5, 145, 5
+line 141, 10, 145, 10
+line 141, 15, 145, 15
+# pelvis: a wide bowl with two dark holes
+shape(blob(143, 25, 10, 7, 5, 0.12, 16), white)
+shape(blob(139, 26, 2, 3, 2, 0.05, 8), black, null)
+shape(blob(147, 26, 2, 3, 3, 0.05, 8), black, null)
+color lightblue
+line 135, 29, 151, 29
+# legs: thigh bones, knobbly knees, shins and dangling feet
+bone([[136, 31], [135, 60], [137, 85]], 8, 6)
+bone([[150, 31], [151, 60], [148, 85]], 8, 6)
+bone([[137, 89], [136, 100], [133, 111]], 6, 5)
+bone([[148, 89], [149, 104], [151, 117]], 6, 5)
+shape(blob(137, 87, 3, 4, 6, 0.1, 10), white)
+shape(blob(148, 87, 3, 4, 7, 0.1, 10), white)
+shape([[129, 110], [135, 110], [134, 117], [128, 116]], white)
+shape([[149, 116], [155, 117], [154, 124], [148, 122]], white)
+color lightblue
+line 137, 36, 137, 82
+line 152, 36, 150, 82
+line 137, 92, 135, 108
+line 150, 92, 151, 112
+
+# ---- the urn on the right ------------------------------------------------------------------
+shape([[143, 108], [159, 105], [159, 145], [146, 144], [148, 132], [143, 124], [146, 116]],
+      darkgrey)
+color black
+line 145, 112, 159, 110
+line 146, 128, 159, 128
+color lightblue
+line 144, 109, 154, 107
+line 144, 120, 146, 128, 147, 140
+
+# ---- foreground: the bench on the right, candles on it ------------------------------------
+shape([[110, 140], [159, 136], [159, 167], [116, 167]], brown)
+color yellow
+line 111, 141, 159, 137
+line 113, 150, 159, 147
+line 115, 159, 159, 157
+color black
+line 111, 143, 159, 139
+fn candle(x1, x2, top, bottom) {
+  shape([[x1, top + 2], [x1 + 1, top], [x2 - 1, top], [x2, top + 2], [x2, bottom], [x1, bottom]],
+        white)
+  color lightgrey
+  line x2 - 1, top + 3, x2 - 1, bottom - 1
+  line x1 + 1, top + 4, x1 + 1, top + 9
+  color black
+  line (x1 + x2) / 2, top - 2, (x1 + x2) / 2, top - 1
+  color yellow
+  line (x1 + x2) / 2, top - 4, (x1 + x2) / 2, top - 3
+}
+candle(124, 130, 120, 143)
+candle(131, 135, 128, 142)
+candle(140, 146, 136, 167)
+candle(149, 153, 146, 167)
+
+# ---- foreground: chest, broom, crystal ball, barrel, drum ---------------------------------
+# small chest
+shape([[80, 136], [99, 136], [100, 149], [79, 150]], brown)
+shape([[80, 133], [99, 133], [99, 137], [80, 137]], lightred)
+color yellow
+line 81, 141, 98, 141
+color black
+line 89, 137, 89, 149
+# broom: handle and a bundle of straw
+color brown
+stroke [[90, 158], [118, 140]]
+shape([[78, 160], [88, 153], [94, 158], [86, 167], [76, 167]], yellow)
+color brown
+line 80, 164, 88, 156
+line 84, 166, 91, 158
+# barrel
+shape([[53, 132], [69, 132], [70, 150], [68, 163], [54, 163], [52, 150]], brown)
+shape(blob(61, 133, 8, 3, 2, 0.02, 14), black, lightblue)
+color black
+line 53, 140, 69, 140
+line 53, 155, 69, 155
+color yellow
+line 56, 142, 56, 160
+# crystal ball on a little stand
+shape([[67, 158], [76, 158], [78, 163], [65, 163]], black)
+shape(blob(71, 151, 5, 7, 4, 0.02, 16), lightmagenta)
+color magenta
+line arc(71, 151, 4, 6, 120, 240, 20)
+color white
+line 69, 147, 69, 148
+# drum
+shape([[29, 141], [53, 141], [52, 167], [30, 167]], red)
+shape(blob(41, 141, 12, 5, 3, 0.02, 18), yellow)
+color brown
+line arc(41, 141, 12, 5, 90, 270, 15)
+color lightred
+line 31, 146, 37, 162, 43, 147, 49, 162
+color black
+line 30, 146, 52, 146
+
+# ---- foreground: suit of armour on the left -----------------------------------------------
+# helmet with a visor slit, then the breastplate and an arm
+blobs([[9, 132, 11, 12], [8, 154, 12, 15], [21, 140, 5, 8]], darkgrey)
+shape([[0, 108], [4, 102], [12, 100], [19, 104], [21, 112], [19, 121], [0, 122]], darkgrey)
+color black
+line 1, 112, 19, 112
+line 2, 113, 18, 113
+line 10, 101, 10, 111
+line 0, 124, 18, 123
+line 0, 144, 16, 142
+line 9, 146, 9, 167
+color lightblue
+line 3, 103, 11, 100, 18, 104, 20, 111
+line 20, 125, 23, 133, 26, 139
+line 17, 149, 19, 166
+line 2, 126, 8, 125
+frame()

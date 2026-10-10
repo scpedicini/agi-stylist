@@ -1,0 +1,308 @@
+# Wizard's Library
+# Source: a pixel-art illustration the user pasted into the chat (not kept in the repo);
+#   reframed with: pnpm grid <image> --crop 0,120,1232,748 --name wizard-library
+# Method: translated by eye from a very busy pixel-art library interior. Kept only what makes
+# the room read: two arched windows, the stone chimney with its painting and fire, a chandelier
+# (moved down so it fits the cropped top), two bookcases, the oval mirror, the red armchair,
+# a globe, a table with a plant, and the rug. Dropped: pottery, ship model, scrolls, book piles,
+# antler ornaments. Books are runs of coloured strokes, not individual spines.
+# Colours: teal walls → cyan with blue shadows, glass → lightcyan, stone → lightgrey/darkgrey,
+# wood → brown with yellow highlights and black lines, rug → red/brown with a yellow border.
+scene "Wizard's Library"
+variants day, night
+
+# ---- walls and vaulted ceiling --------------------------------------------------------------
+color cyan
+rect 0, 0, 159, 135
+# ceiling shadow above the beams
+shape([[0, 0], [56, 0], [40, 2], [26, 10], [16, 22], [10, 40], [8, 60], [0, 60]], blue, null)
+shape([[104, 0], [159, 0], [159, 36], [152, 24], [140, 12], [124, 4]], blue, null)
+# the shadowed wall between the chimney and the bookcase
+color blue
+rect 94, 0, 103, 128
+fn beam(pts) {
+  color brown
+  line pts
+  line shift(pts, 1, 1)
+  color black
+  line shift(pts, 2, 2)
+}
+beam [[8, 60], [10, 40], [16, 22], [26, 10], [40, 2], [56, 0]]
+beam [[104, 0], [124, 4], [140, 12], [152, 24], [157, 36]]
+
+# ---- the arched windows ---------------------------------------------------------------------
+fn window(x1, x2, top, bottom) {
+  let cx = (x1 + x2) / 2
+  let arch = [[x1, bottom], [x1, top + 10], [x1 + 2, top + 4], [cx, top], [x2 - 2, top + 4],
+              [x2, top + 10], [x2, bottom]]
+  let frame = [[x1 - 2, bottom + 2], [x1 - 2, top + 9], [x1, top + 2], [cx, top - 3],
+               [x2, top + 2], [x2 + 2, top + 9], [x2 + 2, bottom + 2]]
+  shape(frame, darkgrey)
+  shape(arch, lightcyan)
+  # a few darker panes so the glass isn't flat
+  color cyan
+  for i in 0..8 {
+    let px = x1 + 1 + noise(x1, i) * (x2 - x1 - 3)
+    let py = top + 10 + noise(x1 + 1, i) * (bottom - top - 14)
+    rect px, py, px + 2, py + 3
+  }
+  # lead: a mullion and transoms
+  color darkgrey
+  line cx, top + 1, cx, bottom
+  for y in range(top + 12, bottom, 7) {
+    line x1 + 1, y, x2 - 1, y
+  }
+  line x1 + 1, top + 5, cx, top + 1, x2 - 1, top + 5
+}
+window 20, 36, 22, 102
+window 45, 62, 24, 106
+
+# ---- the chimney breast with its painting ----------------------------------------------------
+fn stones(x1, y1, x2, y2, h = 6, w = 8) {
+  # mortar lines: courses of blocks, every other course offset by half a block
+  color darkgrey
+  for y in range(y1 + h, y2, h) { line x1, y, x2, y }
+  let row = 0
+  for y in range(y1, y2, h) {
+    for x in range(x1 + (row % 2) * (w / 2) + w / 2, x2, w) {
+      line x, y + 1, x, min(y + h - 1, y2)
+    }
+    row += 1
+  }
+}
+shape([[70, 0], [94, 0], [94, 68], [70, 68]], lightgrey)
+stones 71, 0, 93, 67
+# gilt-framed painting
+color brown
+rect 75, 26, 90, 56
+color yellow
+line 75, 26, 90, 26, 90, 56
+line 75, 27, 75, 56
+color black
+rect 77, 28, 88, 54
+color darkgrey
+line 77, 48, 80, 40, 83, 44, 86, 36, 88, 42
+# mantel hood
+shape([[66, 68], [100, 68], [100, 86], [66, 86]], lightgrey)
+stones 67, 68, 99, 85, 6, 10
+color white
+line 66, 68, 100, 68
+# jambs and the firebox
+shape([[70, 86], [80, 86], [80, 122], [70, 122]], lightgrey)
+shape([[89, 86], [99, 86], [99, 122], [89, 122]], lightgrey)
+stones 71, 86, 79, 121, 6, 6
+stones 90, 86, 98, 121, 6, 6
+shape([[80, 122], [80, 94], [82, 90], [85, 88], [87, 90], [89, 94], [89, 122]], black)
+fn fire() {
+  shape([[81, 121], [82, 108], [84, 100], [85, 104], [87, 98], [88, 110], [88, 121]], lightred, null)
+  shape([[83, 121], [84, 110], [85, 106], [86, 112], [87, 121]], yellow, null)
+  color white
+  line 85, 116, 85, 120
+  color brown
+  line 81, 121, 88, 120
+}
+fire()
+# hearth
+shape([[66, 122], [102, 122], [104, 136], [64, 136]], lightgrey)
+color darkgrey
+line 65, 129, 103, 129
+line 74, 122, 73, 136
+line 84, 122, 84, 136
+line 94, 122, 95, 136
+
+# ---- the chandelier --------------------------------------------------------------------------
+fn chandelier() {
+  color brown
+  line 80, 0, 80, 6
+  line 66, 11, 70, 14, 80, 15, 90, 14, 94, 11
+  color yellow
+  line 66, 10, 70, 13, 80, 14, 90, 13, 94, 10
+  line 79, 6, 81, 6
+  for x in [66, 73, 86, 93] {
+    color white
+    rect x, 5, x + 1, 9
+    color black
+    line x - 1, 5, x - 1, 9
+  }
+}
+fn flames(c) {
+  color c
+  for x in [66, 73, 86, 93] { line x, 3, x + 1, 4 }
+}
+chandelier()
+flames(yellow)
+
+# ---- floor and rug --------------------------------------------------------------------------
+color lightgrey
+rect 0, 128, 159, 167
+color darkgrey
+line 0, 140, 159, 140
+line 0, 154, 159, 154
+for x in [-60, -10, 40, 120, 170, 220] {
+  line clamp(80 + (x - 80) * 0.4, 0, 159), 128, clamp(x, 0, 159), clamp(x < 0 ? 128 + 39 * (80 / (80 - x)) : x > 159 ? 128 + 39 * (79 / (x - 80)) : 167, 128, 167)
+}
+fn rug() {
+  shape([[44, 142], [104, 142], [110, 167], [38, 167]], red, brown)
+  shape([[49, 145], [99, 145], [103, 165], [45, 165]], brown, yellow)
+  shape([[53, 148], [95, 148], [98, 162], [50, 162]], red, null)
+  shape([[74, 150], [80, 155], [74, 160], [68, 155]], lightred)
+  color yellow
+  for p in [[58, 151], [90, 151], [56, 158], [92, 158], [74, 155]] { line p, [p[0] + 1, p[1]] }
+}
+rug()
+
+# ---- left: two bookcases --------------------------------------------------------------------
+let book_colors = [red, blue, magenta, darkgrey, green, brown, lightgrey, red, blue]
+fn books(x1, x2, ybot, h, s) {
+  for x in x1..=x2 {
+    if noise(s, x) >= 0.12 {   # leave the odd gap
+      color book_colors[floor(noise(s + 1, x) * len(book_colors))]
+      line x, ybot - 1, x, ybot - h + floor(noise(s + 2, x) * 3)
+    }
+  }
+}
+shape([[0, 18], [12, 22], [12, 167], [0, 167]], brown)
+for i in 0..11 {
+  let y = 34 + i * 12
+  books 1, 10, y, 9, 10 + i
+  color yellow
+  line 0, y, 11, y
+  color black
+  line 0, y + 1, 11, y + 1
+}
+shape([[12, 72], [26, 66], [26, 136], [12, 144]], brown)
+for i in 0..6 {
+  let y = 82 + i * 11
+  for x in 13..=25 {
+    if noise(30 + i, x) >= 0.12 {
+      color book_colors[floor(noise(31 + i, x) * len(book_colors))]
+      let base = y - (x - 13) * 0.45
+      line x, base - 1, x, base - 8
+    }
+  }
+  color yellow
+  line 12, y, 26, y - 6
+  color black
+  line 12, y + 1, 26, y - 5
+}
+
+# ---- right: bookcase with a cupboard below ---------------------------------------------------
+shape([[103, 24], [140, 24], [140, 134], [103, 134]], brown)
+color yellow
+line 101, 22, 142, 22
+color black
+line 101, 23, 142, 23
+for y in [36, 48, 60, 72, 85] {
+  books 105, 138, y, 10, y
+  color yellow
+  line 104, y, 139, y
+  color black
+  line 104, y + 1, 139, y + 1
+}
+books 105, 138, 97, 10, 97
+color yellow
+line 102, 98, 141, 98
+color black
+line 102, 99, 141, 99
+rect 106, 102, 120, 103
+line 106, 102, 106, 130
+line 120, 102, 120, 130
+line 106, 130, 120, 130
+line 123, 102, 137, 102, 137, 130, 123, 130, 123, 102
+color yellow
+line 118, 116, 118, 117
+line 125, 116, 125, 117
+color black
+line 105, 134, 105, 137
+line 138, 134, 138, 137
+
+# ---- the oval mirror ------------------------------------------------------------------------
+shape(blob(149, 58, 7, 27, 1, 0), yellow)
+shape(blob(149, 58, 5, 24, 1, 0), brown, null)
+shape(blob(149, 58, 4, 21, 1, 0), black, null)
+color darkgrey
+line 147, 44, 148, 40
+line 151, 66, 150, 72
+color yellow
+line 148, 30, 150, 30
+line 149, 29, 149, 31
+
+# ---- globe, table and plant -----------------------------------------------------------------
+color brown
+line 33, 110, 33, 126
+line 30, 126, 36, 126
+shape(blob(33, 104, 5, 7, 1, 0), yellow)
+color brown
+line 31, 100, 30, 104, 32, 108
+line 35, 101, 36, 105
+color black
+line 28, 104, 33, 97, 38, 104
+# table with an open book
+color brown
+rect 42, 112, 58, 114
+color black
+line 42, 115, 58, 115
+line 43, 115, 43, 132
+line 57, 115, 57, 132
+color white
+rect 45, 109, 51, 111
+color darkgrey
+line 48, 109, 48, 111
+# potted plant
+color red
+rect 61, 120, 66, 130
+color black
+line 61, 130, 66, 130
+color green
+line 63, 120, 60, 108
+line 63, 120, 63, 104
+line 64, 120, 67, 106
+line 64, 120, 68, 112
+color lightgreen
+line 61, 110, 60, 108
+line 64, 107, 63, 104
+
+# ---- the red armchair -----------------------------------------------------------------------
+shape([[126, 100], [132, 96], [146, 96], [154, 100], [158, 108], [158, 134], [128, 134], [126, 118]], red)
+color lightred
+for x in [132, 138, 144, 150] { line x, 100, x, 128 }
+color magenta
+line 127, 120, 157, 120
+shape([[128, 128], [154, 128], [158, 138], [130, 140]], lightblue)
+shape([[120, 128], [134, 126], [140, 132], [138, 152], [124, 154], [120, 142]], red)
+color lightred
+line 122, 129, 132, 127
+color magenta
+line 124, 150, 136, 148
+shape([[136, 140], [158, 138], [159, 166], [140, 166]], red)
+color magenta
+line 140, 154, 158, 152
+color black
+line 124, 154, 124, 160
+line 138, 152, 138, 158
+
+# ---- night: dark windows, the room lit by fire and candles -----------------------------------
+if variant == "night" {
+  remap {
+    lightcyan: blue, cyan: blue, blue: black, lightgrey: darkgrey, darkgrey: black, white: lightgrey,
+    yellow: brown, lightred: red, lightgreen: green, green: darkgrey, lightblue: blue,
+    red: magenta, magenta: black
+  }
+  # a moon in the right-hand window
+  shape(blob(56, 40, 2, 4, 1, 0), white, null)
+  color white
+  line 24, 34
+  line 30, 52
+  line 50, 66
+  # firelight spilling onto the hearth and rug
+  shape([[70, 137], [98, 137], [102, 141], [66, 141]], brown, null)
+  color lightgrey
+  line 66, 122, 102, 122
+  fire()
+  chandelier()
+  flames(yellow)
+  color white
+  for x in [66, 73, 86, 93] { line x + 1, 4 }
+}
+
+frame()

@@ -1,0 +1,37 @@
+# A tour of the PicScript standard library: one of (almost) everything.
+scene "Stdlib tour"
+variants day, night
+
+sky 24
+hills 10, 24, lightblue, seed: 3
+treeline 22, 30
+ground 30
+ridge 30
+
+cloud 30, 6, 30, seed: 2
+cloud 110, 9, 24, seed: 5
+
+river([[0, 60], [30, 64], [60, 58], [90, 70], [120, 66], [159, 72]], 10)
+path([[70, 167], [72, 140], [64, 110], [70, 78]], 10)
+pond 30, 120, 22, 12, seed: 4
+
+tree 110, 120, 1, seed: 7
+fruit 110, 75, 10, 12, 8, red
+pine 140, 100, 1, seed: 2
+pine 20, 80, 0.7, seed: 3
+bush 95, 150, 16, 9, seed: 6
+rock 140, 150, 14, 8, seed: 3
+rock 48, 150, 8, 5, seed: 9
+stump 125, 160
+reeds 12, 135, 18, 4
+flowers 80, 120, 100, 135, 18
+fence 100, 160, 158, 158, 9
+stonewall 2, 100, 40, 96, 7
+cave_mouth 50, 50, 16, 14
+
+if variant == "night" {
+  night()
+  moon 140, 6, 4
+  stars 30, 1, 12
+}
+frame

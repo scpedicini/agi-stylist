@@ -1,0 +1,243 @@
+# Redwood Pool
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c08.png; reframed with:
+#   pnpm grid reference/kq6/r05-c08.png --name kq6-r05-c08
+# Method: translated by eye. Kept: hazy sky between the trunks, a few pale far trunks, four
+#   brown mid trunks, the huge redwood on the left with its claw roots reaching into the pool,
+#   the grey boulder, the fern beside it, the grass banks, the tan path with its cut banks, the
+#   two small rocks, the broken stump and stilt roots on the right, the pool.
+#   Dropped: most far trunks, fine twigs and branch moss, undergrowth detail, bark texture
+#   beyond a few grooves, light flecks and foam on the water.
+#   Moved: nothing.
+# Colours: pale blue sky → lightcyan, far hazy trunks → lightgrey, redwood bark → brown with
+#   black grooves and yellow lit edges, undergrowth → green, lit grass and ferns → lightgreen,
+#   tan path → yellow with brown shading, boulder → lightgrey / darkgrey, teal-blue pool →
+#   cyan with blue shadows and lightcyan ripples.
+scene "Redwood Pool"
+variants day
+
+# ---- sky -------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 80
+}
+
+# ---- far hazy trunks ---------------------------------------------------------------------
+fn far_trunk(x1, x2, bottom) {
+  shape([[x1, -1], [x2, -1], [x2, bottom], [x1, bottom]], lightgrey, null)
+  color darkgrey
+  stroke [x1, 0], [x1, bottom]
+}
+far_trunk 50, 52, 70
+far_trunk 56, 58, 70
+far_trunk 66, 68, 70
+far_trunk 92, 95, 60
+far_trunk 100, 102, 60
+far_trunk 104, 106, 60
+far_trunk 122, 124, 70
+far_trunk 126, 129, 70
+far_trunk 141, 143, 70
+far_trunk 157, 159, 60
+
+# ---- branches across the gaps ------------------------------------------------------------
+shape(band([[48, 26], [58, 22], [68, 14], [80, 10]], 3, 2), brown)
+shape(band([[60, 30], [70, 26], [76, 28]], 2, 2), brown)
+shape(band([[86, 20], [92, 22], [100, 18], [108, 8]], 3, 2), brown)
+shape(band([[136, 24], [142, 30], [146, 36]], 3, 2), brown)
+shape(band([[150, 18], [156, 12], [160, 8]], 2, 2), brown)
+
+# ---- undergrowth band behind everything -------------------------------------------------
+delay {
+  blobs([[44, 56, 10, 14], [56, 66, 12, 10], [54, 46, 8, 14], [66, 52, 8, 12],
+         [124, 50, 6, 10], [142, 50, 6, 12], [72, 62, 10, 12], [86, 66, 10, 10],
+         [104, 62, 8, 10], [122, 60, 10, 10], [138, 62, 10, 10], [152, 58, 8, 12],
+         [80, 74, 40, 6], [130, 72, 30, 8]], green, black, 0.25, 3)
+}
+color black
+line 62, 60, 66, 66, 64, 72
+line 74, 56, 78, 62
+line 140, 58, 136, 64
+line 124, 66, 128, 70
+
+# ---- mid trunks ----------------------------------------------------------------------------
+fn trunk(x1, x2, bottom, flare = 2) {
+  shape([[x1, -1], [x2, -1], [x2, bottom - 6], [x2 + flare, bottom], [x1 - flare, bottom],
+         [x1, bottom - 6]], brown)
+  # shadowed left side and one or two grooves
+  color black
+  stroke [x1 + 1, 0], [x1 + 1, bottom - 2]
+  let mid = round((x1 + x2) / 2)
+  stroke [mid, 4], [mid - 1, 30], [mid, bottom - 10]
+  # lit right edge, broken into a few runs
+  color yellow
+  stroke [x2 - 1, 6], [x2 - 1, 24]
+  stroke [x2 - 1, 40], [x2 - 1, bottom - 14]
+}
+trunk 76, 87, 76
+trunk 110, 119, 72
+trunk 131, 139, 77
+trunk 145, 148, 62, 1
+color black
+line 116, 10, 116, 40
+
+# ---- the boulder ---------------------------------------------------------------------------
+boulder([[88, 52], [89, 38], [94, 29], [102, 27], [110, 31], [114, 42], [117, 56],
+         [118, 68], [114, 78], [104, 80], [96, 74], [90, 64]], lightgrey, darkgrey, black, 0.2)
+color white
+line 94, 31, 101, 29, 107, 32
+line 92, 40, 96, 36
+color black
+line 96, 46, 102, 52, 104, 60
+line 108, 40, 110, 50
+line 92, 54, 96, 58
+
+# ---- ferns ----------------------------------------------------------------------------------
+frond(58, 64, 34, 345, 40)
+frond(58, 64, 30, 20, 60)
+frond(56, 66, 26, 310, 30)
+frond(60, 66, 22, 60, 70)
+frond(122, 66, 18, 10, 40)
+frond(122, 66, 16, 330, 30)
+
+# ---- the ground: path, banks, grass ------------------------------------------------------
+# path backdrop
+color yellow
+polygon 40, 84, 100, 74, 108, 72, 126, 72, 130, 82, 128, 100, 134, 128, 140, 136, 40, 130
+# path shading on its right half
+shape([[114, 100], [120, 94], [125, 98], [128, 110], [132, 126], [112, 126], [114, 116],
+       [108, 108]], brown, null)
+color brown
+line 100, 96, 108, 100, 112, 110
+line 96, 120, 108, 118
+color brown
+line 76, 104, 92, 104
+line 82, 114, 98, 116
+
+# middle grass bank with its brown cut bank below
+shape([[44, 86], [44, 76], [56, 72], [72, 70], [88, 70], [100, 74], [106, 78], [100, 82],
+       [92, 84], [80, 84], [66, 86], [56, 90]], brown)
+shape([[44, 82], [44, 76], [56, 72], [72, 70], [88, 70], [100, 74], [104, 77], [96, 80],
+       [84, 81], [70, 82], [58, 84]], lightgreen, null)
+color yellow
+line 64, 86, 68, 92
+line 76, 85, 78, 90
+line 88, 84, 91, 90
+color green
+line 52, 76, 56, 74
+line 70, 75, 75, 73
+line 86, 74, 90, 76
+
+# left cut bank sloping to the pool
+shape([[40, 84], [56, 90], [62, 100], [70, 110], [66, 120], [56, 126], [40, 126]], brown)
+color yellow
+line 58, 96, 62, 104
+line 64, 108, 66, 114
+
+# right cut bank and grass
+shape([[124, 74], [130, 76], [159, 70], [159, 140], [138, 138], [134, 128], [130, 116],
+       [126, 104], [128, 92], [122, 84]], brown)
+color yellow
+line 126, 88, 124, 96
+line 128, 104, 132, 112
+line 130, 118, 134, 124
+shape([[128, 78], [140, 72], [159, 70], [159, 128], [146, 130], [138, 124], [132, 112],
+       [130, 98], [132, 88]], lightgreen)
+color green
+line 136, 92, 140, 88
+line 134, 106, 140, 102
+line 140, 118, 146, 114
+line 146, 96, 150, 92
+
+# left grass behind the roots
+shape([[0, 86], [10, 88], [34, 96], [42, 104], [40, 124], [0, 128]], lightgreen)
+color green
+line 6, 100, 12, 96
+line 20, 104, 26, 100
+
+
+# ---- the pool -------------------------------------------------------------------------------
+shape([[0, 126], [40, 124], [60, 128], [100, 126], [126, 128], [136, 134], [159, 136],
+       [159, 167], [0, 167]], cyan, null)
+# shadows under the banks
+shape([[120, 136], [136, 136], [159, 138], [159, 160], [140, 158], [126, 150], [116, 142]],
+      blue, null)
+shape([[0, 130], [30, 130], [56, 134], [62, 140], [40, 146], [0, 150]], blue, null)
+color brown
+line 60, 128, 100, 126, 120, 128, 130, 132
+color lightcyan
+line 70, 134, 84, 134
+line 80, 138, 92, 138
+line 98, 142, 112, 142
+line 66, 150, 78, 150
+line 90, 156, 106, 156
+line 116, 162, 130, 162
+line 30, 160, 44, 160
+line 140, 150, 148, 150
+
+# ---- the big redwood ------------------------------------------------------------------------
+shape([[6, -1], [46, -1], [46, 30], [47, 60], [49, 78], [48, 92], [46, 104], [38, 110],
+       [28, 108], [20, 98], [10, 92], [4, 86], [6, 50]], brown)
+# shadowed left half: dense long grooves
+color black
+stroke [10, 0], [9, 30], [10, 60], [8, 90]
+stroke [14, 0], [15, 26], [13, 54], [14, 80], [13, 92]
+stroke [18, 4], [17, 34], [19, 66], [18, 96]
+stroke [22, 0], [23, 22], [21, 50], [22, 76], [24, 100]
+stroke [26, 8], [25, 40], [27, 70]
+# lit right half: a few highlight ribs and a knot
+color yellow
+stroke [32, 6], [31, 20], [33, 44], [32, 70], [36, 90]
+stroke [39, 30], [37, 52], [40, 76]
+color black
+stroke [35, 4], [35, 40], [36, 66], [42, 96]
+stroke [41, 30], [42, 60], [46, 86]
+stroke [27, 56], [29, 54], [30, 60], [28, 64]
+
+# far-left thin trunk
+shape([[-1, -1], [4, -1], [4, 86], [-1, 86]], brown)
+color yellow
+line 3, 2, 3, 80
+
+# ---- claw roots ------------------------------------------------------------------------------
+fn root(pts, w, w2, lit = false) {
+  shape(band(pts, w, w2), brown)
+  if lit {
+    color yellow
+    stroke shift(slice(pts, 1, len(pts) - 1), 1, 0)
+  }
+}
+root([[16, 104], [8, 120], [0, 132]], 16, 8)
+root([[2, 132], [12, 146], [22, 158], [28, 164]], 12, 4)
+root([[24, 108], [26, 124], [34, 140], [40, 152], [42, 158]], 16, 4, true)
+root([[18, 112], [14, 126], [18, 140], [24, 150]], 10, 4)
+root([[36, 108], [46, 124], [50, 138], [56, 148]], 14, 4, true)
+root([[44, 104], [50, 114], [58, 116], [64, 122], [66, 136]], 12, 3, true)
+root([[46, 108], [58, 110], [66, 114], [74, 116], [78, 124]], 8, 3)
+color black
+line 30, 112, 34, 124
+line 42, 118, 44, 128
+
+# ---- small rocks and a stick -----------------------------------------------------------------
+boulder([[51, 92], [53, 85], [58, 81], [64, 82], [67, 88], [66, 95], [58, 98], [52, 97]])
+boulder([[56, 104], [60, 100], [66, 100], [68, 104], [64, 107], [58, 107]])
+color brown
+line 70, 98, 76, 88
+color black
+line 71, 98, 77, 88
+
+# ---- broken stump and stilt roots on the right ---------------------------------------------
+shape([[148, 108], [146, 70], [148, 56], [152, 50], [156, 46], [159, 46], [159, 108]], brown)
+shape([[150, 54], [153, 50], [156, 47], [159, 47], [158, 50], [154, 52]], yellow, null)
+color black
+line 152, 64, 151, 100
+line 156, 60, 157, 104
+blobs([[142, 112, 10, 6], [152, 118, 8, 6]], lightgreen, black, 0.3, 5)
+fn stilt(pts) {
+  shape(band(pts, 3, 2), brown)
+}
+stilt([[136, 118], [134, 128], [128, 136], [124, 140]])
+stilt([[146, 122], [144, 134], [146, 144]])
+stilt([[150, 124], [152, 136], [154, 144]])
+
+frame()

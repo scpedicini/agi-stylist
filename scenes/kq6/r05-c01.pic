@@ -1,0 +1,262 @@
+# Catacomb Bone Shrine
+# Source: King's Quest VI VGA background, reference/kq6/r05-c01.png
+#   (a sandstone catacomb chamber); reframed with:
+#   pnpm grid reference/kq6/r05-c01.png --name kq6-r05-c01
+# Method: translated by eye. Kept: the big sandstone block walls (left wall, bone-shrine
+#   alcove, back wall, right wall) with their courses, the dark niche on the left, the bone
+#   shrine (two upright bones topped by red-haired skulls, a beast skull and crossbar between
+#   them, a cyan gem), its dark altar and red urn, the small skull on the floor, the glowing
+#   lava breach in the back wall with its ring of red bricks, the horned beast skull over the
+#   dark doorway with its two columns, the flagstone floor and the dark rubble foreground.
+# Dropped: stone pitting and grain, the vault ring at the top edge, most of the small bones
+#   hanging from the shrine, the column fluting, the rubble's texture.
+# Colours: dark sandstone walls -> brown with black mortar and a few yellow lit edges, lit
+#   tan flagstones -> yellow with brown seams, bones and skulls -> white with lightgrey shade,
+#   hair -> red, lava -> lightred with a yellow core and rim, exposed bricks -> red with
+#   lightred faces, doorway and niche -> black, columns -> lightgrey/darkgrey, horns ->
+#   yellow, urn -> red with a cyan band, rubble -> black with darkgrey lumps.
+scene "Catacomb Bone Shrine"
+variants lit
+
+# ---- walls -------------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color brown
+  rect 0, 0, 159, 167
+}
+
+# courses hanging off a vanishing point low on the left: the side walls' mortar lines
+let vp = [50, 96]
+fn course_r(y) {
+  # a course on the right wall, from the back corner (x 118) up and out to the right edge
+  let k = (y - vp[1]) / (118 - vp[0])
+  color black
+  stroke 118, y, 160, y + k * 42
+}
+
+# back wall (x 68-118): horizontal courses, staggered joints
+color black
+for y in [2, 21, 40, 60, 80, 100] {
+  line 68, y, 118, y
+}
+let joints = [[85, 2, 21], [108, 2, 21], [96, 21, 40], [75, 40, 60], [100, 40, 60],
+              [86, 60, 80], [111, 60, 80], [77, 80, 100], [100, 80, 92], [90, 100, 112]]
+for j in joints {
+  line j[0], j[1], j[0], j[2]
+}
+# lit top lips on a few courses (lava light from below)
+color yellow
+line 70, 101, 84, 101
+line 87, 81, 99, 81
+line 70, 61, 80, 61
+
+# right wall (x 118-159)
+for y in [2, 21, 40, 60, 80, 100, 120] {
+  course_r y
+}
+color black
+line 118, 0, 118, 88
+line 148, 30, 147, 46
+line 152, 72, 151, 86
+line 146, 100, 146, 114
+
+# alcove of the shrine (x 32-68): its own courses, its two corners
+color black
+for y in [12, 30, 48, 66, 84, 104] {
+  line 32, y, 68, y
+}
+line 68, 0, 68, 123
+line 32, 0, 32, 124
+
+# left wall (x 0-32): courses slope down towards the corner
+color black
+line 0, 2, 32, 10
+line 0, 20, 32, 28
+line 17, 64, 32, 66
+line 17, 86, 32, 86
+line 17, 106, 32, 105
+line 24, 28, 24, 46
+line 25, 66, 25, 86
+# the dark niche and the lit ledge over it
+shape([[0, 40], [17, 49], [17, 148], [0, 152]], black, null)
+color yellow
+line 0, 38, 18, 47, 31, 47
+color black
+line 0, 37, 18, 46
+
+# ---- floor -------------------------------------------------------------------------------------
+let floor_pts = [[17, 124], [68, 123], [86, 128], [124, 134], [126, 144], [142, 149],
+                 [159, 146], [159, 167], [0, 167], [0, 152], [17, 148]]
+delay {
+  shape(floor_pts, yellow, null)
+}
+# a lit step block at the foot of the niche
+shape([[17, 122], [32, 124], [32, 138], [17, 146]], brown, null)
+color yellow
+line 17, 122, 32, 124
+# flagstone seams
+color brown
+line 32, 134, 92, 136
+line 18, 146, 82, 146
+line 100, 148, 140, 152
+line 44, 124, 26, 152
+line 60, 124, 46, 156
+line 78, 126, 72, 154
+line 98, 138, 106, 156
+line 118, 136, 128, 154
+color black
+line 17, 124, 68, 123, 86, 128
+line 124, 134, 126, 144, 142, 149
+
+# ---- the bone shrine ---------------------------------------------------------------------------
+# cast shadows of the bones on the alcove wall
+# (thrown up and to the left by the lava glow)
+shape([[33, 34], [33, 14], [35, 8], [38, 7], [40, 12], [40, 24], [37, 34], [36, 100],
+       [33, 100]], black, null)
+shape([[45, 34], [45, 16], [47, 10], [50, 10], [52, 15], [52, 26], [50, 34], [48, 42],
+       [45, 42]], black, null)
+
+# beast skull and ribs between the bones: a long-snouted skull hanging snout down
+shape(blob(47, 72, 6, 12, 7, 0.2), lightgrey)
+color darkgrey
+line 43, 70, 51, 70
+line 43, 75, 51, 75
+line 44, 80, 50, 80
+line 45, 84, 49, 84
+shape([[42, 46], [47, 43], [52, 46], [52, 53], [50, 58], [49, 68], [47, 71], [45, 68],
+       [44, 58], [42, 53]], white)
+color lightgrey
+line 50, 47, 51, 52, 49, 58, 48, 66
+color black
+rect 44, 50, 45, 52
+rect 49, 50, 50, 52
+line 46, 66, 47, 69
+
+fn bone(x, top, bottom) {
+  # a long upright bone: knobbed foot, narrow shaft, flared top
+  shape([[x - 4, top], [x + 4, top], [x + 3, top + 6], [x + 3, bottom - 16], [x + 6, bottom - 8],
+         [x + 6, bottom - 2], [x + 3, bottom], [x, bottom - 3], [x - 3, bottom],
+         [x - 6, bottom - 2], [x - 6, bottom - 8], [x - 3, bottom - 16], [x - 3, top + 6]], white)
+  color lightgrey
+  line x + 2, top + 7, x + 2, bottom - 16, x + 4, bottom - 9, x + 4, bottom - 3
+}
+fn skull(x, y) {
+  # a red-haired skull: hair, white face, two eye sockets and a jaw line
+  shape([[x - 5, y - 4], [x - 2, y - 7], [x + 2, y - 7], [x + 5, y - 4], [x + 5, y + 4],
+         [x + 3, y + 2], [x - 3, y + 2], [x - 5, y + 4]], red)
+  shape(blob(x, y - 1, 3, 5, 4, 0.05, 10), white)
+  color black
+  line x - 2, y - 2, x - 1, y - 2
+  line x + 1, y - 2, x + 2, y - 2
+  line x - 1, y + 2, x + 1, y + 2
+}
+bone 39, 40, 100
+bone 55, 40, 100
+skull 39, 36
+skull 55, 36
+
+# crossbar lashed across the bones, and a small bone hanging off it
+shape(band([[33, 62], [62, 68]], 3), brown)
+shape([[60, 70], [62, 70], [62, 80], [64, 82], [59, 82], [60, 80]], white)
+# the cyan gem hanging on the left
+color black
+line 35, 60, 35, 67
+shape([[33, 67], [35, 66], [37, 67], [37, 70], [35, 72], [33, 70]], cyan)
+color lightcyan
+line 34, 68
+
+# the dark altar and the red urn under it
+shape([[31, 100], [63, 100], [65, 105], [29, 105]], darkgrey)
+color lightgrey
+line 32, 101, 62, 101
+shape(blob(48, 113, 10, 7, 3, 0.05, 16), red)
+color cyan
+line arc(48, 112, 6, 5, 240, 480, 20)
+color lightred
+line 41, 109, 42, 112
+shape([[34, 105], [37, 105], [37, 119], [39, 121], [33, 121]], white)
+shape([[59, 105], [62, 105], [62, 119], [64, 121], [58, 121]], white)
+shape([[42, 120], [56, 120], [56, 123], [42, 123]], darkgrey)
+
+# a skull on the floor
+shape(blob(68, 123, 3, 3, 2, 0.05, 10), white)
+color black
+line 67, 123
+line 69, 123
+
+# ---- the lava breach ---------------------------------------------------------------------------
+let hole = [[86, 112], [91, 104], [97, 100], [101, 94], [107, 89], [115, 89], [121, 95],
+            [124, 104], [125, 114], [124, 124], [120, 132], [110, 137], [100, 139], [91, 137],
+            [86, 131], [83, 121]]
+shape(hole, red)
+# exposed bricks round the top of the breach
+color black
+line 92, 104, 101, 104
+line 109, 104, 122, 104
+line 98, 99, 122, 99
+line 104, 94, 118, 94
+for b in [[96, 104, 108], [116, 104, 107],
+          [101, 99, 104], [109, 99, 104], [117, 99, 104],
+          [106, 94, 99], [114, 94, 99], [110, 89, 94]] {
+  line b[0], b[1], b[0], b[2]
+}
+color lightred
+line 93, 103, 103, 103
+line 106, 98, 116, 98
+line 108, 93, 113, 93
+# the molten pool: a lightred crust round a yellow-hot middle
+let lava = [[84, 121], [88, 112], [93, 108], [98, 109], [102, 105], [108, 106], [114, 104],
+            [119, 108], [123, 115], [123, 123], [119, 131], [110, 135], [100, 137], [92, 135],
+            [86, 130]]
+shape(lava, lightred, null)
+# the hottest lava pools along the bottom, where it spills to the floor
+shape([[85, 126], [92, 125], [97, 128], [104, 126], [110, 128], [116, 125], [122, 123],
+       [119, 131], [110, 135], [100, 137], [92, 135], [86, 130]], yellow, null)
+color yellow
+line 92, 114, 99, 114
+line 104, 112, 112, 111
+line 96, 119, 110, 118
+line 113, 120, 119, 119
+color lightred
+line 96, 131, 104, 131
+line 109, 130, 114, 130
+color white
+line 87, 131, 92, 136, 100, 138, 110, 136, 119, 132
+# the lip where the pool meets the floor
+color black
+line 84, 131, 91, 138, 100, 140, 110, 138, 121, 133, 123, 128
+
+# ---- doorway, columns and the horned skull -----------------------------------------------------
+# the dark doorway and the skull's shadow climbing the wall
+shape([[126, 60], [128, 50], [134, 34], [140, 18], [143, 24], [140, 50], [138, 80],
+       [138, 146], [126, 146]], black, null)
+column(121, 126, 82, 142)
+column(134, 140, 82, 148)
+# a stack of vertebrae on the left column's capital, under the skull
+for y in range(51, 80, 6) {
+  color lightgrey
+  rect 126, y, 129, y + 2
+  color white
+  line 126, y, 128, y
+}
+# horned beast skull
+shape(band([[126, 44], [121, 39], [120, 28], [122, 22]], 7, 2), yellow, brown)
+shape(band([[132, 34], [137, 26], [141, 18]], 4, 1), lightgrey)
+shape(blob(128, 40, 5, 9, 6, 0.1), white)
+color lightgrey
+line 131, 33, 132, 44, 130, 49
+color black
+rect 126, 38, 127, 40
+line 128, 46, 129, 47
+
+# ---- dark rubble in the foreground -------------------------------------------------------------
+let rubble = [[0, 156], [12, 160], [28, 163], [46, 160], [62, 155], [76, 152], [90, 156],
+              [106, 158], [124, 157], [140, 154], [148, 146], [152, 134], [156, 127],
+              [159, 125], [159, 167], [0, 167]]
+shape(rubble, black, null)
+color darkgrey
+line 0, 156, 12, 160, 28, 163, 46, 160, 62, 155, 76, 152
+line 90, 156, 106, 158, 124, 157, 140, 154, 148, 146, 152, 134, 156, 127
+
+frame()

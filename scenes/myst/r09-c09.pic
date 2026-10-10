@@ -1,0 +1,266 @@
+# The Planetarium
+# Source: Myst (1993) render, reference/myst/r09-c09.png; reframed with:
+#   pnpm grid reference/myst/r09-c09.png --crop 0,0,544,333 --name myst-r09-c09
+# Method: translated by eye. Kept: the pale sky, the sea strip on the horizon, the far mast,
+#   the domed granite rotunda (dome, cornice ring, colonnade, wooden door with its brass knocker,
+#   the brass switch box, the stepped podium), the dark building corner and its roof edge framing
+#   the left, the big marble column and its base, the brick steps and the curving brick path with
+#   its kerbs, the olive lawn with the trees' long shadows, the row of tall pines on the right,
+#   the pale paving bottom-left and the dark rock bottom-right. Dropped: the granite speckle, the
+#   column's veining (all but three strokes), the far sign and grey shed by the path, the far
+#   branch of the path towards the trees. Moved: nothing.
+# Colours: sky → lightcyan, sea → cyan with blue ripples, dome patina → cyan with blue ribs,
+#   granite → lightgrey lit / darkgrey shade / white ledges, shaded portico wall → darkgrey,
+#   dark building → darkgrey with lightgrey roof mouldings, marble column → lightgrey with a white
+#   highlight and darkgrey veins (red veins read as blood), door → brown with black panels, brass → yellow, brick → red with
+#   brown joints and lightgrey kerbs, lawn → green with lightgreen sunlit patches and black
+#   shadows, pines → green crowns with black shade strokes, red trunks.
+scene "The Planetarium"
+variants day
+
+let horizon = 103
+
+# ---------------------------------------------------------------- sky, sea, mast
+# Painted first, so everything else stands on them, but held back with delay: over the original
+# the viewer paints them last, filling in behind what's already there (the sea, then the sky).
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, horizon - 1
+}
+delay {
+  color cyan
+  rect 0, horizon, 159, 122
+}
+color blue
+for r in [[78, 106, 3], [88, 108, 4], [96, 105, 2], [82, 111, 4], [104, 109, 3], [116, 107, 3],
+          [128, 110, 4], [140, 106, 3], [150, 112, 4], [122, 113, 3], [92, 113, 3]] {
+  line r[0], r[1], r[0] + r[2], r[1]
+}
+
+# the far mast of the sunken ship
+color brown
+line 100, 72, 100, 112
+line 101, 95, 101, 99
+
+# ---------------------------------------------------------------- the lawn
+let crest = [[-2, 104], [76, 106], [84, 109], [94, 111], [104, 112], [112, 115], [130, 116], [162, 117]]
+shape(crest + [[162, 170], [-2, 170]], green)
+
+# sunlit patches: the crest by the sea, the lawn near the trees, the foreground
+shape([[78, 107], [86, 109], [96, 111], [104, 112], [100, 114], [88, 114], [80, 112]], lightgreen, null)
+shape([[30, 160], [60, 156], [100, 158], [130, 160], [160, 156], [160, 168], [30, 168]], lightgreen, null)
+shape([[108, 128], [122, 124], [150, 132], [160, 140], [160, 152], [130, 148], [112, 140]], lightgreen, null)
+# a few tufts on the shaded hill
+color lightgreen
+for t in [[38, 122], [52, 117], [46, 136], [58, 145], [30, 146]] {
+  line t[0], t[1], t[0] + 1, t[1] - 1, t[0] + 3, t[1]
+}
+
+# ---------------------------------------------------------------- the rotunda
+# dome (copper patina)
+let dome = arc(47, 41, 14, 18, 270, 450)
+shape(dome, cyan)
+color blue
+for o in [-9, -4, 1, 6, 10] {
+  stroke 47 + o * 0.25, 25, 47 + o, 39
+}
+color lightcyan
+line 54, 30, 56, 34
+
+# drum wall in the shade of the portico
+shape([[26, 50], [69, 50], [69, 96], [26, 96]], darkgrey)
+# sky seen past the outermost column
+color lightcyan
+rect 70, 58, 72, 92
+
+# podium with stepped right end
+let podium = [[25, 93], [71, 93], [74, 96], [77, 99], [79, 102], [79, 106], [64, 107], [56, 110],
+              [42, 110], [26, 104]]
+shape(podium, lightgrey)
+shape([[25, 97], [38, 97], [44, 110], [42, 110], [26, 104]], darkgrey, null)
+color white
+line 26, 94, 70, 94
+color darkgrey
+line 71, 96, 73, 96
+line 74, 99, 76, 99
+line 76, 102, 78, 102
+color black
+outline podium
+
+# door surround, door and its brass knocker
+shape([[41, 63], [56, 63], [56, 67], [55, 67], [55, 93], [42, 93], [42, 67], [41, 67]], lightgrey)
+color white
+line 42, 64, 55, 64
+shape([[44, 70], [53, 70], [53, 93], [44, 93]], brown)
+color black
+outline [46, 73], [51, 73], [51, 91], [46, 91]
+color yellow
+ellipse 48, 82, 2, 3
+color brown
+line 48, 81, 48, 83
+
+# the brass switch box beside the door
+shape([[37, 85], [41, 85], [41, 93], [37, 93]], yellow)
+color brown
+rect 38, 87, 40, 91
+
+# colonnade
+column(33, 37, 54, 93)
+column(58, 62, 54, 93)
+column(65, 69, 55, 92)
+
+# cornice ring: cornice above, architrave below
+let ctop = arc(47, 53, 26, 15, 270, 450)
+let cbot = arc(47, 61, 26, 12, 270, 450)
+shape(ctop + reverse(cbot) , lightgrey)
+color darkgrey
+stroke arc(47, 57, 25, 13, 275, 445)
+color white
+stroke arc(47, 54, 25, 15, 290, 420, 10)
+
+# shadow of the podium and column on the hill
+shape([[16, 103], [27, 104], [38, 110], [30, 114], [24, 124], [16, 134]], black, null)
+
+# ---------------------------------------------------------------- brick steps and path
+fn step(x, y, w) {
+  shape([[x, y], [x + w, y], [x + w + 2, y + 2], [x + 2, y + 2]], red)
+  color brown
+  line x + 1, y + 3, x + w + 2, y + 3
+}
+step(56, 103, 9)
+step(60, 106, 10)
+step(64, 109, 10)
+step(68, 112, 10)
+
+# the path comes off the steps across the hill, then turns towards the viewer
+let walk = [[66, 114], [80, 113], [92, 115], [102, 116], [108, 119], [106, 124], [104, 132],
+            [105, 142], [108, 154], [100, 156], [84, 156], [70, 154], [65, 151], [66, 142],
+            [69, 134], [74, 127], [80, 122], [72, 119], [64, 117]]
+shape(walk, red)
+# its front edge: the paving stands a little proud of the turf
+let front = [[65, 151], [70, 154], [84, 156], [100, 156], [108, 154]]
+shape(front + reverse(shift(front, 0, 2)), brown)
+color black
+stroke shift(front, 0, 3)
+# board joints across the path, wider apart near the viewer
+color brown
+for y in [116, 119, 123, 128, 134, 141, 148] {
+  let sp = spanx(walk, y)
+  if sp != null { stroke sp[0] + 1, y, sp[1] - 1, y }
+}
+color black
+for t in [[86, 117, 1], [98, 120, 2], [82, 125, 2], [90, 130, 3], [78, 137, 3], [96, 144, 3]] {
+  line t[0], t[1], t[0], t[1] + t[2]
+}
+# kerbs
+color lightgrey
+stroke [[81, 122], [76, 127], [71, 135], [68, 144], [68, 154]]
+stroke [[96, 119], [100, 123], [103, 131], [103, 143], [104, 155]]
+
+# ---------------------------------------------------------------- pines
+fn pinecrown(x, top, bot, hw, seed) {
+  let n = max(3, floor((bot - top) / 7))
+  let rside = [[x, top]]
+  let lside = [[x, top]]
+  for i in 1..=n {
+    let t = i / n
+    let y = top + (bot - top) * t
+    let w = hw * (0.3 + 0.7 * t) * (0.8 + 0.4 * noise(seed, i))
+    let w2 = hw * (0.3 + 0.7 * t) * (0.8 + 0.4 * noise(seed + 50, i))
+    push(rside, [x + w, y])
+    if i < n { push(rside, [x + w * 0.45, y - 1]) }
+    push(lside, [x - w2, y + 1])
+    if i < n { push(lside, [x - w2 * 0.45, y]) }
+  }
+  let pts = rside + [[x + 1, bot + 2], [x - 1, bot + 2]] + reverse(lside)
+  shape(pts, green)
+  # drooping branch shade on the right, a few lit flecks on the left
+  for i in 1..n {
+    let t = i / n
+    let y = top + (bot - top) * t
+    let w = hw * (0.3 + 0.7 * t)
+    color black
+    stroke x, y - 3, x + w * 0.6, y
+    if noise(seed + 9, i) > 0.5 { stroke x - w * 0.5, y + 2, x - 1, y - 1 }
+    if noise(seed + 3, i) > 0.55 {
+      color lightgreen
+      stroke x - w * 0.6, y - 1, x - w * 0.2, y - 3
+    }
+  }
+}
+
+fn pinetrunk(x, top, base, w) {
+  shape([[x - 1, top], [x + w - 1, top], [x + w - 1, base - 2], [x + w, base], [x - 2, base], [x - 1, base - 2]], red)
+  color black
+  stroke x + w - 1, top, x + w - 1, base
+  color brown
+  for k in 0..3 {
+    let y = top + 6 + k * 9 + noise(x, k) * 4
+    if y < base - 4 { line x - 1, y, x - 1, y + 3 }
+  }
+}
+
+fn shadow(bx, by, len) {
+  shape(band([[bx, by], [bx + len * 0.7, by + len]], 3, 6), black, null)
+}
+
+# long shadows of the trees on the lawn
+shadow(114, 122, 14)
+shadow(126, 141, 12)
+shadow(136, 126, 16)
+shadow(142, 141, 14)
+shadow(150, 139, 14)
+shadow(155, 140, 14)
+
+# back to front by base row: [x, crown top, crown bottom, half width, trunk base, trunk width, seed]
+let pines = [[120, 55, 94, 4, 119, 2, 1], [131, 28, 98, 7, 116, 2, 2], [113, 47, 96, 5, 123, 3, 3],
+             [136, 33, 100, 8, 127, 3, 4], [158, 6, 100, 9, 145, 3, 5], [149, 5, 102, 9, 139, 3, 6],
+             [154, 22, 104, 7, 141, 3, 7], [125, 37, 103, 7, 142, 3, 8], [141, 12, 104, 9, 143, 4, 9]]
+for p in pines {
+  pinetrunk(p[0], p[2] - 6, p[4], p[5])
+  pinecrown(p[0], p[1], p[2], p[3], p[6])
+}
+
+# ---------------------------------------------------------------- the dark building, left
+let bldg = [[-2, -2], [29, -2], [44, 30], [38, 33], [28, 39], [27, 50], [17, 50], [16, 136], [-2, 136]]
+shape(bldg, darkgrey)
+color lightgrey
+stroke [[15, -1], [37, 27]]
+stroke [[22, -1], [41, 28]]
+color black
+stroke [[44, 30], [38, 33], [28, 39]]
+shape([[9, 42], [17, 43], [17, 58]], lightgrey)
+# lit plinth of the building
+shape([[-2, 129], [8, 128], [13, 139], [11, 147], [-2, 148]], lightgrey)
+
+# ---------------------------------------------------------------- the marble column
+shape([[17, 50], [27, 50], [27, 134], [17, 134]], lightgrey)
+color darkgrey
+rect 18, 51, 18, 133
+rect 18, 51, 26, 55
+color white
+rect 23, 57, 23, 131
+color darkgrey
+line 20, 70, 21, 78
+line 25, 96, 25, 102
+line 19, 112, 20, 117
+color black
+outline [17, 50], [27, 50], [27, 134], [17, 134]
+let base = [[16, 133], [28, 133], [30, 137], [29, 141], [30, 144], [27, 147], [14, 147], [11, 144],
+            [13, 140], [14, 136]]
+shape(base, white)
+shape([[11, 143], [30, 143], [27, 147], [14, 147]], lightgrey, null)
+color black
+outline base
+
+# ---------------------------------------------------------------- paving and rocks
+let paving = [[-2, 147], [12, 146], [30, 150], [58, 159], [62, 170], [-2, 170]]
+shape(paving, lightgrey)
+color darkgrey
+line 22, 149, 26, 167
+line 42, 155, 44, 167
+line 10, 157, 52, 162
+boulder([[-2, 151], [5, 150], [9, 156], [8, 166], [-2, 168]], darkgrey, black)
+boulder([[148, 162], [151, 152], [158, 147], [163, 150], [163, 168], [150, 168]], darkgrey, black)
+
+frame()

@@ -1,0 +1,270 @@
+# Gate of the Winged Ones
+# Source: King's Quest VI (VGA) background, reference/kq6/r04-c05.png (the
+#   swan-winged gate of the Winged Ones' city on the Isle of the Sacred Mountain); reframed with:
+#   pnpm grid reference/kq6/r04-c05.png --name kq6-r04-c05
+# Method: translated by eye. Kept: blue sky and a few wisps, the tan mountain with its snowy
+#   peak, the tall far column with the little temple on top, the thin far columns, the dark
+#   hedge glimpsed between columns, the stone gate with its two swan figures and spread wings,
+#   the two doors with their dark bird emblems, the big columns on both sides (lit left group,
+#   shadowed right group) with capitals, entablatures, drum joints and bases, the pale stone
+#   platform and the black-and-gold checkerboard floor.
+# Dropped: stone speckle, capital acanthus carving, the flying speck by the peak, marble
+#   veining on the floor squares, the soft lavender shading on the platform, the urns' detail.
+# Colours: sky → blue, clouds → white, tan mountain → yellow with brown gullies, snow → white,
+#   pale lavender stone (lit) → lightgrey with white highlight and darkgrey shade, shadowed
+#   purple columns → darkgrey with lightblue sheen and black shade, far columns → white with
+#   lightblue flutes, gate wings → lightgrey with white highlights and darkgrey feathers,
+#   doors → white with lightblue shadow strokes, bird emblems → black, hedge → green/black,
+#   floor → yellow and darkgrey checks, platform → lightgrey with a white rim.
+scene "Gate of the Winged Ones"
+variants day
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn pillar(x1, x2, top, bottom, body, light, shade, joints = []) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], body)
+  let sx = x2 - max(1, floor((x2 - x1) / 3))
+  shape([[sx, top + 1], [x2 - 1, top + 1], [x2 - 1, bottom - 1], [sx, bottom - 1]], shade, null)
+  color light
+  stroke x1 + 2, top + 1, x1 + 2, bottom - 1
+  for y in joints {
+    color black
+    stroke x1, y, x2, y
+    color light
+    stroke x1 + 1, y + 1, sx - 1, y + 1
+  }
+}
+
+fn base(x1, x2, y, body, shade) {
+  # a torus moulding then a square plinth, each a bit wider than the shaft
+  shape([[x1 - 1, y], [x2 + 1, y], [x2 + 2, y + 2], [x2 + 2, y + 4], [x1 - 2, y + 4], [x1 - 2, y + 2]], body)
+  shape([[x1 - 3, y + 5], [x2 + 3, y + 5], [x2 + 3, y + 9], [x1 - 3, y + 9]], body)
+  color shade
+  stroke x1 - 1, y + 3, x2 + 1, y + 3
+  stroke x1 - 2, y + 8, x2 + 2, y + 8
+}
+
+fn capital(x1, x2, y, body, shade, light) {
+  # bell with leaf strokes, a neck ring, scrolled volutes at both corners, abacus slab on top
+  shape([[x1, y], [x2, y], [x2 + 3, y - 10], [x1 - 3, y - 10]], body)
+  color shade
+  for lx in range(x1 + 2, x2 - 1, 4) {
+    stroke lx - 1, y - 8, lx, y - 2, lx + 1, y - 8
+  }
+  color black
+  stroke x1, y, x2, y
+  shape(blob(x1 - 2, y - 10, 3, 4, 3, 0.05), body)
+  shape(blob(x2 + 2, y - 10, 3, 4, 4, 0.05), body)
+  color shade
+  stroke arc(x1 - 2, y - 10, 2, 2, 90, 360, 30)
+  stroke arc(x2 + 2, y - 10, 2, 2, 0, 270, 30)
+  color black
+  if x1 - 2 >= 0 { line x1 - 2, y - 10 }
+  if x2 + 2 <= 159 { line x2 + 2, y - 10 }
+  shape([[x1 - 6, y - 17], [x2 + 6, y - 17], [x2 + 5, y - 14], [x1 - 5, y - 14]], body)
+  color light
+  stroke x1 - 5, y - 16, x2 + 5, y - 16
+}
+
+fn far_column(x1, x2, top, bottom) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], white)
+  color lightblue
+  line x2 - 1, top + 1, x2 - 1, bottom - 1
+  # little urn with a plant on top
+  shape([[x1 - 1, top - 1], [x2 + 1, top - 1], [x2, top - 3], [x1, top - 3]], brown)
+  shape(blob((x1 + x2) / 2, top - 5, 3, 2, x1, 0.2), green)
+}
+
+# ---- sky ---------------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color blue
+  rect 0, 0, 159, 90
+}
+# wispy clouds
+shape([[66, 4], [72, 2], [80, 3], [76, 6], [68, 6]], white, null)
+shape([[96, 4], [104, 2], [112, 3], [108, 6], [98, 6]], white, null)
+color lightgrey
+line 68, 6, 76, 6
+line 98, 6, 108, 6
+
+# ---- the mountain ------------------------------------------------------------------------------
+delay 2 {
+  shape([[46, 80], [48, 44], [56, 36], [62, 30], [70, 19], [77, 10], [83, 3], [87, 1], [92, 4],
+         [98, 10], [106, 15], [112, 20], [124, 25], [136, 28], [160, 34], [160, 80]], yellow)
+}
+# shadowed gullies running down the face
+color brown
+line 83, 6, 76, 18, 70, 30, 66, 42
+line 88, 8, 84, 20, 80, 30
+line 94, 10, 92, 22, 96, 32
+line 100, 14, 102, 24, 108, 34
+line 72, 22, 62, 36, 58, 46
+line 106, 18, 114, 26, 122, 34
+line 132, 30, 136, 40
+# snow cap
+shape([[74, 14], [78, 9], [83, 3], [87, 1], [92, 4], [97, 9], [93, 10], [90, 8], [87, 11],
+       [84, 9], [80, 13]], white)
+color lightgrey
+line 80, 12, 84, 8, 87, 10, 90, 7
+
+# ---- the tall far column with the temple on top --------------------------------------------
+shape([[61, 12], [67, 12], [67, 48], [61, 48]], white)
+color lightblue
+line 63, 13, 63, 47
+line 66, 13, 66, 47
+shape([[59, 9], [69, 9], [67, 12], [61, 12]], lightgrey)
+shape(blob(64, 8, 6, 2, 7, 0.2), green)
+# the little temple: roof and three posts
+shape([[60, 1], [68, 1], [68, 6], [60, 6]], white)
+color lightblue
+line 62, 2, 62, 5
+line 64, 2, 64, 5
+line 66, 2, 66, 5
+shape([[59, 0], [69, 0], [69, 1], [59, 1]], lightgrey)
+
+# ---- hedge and dark shade glimpsed behind the colonnades -------------------------------------
+delay {
+  color black
+  rect 0, 96, 159, 124
+}
+blobs([[22, 92, 8, 5], [36, 90, 8, 5], [52, 92, 8, 5], [104, 92, 8, 5], [118, 90, 8, 5],
+       [134, 92, 8, 5], [148, 90, 8, 5]], green)
+color lightgreen
+line 50, 90, 53, 88
+line 132, 90, 135, 88
+line 26, 91, 29, 89
+
+# ---- thin far columns --------------------------------------------------------------------------
+far_column 24, 28, 42, 122
+far_column 52, 55, 44, 120
+far_column 93, 96, 36, 60
+far_column 103, 108, 44, 122
+far_column 130, 134, 38, 124
+
+# ---- checkerboard floor ------------------------------------------------------------------------
+# square columns converge on (80, 105); rows widen towards the viewer
+let rows = [130, 137, 145, 155, 168]
+fn fx(k, y) { return 80 + (k - 0.5) * 8 * (y - 105) / 25 }
+for r in 0..4 {
+  let ya = rows[r]
+  let yb = rows[r + 1]
+  for k in -12..12 {
+    color (k + r + 40) % 2 == 0 ? yellow : darkgrey
+    polygon fx(k, ya), ya, fx(k + 1, ya), ya, fx(k + 1, yb), yb, fx(k, yb), yb
+  }
+}
+
+# ---- pale stone platform on both sides ---------------------------------------------------------
+let LEFT_EDGE = [[57, 130], [46, 135], [34, 141], [23, 148], [14, 156], [8, 163], [6, 168]]
+let RIGHT_EDGE = [[104, 130], [116, 135], [127, 141], [137, 148], [146, 156], [152, 163], [154, 168]]
+shape([[-1, 120], [57, 120]] + LEFT_EDGE + [[-1, 168]], lightgrey)
+shape([[161, 120], [104, 120]] + RIGHT_EDGE + [[161, 168]], lightgrey)
+color white
+stroke shift(LEFT_EDGE, -1, 0)
+stroke shift(RIGHT_EDGE, 1, 0)
+# the rounded lip of the step, in shade below its lit rim
+color darkgrey
+stroke shift(LEFT_EDGE, -4, 0)
+stroke shift(RIGHT_EDGE, 4, 0)
+
+# ---- the back column of the left group (behind the front ones) ------------------------------
+pillar 15, 24, 26, 118, lightgrey, white, darkgrey, [70]
+base 15, 24, 118, lightgrey, darkgrey
+capital 15, 24, 26, lightgrey, darkgrey, white
+pillar 45, 51, 28, 116, lightgrey, white, darkgrey, [70]
+base 45, 51, 116, lightgrey, darkgrey
+
+# ---- the gate ----------------------------------------------------------------------------------
+# door jambs and the lintel under the wings
+shape([[51, 74], [109, 74], [109, 130], [51, 130]], lightgrey)
+color darkgrey
+line 54, 78, 54, 129
+line 106, 78, 106, 129
+# the two doors, rounded at their outer shoulders
+shape([[55, 130], [55, 86], [57, 81], [61, 78], [80, 78], [80, 130]], white)
+shape([[105, 130], [105, 86], [103, 81], [99, 78], [81, 78], [81, 130]], white)
+color black
+line 80, 78, 80, 130
+color lightgrey
+line 81, 79, 81, 129
+# the bird emblems: wings raised, ragged feather tips
+let BIRD = [[60, 92], [62, 86], [65, 89], [66, 83], [69, 88], [71, 84], [72, 92], [74, 95],
+            [75, 89], [76, 84], [78, 80], [79, 86], [79, 92], [77, 98], [76, 106], [78, 114],
+            [75, 113], [74, 119], [71, 112], [70, 104], [66, 101], [63, 100], [64, 97], [60, 96]]
+# narrowed towards x 72 so the emblem stands tall, as in the source
+for i in 0..len(BIRD) { BIRD[i] = [72 + (BIRD[i][0] - 70) * 0.7, BIRD[i][1]] }
+let BIRD2 = []
+for p in BIRD { push(BIRD2, [161 - p[0], p[1]]) }
+shape(BIRD, black)
+shape(BIRD2, black)
+# blue shadows cast beside the emblems
+color lightblue
+line 79, 94, 78, 104, 79, 112
+line 67, 102, 68, 108
+line 83, 96, 84, 108
+line 94, 102, 93, 108
+line 72, 120, 76, 124
+
+# the wings: one carved mass with feather tips fringing the lower edge
+let WINGS = [[45, 74], [47, 67], [51, 61], [56, 55], [62, 49], [68, 44], [72, 40], [76, 38],
+             [80, 40], [81, 40], [85, 38], [89, 40], [93, 44], [99, 49], [105, 55], [110, 61],
+             [114, 67], [116, 74], [112, 73], [110, 77], [106, 75], [102, 78], [96, 76],
+             [90, 79], [80, 80], [70, 79], [64, 76], [58, 78], [54, 75], [50, 77], [48, 73]]
+shape(WINGS, lightgrey)
+# lit upper coverts
+shape([[49, 68], [53, 61], [58, 55], [64, 50], [70, 45], [76, 42], [78, 47], [72, 50], [64, 54],
+       [57, 60], [52, 66]], white, null)
+shape([[112, 68], [108, 61], [103, 55], [97, 50], [91, 45], [85, 42], [83, 47], [89, 50],
+       [97, 54], [104, 60], [109, 66]], white, null)
+# long primaries sweeping out to the tips
+color darkgrey
+line 78, 54, 70, 56, 61, 61, 53, 67, 48, 72
+line 78, 62, 68, 65, 59, 70, 52, 75
+line 77, 70, 68, 72, 60, 76
+line 83, 54, 91, 56, 100, 61, 108, 67, 113, 72
+line 83, 62, 93, 65, 102, 70, 109, 75
+line 84, 70, 93, 72, 101, 76
+color black
+line 80, 41, 80, 79
+# the two swans: necks rising from the wings, heads bowed towards each other
+shape(band([[76, 52], [73, 44], [74, 36], [77, 31]], 7, 4), white)
+shape(band([[85, 31], [88, 36], [89, 44], [86, 52]], 4, 7), white)
+shape(blob(77, 30, 2, 2, 5, 0.05), white)
+shape(blob(84, 30, 2, 2, 6, 0.05), white)
+color darkgrey
+line 79, 31, 80, 33
+line 82, 31, 81, 33
+color lightgrey
+line 76, 34, 75, 40, 76, 46
+line 86, 34, 87, 40, 86, 46
+
+# ---- the front columns of the left group -----------------------------------------------------
+# entablature across the top
+shape([[14, -1], [58, -1], [58, 7], [55, 10], [14, 10]], lightgrey)
+color darkgrey
+line 15, 8, 55, 8
+color white
+line 15, 1, 57, 1
+pillar 30, 45, 29, 116, lightgrey, white, darkgrey, [70, 100]
+base 30, 45, 116, lightgrey, darkgrey
+capital 30, 45, 29, lightgrey, darkgrey, white
+pillar -3, 13, 16, 126, lightgrey, white, darkgrey, [58, 98]
+base -3, 13, 126, lightgrey, darkgrey
+capital -3, 13, 16, lightgrey, darkgrey, white
+
+# ---- the right group, in shadow ----------------------------------------------------------------
+shape([[100, -1], [161, -1], [161, 9], [100, 9]], darkgrey)
+color black
+line 101, 7, 158, 7
+pillar 136, 147, 28, 124, darkgrey, lightgrey, black, [72]
+base 136, 147, 124, darkgrey, black
+capital 136, 147, 28, darkgrey, black, lightgrey
+pillar 111, 129, 30, 116, darkgrey, lightblue, black, [66, 98]
+base 111, 129, 116, darkgrey, black
+capital 111, 129, 30, darkgrey, black, lightblue
+pillar 149, 163, 20, 134, lightgrey, white, darkgrey, [64, 104]
+base 149, 163, 134, lightgrey, darkgrey
+capital 149, 163, 20, lightgrey, darkgrey, white
+
+frame()

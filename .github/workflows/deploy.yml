@@ -1,0 +1,147 @@
+# Build & deploy kq-styles to the VPS (served statically by Caddy at kq-styles.specr.net).
+#
+# Modeled on hackerman-recorder's static-frontend workflow (itself derived from the knowledge-base
+# reference workflow):
+#   - SINGLE job, no upload-artifact: GitHub Actions artifact storage is a 500 MB ACCOUNT-WIDE quota
+#     (KB GITHUB_ACTIONS.md), so the built files stay on the runner and are scp'd directly.
+#   - Raw ssh/scp via ssh-agent with a pinned host key (SSH_KNOWN_HOSTS) - never a third-party
+#     deploy action.
+#   - Atomic release: extract into a unique per-run dir (so a rerun of the live SHA never deletes the
+#     directory `current` points at), then swap `current` via a temp-symlink + rename (rename(2) is
+#     atomic; `ln -sfn` unlinks-then-relinks and leaves a window).
+#
+# Required GitHub configuration (Settings -> Secrets and variables -> Actions). EVERYTHING is a
+# Secret (never a Variable) so the host, user, and deploy path are masked in the Actions logs.
+#   Secrets: SSH_HOST, SSH_USERNAME, DEPLOY_BASE, SSH_KEY, SSH_KNOWN_HOSTS
+#     (DEPLOY_BASE=/home/dockerman/www/adventure-game-builder - Caddy's `root` is $DEPLOY_BASE/current)
+
+name: Build & Deploy
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Production is a single shared resource: one deploy at a time regardless of the triggering ref, so a
+# `prod` push and a manual dispatch can never race to the same host. cancel-in-progress is FALSE so a
+# newer run QUEUES behind an in-flight deploy instead of cancelling it mid-swap.
+concurrency:
+  group: deploy-kq-styles-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      # Typecheck + vite build. Every scene's .pic source and reference PNG is bundled via
+      # import.meta.glob, so dist/ is fully self-contained.
+      - name: Build
+        run: pnpm run build
+
+      - name: Smoke-check the release
+        run: |
+          set -euo pipefail
+          test -f dist/index.html || { echo "::error::dist/index.html is missing"; exit 1; }
+          ls dist/assets/index-*.js >/dev/null 2>&1 || { echo "::error::no JS bundle in dist/assets"; exit 1; }
+
+      - name: Bundle dist
+        run: tar -C dist -czf frontend-dist.tgz --exclude='*.map' --exclude='.DS_Store' .
+
+      - name: Validate deploy config
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          DEPLOY_BASE: ${{ secrets.DEPLOY_BASE }}
+        run: |
+          set -euo pipefail
+          for v in SSH_HOST SSH_USERNAME DEPLOY_BASE; do
+            if [ -z "${!v:-}" ]; then echo "::error::required repo secret $v is empty"; exit 1; fi
+          done
+
+      - name: Trust server host key
+        env:
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Pass the (multi-line) secret via env + printf rather than interpolating it into the script body.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Copy bundle to server
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          set -euo pipefail
+          eval "$(ssh-agent -s)"
+          trap 'ssh-agent -k >/dev/null 2>&1 || true' EXIT
+          ssh-add - <<< "$SSH_KEY"
+          # StrictHostKeyChecking=yes enforces the pinned key; BatchMode=yes fails fast instead of
+          # waiting on a prompt. The archive is named per run+attempt so queued runs never collide.
+          scp -q -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            frontend-dist.tgz \
+            "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/tmp/kq-styles-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}.tgz"
+
+      - name: Activate release (atomic)
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          DEPLOY_BASE: ${{ secrets.DEPLOY_BASE }}
+        run: |
+          set -euo pipefail
+          eval "$(ssh-agent -s)"
+          trap 'ssh-agent -k >/dev/null 2>&1 || true' EXIT
+          ssh-add - <<< "$SSH_KEY"
+
+          ssh -o StrictHostKeyChecking=yes -o BatchMode=yes "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
+            "BASE='$DEPLOY_BASE' SHA='${{ github.sha }}' RID='${{ github.run_id }}' RATT='${{ github.run_attempt }}' bash -s" <<'EOF'
+            set -euo pipefail
+
+            # `current` must be a symlink (or absent) for the atomic rename swap to work; if it is a
+            # real directory (a hand-made first deploy), refuse rather than fail cryptically.
+            if [ -e "$BASE/current" ] && [ ! -L "$BASE/current" ]; then
+              echo "::error::$BASE/current exists but is not a symlink; convert it to the releases/current layout first"
+              exit 1
+            fi
+
+            # Release dir and archive are unique per run+attempt, so a rerun of the deployed SHA never
+            # rm's the live directory `current` points at.
+            ARCHIVE="/tmp/kq-styles-${SHA}-${RID}-${RATT}.tgz"
+            REL="$BASE/releases/${SHA}-${RID}-${RATT}"
+            rm -rf "$REL"
+            mkdir -p "$REL"
+            tar -xzf "$ARCHIVE" -C "$REL"
+            rm -f "$ARCHIVE"
+
+            # Validate BEFORE the swap so `current` never points at a broken release.
+            test -f "$REL/index.html" || { echo "::error::release $REL is missing index.html; not activating"; exit 1; }
+
+            # Atomic swap: per-run temp symlink, then rename() it over `current`.
+            TMP_LINK="$BASE/.current.${RID}.${RATT}.tmp"
+            ln -sfn "$REL" "$TMP_LINK"
+            mv -T "$TMP_LINK" "$BASE/current"
+
+            # Prune to the last 3 releases. HTML is served no-store (see the Caddy block), so any
+            # retention >= 2 is safe. Never remove the dir `current` resolves to.
+            LIVE="$(readlink -f "$BASE/current")"
+            ls -1dt "$BASE"/releases/* 2>/dev/null | tail -n +4 | while IFS= read -r d; do
+              [ "$(readlink -f "$d")" = "$LIVE" ] || rm -rf "$d"
+            done
+          EOF
+
+      - name: Deployed
+        run: echo "Deployed ${{ github.sha }} to https://kq-styles.specr.net"

@@ -1,0 +1,26 @@
+# Logo-style turtle graphics: a recursive branching tree drawn with forward/left/right.
+scene "Turtle tree"
+
+sky 20
+ground 21
+
+fn branch(len, depth) {
+  if depth == 0 {
+    return
+  }
+  forward len
+  save_turtle
+  left 25
+  branch(len * 0.7, depth - 1)
+  restore_turtle
+  save_turtle
+  right 30
+  branch(len * 0.72, depth - 1)
+  restore_turtle
+}
+
+color brown
+moveto 80, 160
+heading 0
+branch(28, 7)
+frame

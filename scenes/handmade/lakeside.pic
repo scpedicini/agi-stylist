@@ -1,0 +1,87 @@
+# @reference kq1/r01-c04
+# Method: freehand layers with the stdlib; large shapes placed from `pnpm regions` polygons. No traced line art.
+# Hand-authored recreation of the KQ1 lake screen (row 1, column 4), written the way an
+# artist would: big areas first, back to front, then details on top. Compare with
+# `pnpm render scenes/handmade/lakeside.pic --compare`.
+scene "Lakeside"
+variants day, night
+
+# --- sky, clouds and the mountains behind the trees ---
+sky 18
+color white
+polygon 22,8 27,6 34,8 39,5 46,3 55,8 59,9 54,17 45,15 36,21 33,17 28,19 22,15
+polygon 67,15 71,8 82,9 82,17 77,15 74,17 71,20
+polygon 1,1 13,1 8,8 4,6 1,9
+
+color lightblue
+polygon 1,17 158,17 158,30 1,30
+color green
+rect 1, 31, 158, 39
+color darkgrey
+polygon 1,22 5,17 16,27 10,33 2,34
+polygon 40,29 47,20 48,19 68,30 76,27 80,29 73,33 46,33
+polygon 111,34 121,21 122,20 130,27 116,35
+color lightgrey
+polygon 141,1 147,1 147,22 155,24 142,29 132,27 141,22
+
+# --- far forest band along the horizon ---
+color green
+polygon 1,34 10,34 22,22 46,34 53,31 73,34 84,23 88,21 100,30 107,32 117,37 130,28 136,32 147,29 158,28 158,39 1,39
+
+# --- the meadow and the lake ---
+ground 40
+let lake = [[40, 61], [54, 73], [81, 91], [98, 108], [101, 114], [96, 142], [79, 147], [64, 148],
+            [42, 150], [29, 154], [19, 161], [10, 160], [5, 152], [1, 150], [1, 85], [14, 82], [31, 73], [36, 66], [39, 62]]
+shape(lake, blue, null)
+
+# light-blue shallows with ripple bands near the far shore
+color lightblue
+polygon 1,45 23,48 36,53 42,60 24,63 36,66 15,70 31,73 12,75 21,78 8,79 14,82 1,84
+
+# --- the oak at the top edge and its shadow ---
+color green
+ellipse 99, 46, 18, 5
+color brown
+polygon 98,1 105,1 104,7 104,33 110,39 106,40 102,37 101,40 99,39 102,30 102,10
+color green
+polygon 80,1 96,1 92,6 89,3 86,7 80,2
+polygon 110,1 123,1 125,4 122,7 119,4 117,7
+polygon 139,8 139,18 136,14 133,18 127,15 129,12
+
+# --- birch on the right: pale trunk running off the top, a bough with needles ---
+color lightgrey
+polygon 132,27 141,22 155,24 147,27 142,29
+color green
+polygon 118,35 121,31 129,29 136,32 147,29 153,35 141,34 139,38 135,34 130,37 127,34
+let birch = [[141, 1], [147, 1], [147, 38], [149, 76], [151, 106], [158, 136], [158, 166], [153, 166],
+             [146, 127], [143, 82], [142, 64], [141, 37]]
+shape(birch, lightgrey, null)
+color black
+line 141,1 141,37 142,64 143,82 146,127 153,166
+color darkgrey
+for k in 0..8 {
+  let y = 8 + k * 17
+  let x = 142 + y * 0.08 + (y > 100 ? (y - 100) * 0.12 : 0)
+  line x, y  x + 2, y + 1
+}
+
+# --- reeds, lily pad and stones at the near shore ---
+reeds 2, 166, 70, 3, seed: 4
+color brown
+polygon 4,89 6,93 4,111 2,104
+polygon 17,97 14,109 10,113 11,106
+color green
+ellipse 29, 137, 5, 2
+ellipse 29, 141, 5, 2
+
+rock 76, 158, 14, 14, seed: 2
+color darkgrey
+polygon 40,158 45,159 48,164 42,165 37,161
+polygon 54,152 58,154 60,159 52,158 50,156
+
+if variant == "night" {
+  night()
+  moon 120, 8, 4
+  stars 20, 1, 16
+}
+frame

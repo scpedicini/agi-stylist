@@ -1,0 +1,207 @@
+# Ribbed Cavern of the Black Abyss
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c09.png; reframed with:
+#   pnpm grid reference/kq6/r06-c09.png --name kq6-r06-c09
+# Method: translated by eye. Kept: black abyss filling the middle, lavender far ceiling with
+#   pale vein lines, four glowing trumpet stalactites, the ribbed arch along the top and left,
+#   the left stub and claw, the right ribbed column with its hooked trunk, three small rock
+#   islets floating in the dark, the great ribbed mound on the right with its rolled lip, the
+#   curled ribbed creature with its spiky crown and dark eye at the bottom, the ribbed floor
+#   lip bottom left.
+#   Dropped: the dark-purple fleck texture on the ceiling (a few streaks kept), the soft glow
+#   gradients, most individual ribs (spaced out to a few per tube), fine petal folds.
+#   Moved: nothing.
+# Colours: black void → black, lavender-violet ceiling → blue with lightblue veins and black
+#   flecks, glowing stalactites → lightmagenta flare with magenta/brown streaks, brown stem,
+#   yellow glow, white core, tan-and-lavender ribbed flesh → brown tubes with a magenta shadow
+#   strip, yellow lit rim and black ribs, lavender mound → magenta with lightmagenta ribs,
+#   islets → magenta with lightmagenta lit tops, creature's eye → red.
+scene "Ribbed Cavern of the Black Abyss"
+variants night
+
+# ---- helpers ---------------------------------------------------------------------------
+# ribs across a band: a groove stroke every `step` rows, perpendicular to the path
+fn ribs(path, w1, w2, step, c, from = -1, to = 1, start = 0, phase = 0) {
+  let pts = along(path, step)
+  let n = len(pts)
+  for i in 0..n {
+    if i < start { continue }
+    let p = pts[i]
+    let t = n > 1 ? i / (n - 1) : 0
+    let h = (w1 + (w2 - w1) * t) / 2 - 0.6
+    let sx = p[2] * 2
+    let sy = p[3]
+    let l = max(0.001, sqrt(sx * sx + sy * sy))
+    let nx = -sy / l
+    let ny = sx / l
+    # jitter the spacing a little so it doesn't read as a comb
+    let j = (noise(i, 7) - 0.5) * 1.2 + phase
+    let x = p[0] + p[2] * j
+    let y = p[1] + p[3] * j
+    color c
+    stroke [[x + nx * h * from / 2, y + ny * h * from], [x + nx * h * to / 2, y + ny * h * to]]
+  }
+}
+
+# a ribbed fleshy tube like a coiled spring: a brown body with a magenta shadow strip, a
+# yellow rim on the lit side (`lit` -1 is the left of the path's direction, 1 the right), and
+# black ribs across it that break the rim into glints
+fn tube(path, w1, w2, lit = -1, step = 6, edge = black) {
+  let w = (w1 + w2) / 2
+  shape(band(path, w1, w2), brown, edge)
+  shape(band(offset(path, -lit * w / 4), w1 * 0.3, w2 * 0.3), magenta, null)
+  color yellow
+  stroke offset(path, lit * (w / 2 - 2))
+  ribs(path, w1, w2, step * 1.2, black, -0.8, 0.8)
+}
+
+# a glowing trumpet stalactite hanging from the ceiling: a pale fan of streaks flaring up into
+# the ceiling, a slender brown stem, a yellow glow and a white core at its foot
+fn trumpet(cx, top, top_w, stem_w, mid, bottom) {
+  let left = []
+  let right = []
+  for k in 0..=8 {
+    let f = k / 8
+    let y = top + (mid - top) * f
+    let hw = stem_w + (top_w - stem_w) * (1 - f) * (1 - f) * (1 - f)
+    push(left, [cx - hw, y])
+    push(right, [cx + hw, y])
+  }
+  push(left, [cx - stem_w - 1, bottom])
+  push(right, [cx + stem_w + 1, bottom])
+  let pts = left
+  for i in 0..len(right) { push(pts, right[len(right) - 1 - i]) }
+  shape(pts, lightmagenta, null)
+  # streaks fanning up into the ceiling
+  for j in [-0.8, -0.5, -0.2, 0.15, 0.45, 0.75] {
+    color j < 0 ? magenta : brown
+    stroke [[cx + j * top_w, top + 3], [cx + j * stem_w * 1.2, mid - 4]]
+  }
+  # the stem, glowing towards its foot
+  color brown
+  polygon cx - stem_w * 0.8, top + (mid - top) * 0.45, cx + stem_w * 0.8, top + (mid - top) * 0.45, cx + stem_w + 1, bottom, cx - stem_w - 1, bottom
+  let gw = max(1, stem_w - 1)
+  color yellow
+  polygon cx - gw * 0.5, top + (mid - top) * 0.6, cx + gw * 0.5, top + (mid - top) * 0.6, cx + gw, bottom - 1, cx - gw, bottom - 1
+  color white
+  line cx, mid - 4, cx, bottom - 1
+  if stem_w >= 4 { line cx - 1, mid + 2, cx - 1, bottom - 2 }
+  color black
+  line cx - stem_w - 1, bottom, cx + stem_w + 1, bottom
+}
+
+# a small rock islet floating in the dark
+fn islet(pts, top) {
+  shape(pts, magenta)
+  color lightmagenta
+  stroke top
+}
+
+# ---- the void --------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color black
+  rect 0, 0, 159, 167
+}
+
+# ---- far ceiling -----------------------------------------------------------------------
+delay {
+  color blue
+  rect 0, 0, 159, 43
+}
+# dark flecks thickening towards the lower edge
+color black
+for i in 0..30 {
+  let x = 4 + floor(noise(1, i) * 146)
+  let y = 26 + floor(sqrt(noise(4, i)) * 17)
+  let l = 1 + floor(noise(5, i) * 3)
+  line x, y, x + l, y
+}
+# pale vein lines
+color lightblue
+stroke [[14, 20], [22, 28], [30, 32]]
+stroke [[44, 30], [54, 18], [66, 12], [82, 10], [96, 14], [108, 22]]
+stroke [[66, 12], [72, 4]]
+stroke [[96, 14], [104, 8], [118, 6]]
+stroke [[118, 24], [128, 18], [134, 12]]
+stroke [[88, 2], [88, 18]]
+stroke [[92, 4], [91, 14]]
+stroke [[36, 4], [37, 20]]
+stroke [[20, 16], [36, 24]]
+
+# ---- glowing stalactites ---------------------------------------------------------------
+trumpet(35, 6, 20, 5, 40, 52)
+trumpet(67, 8, 13, 3, 38, 46)
+trumpet(112, 6, 18, 5, 40, 50)
+trumpet(145, 8, 10, 3, 40, 48)
+
+# ---- islets ----------------------------------------------------------------------------
+islet([[27, 57], [29, 53], [34, 52], [41, 53], [43, 50], [45, 50], [48, 56], [47, 58], [28, 58]],
+      [[29, 53], [34, 52], [41, 53], [43, 50], [45, 50]])
+islet([[32, 88], [36, 80], [39, 74], [41, 73], [44, 79], [48, 82], [54, 87], [53, 89], [33, 89]],
+      [[36, 80], [39, 74], [41, 73], [44, 79]])
+islet([[94, 62], [97, 58], [99, 58], [101, 54], [103, 55], [105, 60], [110, 61], [109, 63], [95, 63]],
+      [[97, 58], [99, 58], [101, 54], [103, 55]])
+
+# ---- the ribbed arch: top and left -----------------------------------------------------
+# the band across the top, thinning to the right
+tube([[-2, 34], [6, 18], [16, 9], [30, 4], [50, 1], [76, -1], [104, -1], [130, 1]], 26, 10, 1, 7)
+# the left column running down the edge
+tube([[6, 22], [4, 44], [2, 66], [1, 90], [0, 112]], 24, 10, 1, 7)
+
+# left stub with its open cap
+tube([[1, 86], [7, 80], [9, 68]], 10, 8, 1, 5)
+shape([[4, 64], [14, 64], [13, 68], [5, 68]], lightmagenta)
+# left claw reaching into the dark
+tube([[0, 90], [8, 95], [18, 97], [28, 99]], 16, 6, -1, 6)
+tube([[0, 92], [6, 100], [10, 109]], 14, 8, 1, 6)
+
+# ---- right column and hooked trunk -----------------------------------------------------
+tube([[116, -2], [132, 6], [144, 16], [150, 30]], 24, 18, 1, 7)
+tube([[152, -4], [153, 20], [156, 40], [157, 60], [159, 80], [161, 96]], 30, 22, 1, 7)
+tube([[159, 54], [152, 66], [142, 73], [131, 77], [123, 78]], 24, 13, 1, 6)
+shape([[118, 71], [123, 71], [124, 78], [123, 85], [118, 85], [117, 78]], lightmagenta)
+color magenta
+line 120, 74, 120, 82
+
+# ---- great ribbed mound, lower right ---------------------------------------------------
+let mound_edge = [[80, 150], [86, 140], [98, 128], [110, 121], [120, 116], [130, 114],
+                  [138, 112], [144, 106], [150, 96], [155, 88], [160, 84]]
+shape(mound_edge + [[160, 168], [76, 168]], magenta)
+# fan of ribs radiating from below the creature out to the rim
+let fx = 102
+while fx < 160 {
+  let ey = interp(mound_edge, fx) + 4
+  color lightmagenta
+  stroke [[100 + (fx - 100) * 0.5, 168], [fx, ey]]
+  fx += 7 + floor(noise(fx, 5) * 4)
+}
+# the rolled lip along its top
+tube([[104, 127], [116, 119], [130, 116], [140, 110], [148, 100], [155, 90], [162, 84]], 9, 11, -1, 6)
+# tan vines across its face
+tube([[112, 140], [128, 146], [144, 151], [162, 157]], 6, 6, -1, 8, null)
+tube([[146, 136], [150, 122], [156, 108]], 6, 6, -1, 8, null)
+
+# ---- ribbed floor lip, lower left ------------------------------------------------------
+tube([[-2, 150], [8, 157], [18, 163], [34, 168], [50, 168], [66, 164]], 16, 14, -1, 7)
+
+# ---- the curled creature ---------------------------------------------------------------
+shape([[54, 168], [60, 152], [80, 142], [100, 148], [112, 168]], magenta)
+tube([[30, 162], [38, 151], [46, 141], [51, 134]], 20, 12, -1, 6)
+tube([[36, 160], [50, 151], [64, 148], [78, 152]], 18, 14, -1, 6)
+tube([[60, 170], [64, 155], [68, 142], [70, 132]], 18, 6, -1, 6)
+tube([[76, 150], [88, 156], [100, 160], [112, 168]], 18, 18, -1, 6)
+# head: a coiled ring with a spiky crown
+let spikes = [[84, 128, 86, 119], [90, 125, 92, 117], [96, 124, 98, 116], [101, 126, 104, 120]]
+color brown
+for s in spikes { polygon s[0] - 1.5, s[1], s[2], s[3], s[0] + 2, s[1] }
+color yellow
+for s in spikes { line s[0], s[1] - 1, s[2], s[3] + 1 }
+tube(arc(93, 140, 8, 12, 250, 610, 20), 14, 14, 1, 6)
+shape(blob(90, 139, 3, 5, 4, 0.15), black)
+color red
+rect 89, 137, 90, 140
+# a strand falling from the head
+tube([[84, 132], [90, 146], [96, 158], [100, 170]], 14, 16, -1, 6)
+
+frame()

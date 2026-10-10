@@ -1,0 +1,218 @@
+# Vaulted Castle Gallery
+# Source: King's Quest VI VGA background, reference/kq6/r07-c03.png
+#   (a pale-green vaulted hall in the Castle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r07-c03.png --name kq6-r07-c03
+# Method: translated by eye. Kept: the dome rim, the two blue painted pendentives, the
+#   central arch with its lit lunette and three stained-glass windows, the cornice, the
+#   pointed stone doorway, the dark side bays with their tall arches, the small dark door on
+#   the left, the suit of armour with a halberd on its chest, the recessed panel on the right,
+#   the floor seams and the dark blocks along the bottom edge.
+# Dropped: the plaster mottling, the floral painting detail (reduced to one flower and a few
+#   leaf strokes per pendentive), the soft floor reflections and mottling, the far right pendentive sliver.
+# Colours: pale sage-green stone -> lightgrey, lit arch rims and door surround -> white,
+#   shadowed grey-green bays -> darkgrey with black shading, painted pendentives -> blue with
+#   lightblue flowers, stained glass -> red, lightred, yellow, green, lightcyan and lightblue
+#   in black lead, doorways -> black, armour -> lightgrey steel with darkgrey shade and white sheen, plume ->
+#   lightred, chest -> brown, floor -> lightgrey with darkgrey seams and shadow.
+scene "Vaulted Castle Gallery"
+variants lit
+
+# ---- backdrop: lit stone everywhere ------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color lightgrey
+  rect 0, 0, 159, 167
+}
+
+# ---- far left: a sliver of the next arch ----------------------------------------------------
+shape(band([[1, 40], [3, 52], [4, 70]], 4, 5), white, null)
+
+# ---- left bay: tall dark arch -----------------------------------------------------------------
+shape(archway(21, 2, 16, 22, 70), darkgrey)
+# inner edge of the shaded soffit on the left side of the bay
+color black
+stroke [[11, 70], [11, 30], [13, 17], [19, 7]]
+# lit soffit along the right side of the arch
+color white
+stroke arc(21, 24, 16, 22, 20, 90, 10)
+stroke [[37, 24], [37, 70]]
+color lightgrey
+stroke arc(21, 25, 14, 21, 25, 90, 10)
+
+# ---- right bay: tall dark arch, and the white rim of the next arch beyond ------------------
+shape(archway(126, 4, 16, 22, 70), darkgrey)
+color black
+stroke [[117, 70], [117, 30], [119, 18], [125, 9]]
+shape(band([[159, 14], [150, 22], [145, 34], [143, 50], [143, 70]], 7, 5), white)
+
+# ---- central arch: white rim, lit lunette -------------------------------------------------------
+shape(archway(77, 18, 37, 38, 70), white)
+shape(archway(77, 26, 31, 32, 70), lightgrey, darkgrey)
+color yellow
+stroke arc(77, 58, 30, 31, 285, 435, 10)
+
+# ---- dome rim along the top ------------------------------------------------------------------
+shape(band([[34, -1], [58, 3], [80, 4], [102, 3], [126, -1]], 5), white, null)
+color darkgrey
+stroke [[34, 1], [58, 5], [80, 6], [102, 5], [126, 1]]
+
+# ---- painted pendentives -----------------------------------------------------------------------
+fn pendentive(pts, fx, fy, leaves) {
+  shape(pts, blue)
+  # one flower and a few leaf strokes in lightblue
+  shape(blob(fx, fy, 3, 4, 2, 0.1, 10), lightblue, null)
+  color blue
+  plot fx, fy
+  color lightblue
+  for l in leaves { stroke l }
+}
+pendentive([[33, -1], [45, 8], [56, 14], [64, 19], [55, 22], [48, 28], [44, 35], [41, 45],
+            [39, 30], [36, 14]], 44, 19,
+           [[[38, 10], [41, 14]], [[50, 16], [55, 19]], [[43, 28], [45, 34]], [[41, 26], [42, 38]]])
+pendentive([[119, 2], [109, 10], [97, 16], [88, 19], [98, 21], [104, 27], [107, 34], [108, 43],
+            [110, 30], [113, 14]], 104, 22,
+           [[[95, 18], [99, 19]], [[110, 10], [107, 14]], [[106, 29], [107, 36]], [[110, 18], [112, 14]]])
+
+# ---- stained-glass windows -----------------------------------------------------------------------
+fn window(x1, x2, top, bottom, a, b, c, d) {
+  let cx = (x1 + x2) / 2
+  let pts = [[x1, bottom], [x1, top + 7], [x1 + 1, top + 3], [cx, top], [x2 - 1, top + 3],
+             [x2, top + 7], [x2, bottom]]
+  shape(pts, a)
+  # glass pieces, back to front, each leaded in black
+  shape([[x1, top + 9], [x2, top + 6], [x2, top + 14], [x1, top + 16]], b)
+  shape([[x1, top + 16], [cx, top + 15], [x2, top + 19], [x2, bottom], [x1, bottom]], c)
+  shape([[x1, bottom - 4], [cx - 1, top + 12], [cx + 1, top + 12], [x2, bottom - 9], [x2, bottom - 6], [x1 + 1, bottom]], d)
+  shape([[cx, top + 1], [x2, top + 6], [cx + 1, top + 8]], b)
+  color black
+  outline pts
+  line x1, bottom - 13, cx, bottom - 10
+}
+window 55, 62, 40, 65, red, yellow, lightblue, lightgrey
+window 70, 79, 40, 65, lightred, red, lightblue, lightgrey
+window 86, 93, 40, 65, red, green, lightcyan, yellow
+
+# ---- cornice across all three bays --------------------------------------------------------------
+shape([[0, 68], [159, 68], [159, 72], [0, 72]], lightgrey)
+color white
+line 1, 69, 158, 69
+color darkgrey
+line 1, 71, 158, 71
+color black
+line 1, 73, 158, 73
+
+# ---- back wall, lower part -----------------------------------------------------------------------
+color darkgrey
+line 41, 76, 107, 76
+
+# piers either side of the back wall
+shape([[37, 74], [41, 74], [41, 120], [37, 120]], white, darkgrey)
+shape([[107, 74], [111, 74], [111, 120], [107, 120]], white, darkgrey)
+
+# left bay wall under the cornice
+shape([[5, 74], [37, 74], [37, 120], [5, 120]], darkgrey)
+shape([[0, 74], [4, 74], [4, 122], [0, 122]], white, null)
+# right bay wall with its recessed panel
+shape([[111, 74], [141, 74], [141, 120], [111, 120]], darkgrey)
+shape([[117, 78], [137, 78], [137, 116], [117, 116]], darkgrey)
+color lightgrey
+line 118, 115, 136, 115
+color black
+line 112, 75, 112, 119
+# lit far wall at the right
+shape([[141, 74], [145, 74], [145, 120], [141, 120]], white, darkgrey)
+color darkgrey
+line 146, 76, 158, 76
+
+# ---- floor -------------------------------------------------------------------------------------
+shape([[0, 120], [159, 120], [159, 167], [0, 167]], lightgrey, null)
+# shadow from the right bay
+shape([[111, 121], [141, 121], [150, 133], [124, 138]], darkgrey, null)
+shape([[5, 121], [37, 121], [28, 128], [5, 128]], darkgrey, null)
+# wall foot
+color black
+line 0, 120, 159, 120
+
+# seams converging on the back wall corners
+color darkgrey
+stroke [[40, 121], [-2, 157]]
+stroke [[110, 121], [142, 162]]
+stroke [[142, 121], [162, 136]]
+
+# ---- left door -----------------------------------------------------------------------------------
+shape([[20, 90], [30, 90], [30, 120], [20, 120]], black)
+color lightgrey
+line 20, 89, 30, 89
+
+# ---- the pointed stone doorway ------------------------------------------------------------------
+shape([[43, 120], [43, 86], [47, 82], [53, 78], [59, 82], [64, 86], [64, 120]], white, darkgrey)
+shape([[49, 84], [59, 84], [59, 120], [49, 120]], black)
+color lightgrey
+for y in range(90, 120, 6) {
+  line 44, y, 48, y
+  line 60, y + 3, 63, y + 3
+}
+line 50, 83, 47, 84
+line 54, 79, 54, 83
+line 57, 83, 60, 84
+color darkgrey
+line 48, 85, 48, 119
+line 60, 85, 60, 119
+
+# ---- suit of armour on a chest --------------------------------------------------------------------
+# halberd behind the figure
+color black
+line 18, 73, 17, 113
+shape([[18, 76], [21, 75], [22, 78], [21, 81], [18, 80]], lightgrey)
+color black
+line 18, 71, 18, 73
+# legs and feet
+shape(band([[9, 99], [9, 106], [8, 113]], 4, 3), lightgrey)
+shape(band([[13, 99], [13, 106], [14, 113]], 4, 3), lightgrey)
+color darkgrey
+line 9, 101, 9, 112
+line 14, 101, 14, 112
+# arms (the right hand grips the halberd)
+shape(band([[7, 85], [6, 92], [7, 98]], 4, 3), lightgrey)
+shape(band([[14, 85], [16, 89], [17, 92]], 4, 3), lightgrey)
+# breastplate and tassets
+shape([[8, 83], [14, 83], [14, 92], [13, 98], [8, 98], [8, 92]], lightgrey)
+shape([[12, 84], [13, 84], [13, 92], [12, 97]], darkgrey, null)
+color darkgrey
+line 9, 94, 13, 94
+# pauldrons
+shape(blob(7, 85, 2, 2, 1, 0.05, 8), lightgrey)
+shape(blob(14, 85, 2, 2, 1, 0.05, 8), lightgrey)
+# helmet with its visor slit, and the plume
+shape(blob(11, 79, 2, 3, 2, 0.05, 10), lightgrey)
+color black
+line 10, 79, 12, 79
+shape(band([[11, 76], [11, 72], [13, 71], [15, 74], [15, 78]], 4, 2), lightred)
+# steel sheen
+color white
+line 9, 85, 9, 90
+plot 6, 87, 8, 103, 12, 103
+# the chest
+shape([[5, 114], [19, 114], [19, 123], [5, 123]], brown)
+color yellow
+line 6, 115, 18, 115
+color black
+line 6, 117, 18, 117
+color yellow
+plot 12, 119
+
+# ---- dark blocks along the bottom edge ------------------------------------------------------------
+color black
+rect 0, 163, 159, 167
+shape([[-1, 157], [7, 157], [7, 167], [-1, 167]], darkgrey)
+shape([[41, 156], [55, 156], [57, 167], [40, 167]], darkgrey)
+shape([[95, 153], [110, 153], [112, 167], [94, 167]], darkgrey)
+shape([[148, 153], [160, 153], [160, 167], [146, 167]], darkgrey)
+color lightgrey
+line 42, 157, 54, 157
+line 96, 154, 109, 154
+line 149, 154, 159, 154
+line 0, 158, 6, 158
+
+frame()

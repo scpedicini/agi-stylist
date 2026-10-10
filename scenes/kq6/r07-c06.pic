@@ -1,0 +1,197 @@
+# Compass Rotunda
+# Source: King's Quest VI VGA background, reference/kq6/r07-c06.png (a round
+#   teal castle chamber with a compass-star marble floor); reframed with:
+#   pnpm grid reference/kq6/r07-c06.png --name kq6-r07-c06
+# Method: translated by eye. Kept: the curved gold cornice and the dark vaulted coves above
+#   it, the four teal columns with their flared, ringed capitals, the three tall pointed
+#   windows in red and gold frames, the arched door in its teal stone surround on the left,
+#   the two little gold plaques, the curving red skirting, the compass-star marble floor, the
+#   stair going down on the right with its gold banister, and the two ochre ledges in the
+#   foreground. Dropped: the wall mottling, marble reflections of the columns, the door's
+#   carved panels, the finer diagonal star rays, the far right column behind the cornice.
+# Colours: dark teal vault coves -> blue, cornice band -> cyan, pale teal capitals -> lightcyan,
+#   teal columns -> cyan with a lightcyan highlight and blue shade, mint walls -> lightgreen,
+#   shaded right wall -> cyan, gold trim -> yellow, maroon frames and skirting -> red, window
+#   glass -> lightcyan, pale marble -> lightgreen with a yellow lit pool, dark star inlay ->
+#   green, door -> brown, ochre ledges -> yellow with brown sides.
+scene "Compass Rotunda"
+variants lit
+
+# ---- measured edges ------------------------------------------------------------------------
+let cornice = [[0, 6], [10, 14], [20, 22], [30, 28], [45, 33], [60, 36], [80, 38], [100, 36],
+               [115, 31], [125, 26], [135, 18], [145, 11], [159, 3]]
+let skirt = [[0, 124], [10, 119], [20, 115], [30, 112], [45, 109], [60, 107], [80, 106],
+             [100, 106], [115, 107], [125, 109], [135, 113], [145, 117], [159, 123]]
+
+# ---- vault: dark coves -----------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color cyan
+  rect 0, 0, 159, 167
+}
+# pointed vault coves between the capitals (their tops run off the picture)
+fn pointed(cx, top, hw, bottom) {
+  # a pointed (lancet) arch: two arcs meeting at (cx, top), straight sides down to bottom
+  let r = hw * 3
+  let cy = top + r * 0.866
+  let l = arc(cx + hw, cy, hw * 2, r, 270, 330, 10)
+  let rr = arc(cx - hw, cy, hw * 2, r, 30, 90, 10)
+  return l + rr + [[cx + hw, bottom], [cx - hw, bottom]]
+}
+shape(pointed(12, -24, 13, 40), blue)
+shape(pointed(47, -8, 11, 46), blue)
+shape(pointed(80, -6, 11, 46), blue)
+shape(pointed(113, -8, 11, 46), blue)
+# lighter top of each cove
+color lightblue
+stroke arc(47 + 11, -8 + 33 * 0.866, 22, 33, 280, 320, 10)
+stroke arc(80 + 11, -6 + 33 * 0.866, 22, 33, 280, 320, 10)
+stroke arc(113 + 11, -8 + 33 * 0.866, 22, 33, 280, 320, 10)
+
+# ---- walls -------------------------------------------------------------------------------------
+# mint wall below the cornice band, then the shaded curve of the right wall
+delay {
+  shape(shift(cornice, 0, 5) + [[159, 130], [0, 130]], lightgreen, null)
+}
+shape([[137, 15], [159, 0], [159, 130], [137, 130]], cyan, null)
+color blue
+stroke [139, 30], [139, 112]
+# the dark band under the cornice and the gold moulding line
+color cyan
+for d in 1..5 { stroke shift(cornice, 0, d) }
+color yellow
+stroke cornice
+color black
+stroke shift(cornice, 0, 5)
+color black
+stroke shift(cornice, 0, -1)
+
+# ---- the arched door on the left ------------------------------------------------------------
+shape(arc(7, 72, 11, 22, 270, 450, 10) + [[18, 122], [-4, 122]], cyan)
+color blue
+for a in range(280, 450, 20) {
+  stroke [7 + sin(a) * 7, 72 - cos(a) * 15], [7 + sin(a) * 11, 72 - cos(a) * 22]
+}
+shape(arc(6, 72, 7, 15, 270, 450, 10) + [[13, 121], [-1, 121]], brown)
+color yellow
+stroke arc(6, 73, 5, 12, 270, 450, 10)
+stroke [1, 85], [1, 120]
+stroke [11, 85], [11, 120]
+stroke [1, 85], [11, 85]
+color red
+stroke [6, 87], [6, 119]
+color yellow
+plot 9, 106
+
+# ---- windows -----------------------------------------------------------------------------------
+fn window(cx, top, hw, bottom) {
+  shape(pointed(cx, top, hw, bottom), red)
+  shape(pointed(cx, top + 3, hw - 2, bottom - 7), yellow, null)
+  shape(pointed(cx, top + 6, hw - 3, bottom - 11), lightcyan, red)
+  color white
+  stroke [cx - hw + 4, top + 16], [cx - hw + 4, bottom - 15]
+  color brown
+  stroke [cx - hw + 2, bottom - 7], [cx + hw - 2, bottom - 7]
+}
+window 46, 40, 6, 108
+window 82, 44, 8, 108
+window 115, 40, 6, 109
+
+# gold plaques
+fn plaque(x, y) {
+  shape([[x, y], [x + 4, y], [x + 4, y + 2], [x, y + 2]], yellow, brown)
+}
+plaque 102, 82
+plaque 102, 96
+
+# ---- floor ---------------------------------------------------------------------------------------
+# pale teal marble, a lit pool at the back, then the dark compass-star inlay
+shape(skirt + [[159, 167], [0, 167]], lightcyan, null)
+shape(blob(76, 125, 40, 12, 3, 0.12), lightgreen, null)
+fn inlay(pts) { shape(pts, cyan, black) }
+# thin upper diagonal rays and the north ray
+inlay [[72, 126], [52, 117], [76, 125]]
+inlay [[88, 126], [108, 117], [84, 125]]
+inlay [[78, 125], [80, 114], [82, 125]]
+# east and west rays, the short south ray
+inlay [[68, 126], [42, 130], [70, 130]]
+inlay [[92, 126], [118, 128], [90, 130]]
+inlay [[76, 131], [80, 142], [84, 131]]
+# the big outer kites
+inlay [[31, 142], [62, 136], [80, 141], [62, 152], [46, 151]]
+inlay [[108, 129], [126, 121], [138, 128], [132, 138], [116, 136]]
+inlay [[126, 149], [150, 140], [160, 140], [160, 153], [140, 152]]
+inlay [[-1, 138], [20, 140], [10, 150], [-1, 152]]
+inlay [[62, 163], [84, 156], [102, 163], [100, 168], [64, 168]]
+# the pale centre disc
+shape(blob(80, 128, 11, 3, 1, 0.02), white, cyan)
+
+# ---- stair going down on the right -------------------------------------------------------------
+shape([[121, 110], [134, 112], [146, 119], [146, 137], [134, 138]], cyan)
+color lightcyan
+for y in range(115, 137, 4) { stroke [124 + (y - 110) * 0.4, y], [146, y] }
+color black
+for y in range(117, 137, 4) { stroke [124 + (y - 110) * 0.4, y], [146, y] }
+
+# ---- skirting --------------------------------------------------------------------------------------
+let sk = []
+for p in skirt { push(sk, p) }
+let back = []
+for i in range(len(skirt) - 1, -1, -1) { push(back, [skirt[i][0], skirt[i][1] - 5]) }
+shape(sk + back, red, null)
+color yellow
+stroke shift(skirt, 0, -5)
+color black
+stroke skirt
+
+# ---- columns -----------------------------------------------------------------------------------------
+fn shaft(x1, x2, top, bottom) {
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], cyan)
+  color lightcyan
+  stroke [x1 + 2, top + 1], [x1 + 2, bottom - 5]
+  color blue
+  stroke [x2 - 2, top + 1], [x2 - 2, bottom - 5]
+  # gold ring and dark plinth at the foot
+  shape([[x1 - 1, bottom - 4], [x2 + 1, bottom - 4], [x2 + 1, bottom - 2], [x1 - 1, bottom - 2]], yellow)
+  shape([[x1 - 1, bottom - 2], [x2 + 1, bottom - 2], [x2 + 1, bottom + 1], [x1 - 1, bottom + 1]], red)
+}
+fn capital(cx, wtop, wneck, ring1, ring2) {
+  # flared cone running off the top, a red-gold ring, a narrower cone, a gold ring
+  shape([[cx - wtop, -1], [cx + wtop, -1], [cx + wneck + 1, ring1], [cx - wneck - 1, ring1]], lightcyan)
+  shape([[cx + 1, 0], [cx + wtop, -1], [cx + wneck + 1, ring1], [cx + 1, ring1]], cyan, null)
+  shape([[cx - wneck - 2, ring1], [cx + wneck + 2, ring1], [cx + wneck + 2, ring1 + 4], [cx - wneck - 2, ring1 + 4]], red)
+  color yellow
+  stroke [cx - wneck - 1, ring1 + 1], [cx + wneck + 1, ring1 + 1]
+  shape([[cx - wneck, ring1 + 4], [cx + wneck, ring1 + 4], [cx + wneck, ring2], [cx - wneck, ring2]], lightcyan)
+  shape([[cx + 1, ring1 + 5], [cx + wneck - 1, ring1 + 5], [cx + wneck - 1, ring2 - 1], [cx + 1, ring2 - 1]], cyan, null)
+  shape([[cx - wneck - 1, ring2], [cx + wneck + 1, ring2], [cx + wneck + 1, ring2 + 3], [cx - wneck - 1, ring2 + 3]], yellow)
+}
+capital 31, 9, 3, 14, 24
+shaft 26, 34, 27, 114
+capital 64, 9, 3, 11, 29
+shaft 60, 68, 32, 108
+capital 96, 9, 3, 11, 29
+shaft 92, 100, 32, 108
+capital 132, 10, 3, 11, 21
+shaft 128, 136, 24, 113
+
+# ---- banister down the stair ------------------------------------------------------------------------
+color brown
+for t in [0.25, 0.5, 0.75] {
+  let x = 121 + 14 * t
+  let y = 107 + 28 * t
+  stroke [x, y], [x, y + 6]
+}
+color yellow
+stroke [121, 107], [135, 135]
+stroke [122, 107], [136, 135]
+shape([[119, 104], [123, 104], [123, 116], [119, 116]], yellow, brown)
+
+# ---- foreground ledges --------------------------------------------------------------------------------
+shape([[0, 156], [18, 149], [34, 158], [28, 167], [0, 167]], yellow)
+shape([[0, 162], [28, 167], [0, 167]], brown, null)
+shape([[120, 156], [140, 146], [152, 157], [159, 153], [159, 167], [124, 167]], yellow)
+shape([[124, 167], [152, 157], [159, 160], [159, 167]], brown, null)
+
+frame()

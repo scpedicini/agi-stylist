@@ -1,0 +1,307 @@
+# Crossroads Oak
+# Source: King's Quest VI (VGA) - reference/kq6/r03-c02.png; reframed with:
+#   pnpm grid reference/kq6/r03-c02.png --name kq6-r03-c02
+# Method: translated by eye. Kept: the great forked oak and its canopy, the branches reaching
+#   right, the pile of grey boulders, the dirt path forking round the tree, the white castle on
+#   its green hill with the winding path, the village at far left, the small rock in the lower
+#   left, and the bank of ferns in the lower right. Dropped: sun rays, the hazy peaks behind
+#   the castle, individual leaves and grass blades, the stone steps' detail, flowers in the
+#   grass, most of the fern texture. Moved: the village sits a little higher to clear the path.
+# Colours: pale hazy sky → lightblue, castle → white / lightgrey, hill and lit
+#   grass → lightgreen, tall grass → green with lightgreen blades, bark → brown with black
+#   grooves and yellow highlights, boulders → lightgrey / darkgrey, path → brown with yellow
+#   ruts, village → yellow, dark teal ferns → cyan, ferns → green, olive frond → lightgreen.
+scene "Crossroads Oak"
+variants day
+
+# ---- sky and castle --------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color lightblue
+  rect 0, 0, 159, 70
+}
+
+fn tower(x, top, w) {
+  shape([[x, 38], [x, top], [x + w, top], [x + w, 38]], white, darkgrey)
+  shape([[x - 1, top], [x + w / 2, top - 7], [x + w + 1, top]], lightgrey, darkgrey)
+  color darkgrey
+  line x + w / 2, top + 3, x + w / 2, top + 4
+}
+shape([[118, 39], [118, 30], [158, 30], [158, 39]], white, darkgrey)
+shape([[118, 39], [118, 30], [125, 30], [125, 39]], lightgrey, darkgrey)
+tower 120, 25, 4
+tower 133, 19, 4
+tower 144, 20, 4
+tower 152, 24, 4
+color darkgrey
+line 128, 33, 128, 34
+line 140, 32, 140, 34
+
+# ---- far hill with its winding path -------------------------------------------------------
+shape([[88, 50], [100, 44], [114, 40], [128, 37], [144, 36], [160, 35], [160, 76], [88, 76]],
+      lightgreen, null)
+color green
+line 88, 50, 100, 44, 114, 40, 128, 37, 144, 36, 159, 35
+shape(blob(152, 46, 9, 7, 3, 0.25), green, null)
+shape(blob(104, 50, 6, 4, 6, 0.25), green, null)
+color brown
+line 137, 38, 132, 43, 130, 49, 134, 55, 142, 58, 150, 61, 159, 63
+line 138, 38, 133, 43, 131, 49, 135, 55
+
+# ---- ground and the forked path -----------------------------------------------------------
+delay 2 {
+  color lightgreen
+  rect 0, 56, 159, 167
+}
+delay {
+  shape([[0, 54], [30, 54], [34, 70], [42, 86], [52, 98], [72, 104], [94, 96], [112, 84],
+         [122, 74], [128, 68], [136, 67], [134, 76], [128, 88], [122, 98], [110, 108],
+         [96, 116], [84, 122], [78, 134], [74, 150], [72, 167], [30, 167], [38, 154],
+         [44, 142], [46, 130], [42, 118], [34, 110], [26, 100], [20, 86], [12, 74], [0, 64]],
+        brown, null)
+}
+# a few lit ruts and pebbles, and a dark edge on each side
+color yellow
+line 8, 60, 16, 64
+line 40, 104, 48, 112
+line 56, 124, 58, 132
+line 54, 150, 52, 158
+line 80, 110, 90, 106
+line 112, 94, 118, 88
+color darkgrey
+line 30, 96
+line 60, 140
+line 98, 106
+line 124, 84
+color black
+line 0, 64, 12, 74, 20, 86, 26, 100, 34, 110, 42, 118, 46, 130, 44, 142, 38, 154, 30, 167
+line 136, 67, 134, 76, 128, 88, 122, 98, 110, 108, 96, 116, 84, 122, 78, 134, 74, 150, 72, 167
+# old stone steps
+for i in 0..4 {
+  let y = 76 + i * 6
+  color yellow
+  line 18 + i * 2, y, 28 + i * 2, y
+  color black
+  line 18 + i * 2, y + 1, 28 + i * 2, y + 1
+}
+
+# ---- left trees, village and bush ------------------------------------------------------------------
+shape(blob(30, 50, 4, 9, 4, 0.25), green)
+# village far left ---------------------------------------------------------------------
+shape([[2, 56], [2, 46], [8, 44], [8, 56]], yellow, brown)
+shape([[8, 56], [8, 41], [20, 39], [20, 56]], yellow, brown)
+shape([[20, 56], [20, 46], [27, 46], [27, 56]], white, lightgrey)
+color brown
+line 12, 46, 12, 48
+line 16, 46, 16, 48
+line 4, 50, 4, 52
+color red
+line 0, 52, 3, 54
+line 1, 55, 4, 53
+
+shape(blob(1, 36, 4, 24, 8, 0.25), green)
+shape(blob(8, 72, 10, 10, 5, 0.3), green)
+color lightgreen
+line 4, 70, 8, 66
+line 10, 74, 14, 70
+
+# ---- back canopy ---------------------------------------------------------------------------
+shape([[0, 0], [62, 0], [60, 14], [50, 20], [40, 16], [28, 14], [16, 10], [0, 10]], green, null)
+shape([[90, 0], [159, 0], [159, 8], [140, 8], [120, 10], [100, 12], [90, 10]], green, null)
+let back = [[4, 2, 14, 8], [22, 4, 12, 9], [40, 6, 12, 9], [50, 12, 9, 8], [34, 20, 10, 7],
+            [46, 26, 8, 6], [28, 12, 9, 6], [56, 30, 6, 5], [30, 26, 6, 4], [8, 10, 6, 4], [100, 4, 12, 7], [118, 3, 12, 7], [136, 2, 12, 6], [154, 4, 9, 7],
+            [104, 16, 7, 6], [124, 13, 8, 5], [46, 36, 10, 6]]
+for i in 0..len(back) {
+  let b = back[i]
+  shape(blob(b[0], b[1], b[2], b[3], 20 + i, 0.3), green)
+  color black
+  line max(0, b[0] - b[2] / 2), b[1] + b[3] / 3, b[0], b[1] + b[3] / 2
+}
+# sunlit clusters
+shape(blob(20, 20, 5, 7, 41, 0.3), lightgreen)
+shape(blob(13, 12, 4, 4, 42, 0.3), lightgreen)
+shape(blob(148, 10, 6, 5, 43, 0.3), lightgreen)
+color green
+line 18, 20, 22, 24
+line 20, 27, 24, 25
+line 146, 10, 150, 9
+
+# ---- boulder pile: four big stones --------------------------------------------------------
+fn stone(pts, shade, light) {
+  shape(pts, lightgrey)
+  shape(shade, darkgrey, null)
+  shape(light, white, null)
+}
+stone([[38, 52], [42, 43], [50, 38], [58, 38], [63, 42], [63, 54], [54, 57], [44, 56]],
+      [[38, 52], [42, 43], [44, 46], [42, 54]],
+      [[46, 41], [50, 39], [57, 39], [60, 42], [52, 44]])
+stone([[31, 68], [33, 58], [38, 52], [46, 54], [50, 60], [48, 68], [40, 71]],
+      [[31, 68], [33, 58], [36, 56], [36, 66], [40, 71]],
+      [[39, 54], [45, 55], [47, 58], [41, 57]])
+stone([[48, 67], [50, 58], [56, 56], [63, 56], [63, 69], [56, 70]],
+      [[48, 67], [50, 60], [52, 64], [56, 70]],
+      [[52, 58], [57, 57], [62, 58], [56, 60]])
+stone([[32, 83], [31, 74], [38, 69], [50, 68], [60, 70], [63, 74], [63, 86], [48, 87]],
+      [[32, 83], [31, 74], [36, 72], [38, 80], [44, 87]],
+      [[40, 70], [50, 69], [58, 71], [50, 73], [42, 73]])
+color darkgrey
+line 54, 48, 60, 50
+line 44, 62, 46, 66
+line 52, 78, 60, 80
+
+# ---- grass in front of the boulders and the tree --------------------------------------------
+shape([[28, 84], [36, 80], [48, 82], [60, 86], [70, 92], [84, 92], [96, 92], [106, 88],
+       [114, 82], [118, 86], [112, 96], [100, 104], [86, 110], [70, 110], [56, 106],
+       [44, 98], [34, 92]], lightgreen, null)
+color green
+line 28, 84, 34, 92, 44, 98, 56, 106, 70, 110, 86, 110, 100, 104, 112, 96, 118, 86
+for i in 0..14 {
+  let x = 34 + noise(11, i) * 74
+  let y = 88 + noise(12, i) * 14
+  line x, y, x + 1, y - 3
+  line x + 2, y, x + 4, y - 2
+}
+
+# ---- tall grass right of the trunk ----------------------------------------------------------
+shape([[86, 94], [86, 62], [92, 54], [100, 52], [110, 56], [118, 64], [124, 72],
+       [120, 80], [112, 88], [100, 94]], green, null)
+color lightgreen
+for i in 0..26 {
+  let x = 88 + noise(13, i) * 32
+  let y = 60 + noise(14, i) * 30
+  line x, y + 5, x + (noise(15, i) - 0.5) * 6, y - 4
+}
+color yellow
+for i in 0..6 {
+  line 96 + noise(16, i) * 22, 60 + noise(17, i) * 24
+}
+
+# ---- the great oak --------------------------------------------------------------------------
+# trunk: two stems grown together, forking into limbs at the top and flaring into roots
+shape([[62, 98], [60, 88], [61, 70], [61, 50], [60, 36], [54, 26], [46, 16], [38, 6], [34, 0],
+       [46, 0], [52, 8], [60, 16], [62, 8], [60, 0], [74, 0], [72, 10], [74, 20], [80, 12],
+       [86, 4], [88, 0], [100, 0], [94, 10], [88, 22], [86, 32], [86, 42], [88, 56],
+       [88, 72], [90, 84], [94, 92], [102, 98], [92, 99], [84, 96], [76, 100], [68, 97]], brown)
+# a gap of sky between the two stems
+shape([[77, 30], [80, 29], [81, 36], [80, 42], [77, 40]], lightblue)
+# bark grooves: long twisting strokes, denser on the shadowed left stem
+color black
+line 64, 96, 65, 80, 64, 64, 66, 48, 64, 34, 58, 24, 50, 14
+line 67, 94, 69, 78, 68, 60, 70, 44, 68, 30, 66, 16, 66, 4
+line 71, 98, 73, 84, 72, 70, 74, 56, 72, 44
+line 76, 98, 76, 86, 77, 74, 76, 62, 77, 46
+line 74, 26, 72, 16, 70, 4
+line 80, 46, 82, 54, 81, 64, 80, 72, 82, 86, 84, 96
+line 86, 46, 85, 54
+line 86, 66, 87, 76, 90, 88
+line 82, 30, 84, 20, 90, 8, 94, 2
+line 62, 60, 63, 52
+line 63, 84, 62, 76
+# sunlit bark on the right stem
+color yellow
+line arc(83, 62, 3, 8, 20, 160, 20)
+line arc(83, 80, 4, 7, 20, 160, 20)
+line arc(84, 44, 2, 6, 20, 160, 30)
+line 78, 50, 79, 58, 78, 64
+line 72, 60, 73, 70
+line 88, 10, 82, 22
+line 96, 98, 90, 94
+
+fn bough(pts, w) {
+  # a branch: brown stroke `w` px thick with a black underside
+  color brown
+  for j in 0..w {
+    line shift(pts, 0, j)
+  }
+  color black
+  line shift(pts, 0, w)
+}
+bough([[86, 26], [96, 20], [106, 14], [120, 10], [134, 7], [148, 4], [159, 2]], 4)
+bough([[87, 14], [96, 8], [106, 3], [114, 0]], 3)
+bough([[86, 40], [94, 42], [102, 46], [110, 49], [118, 47], [124, 42], [127, 34], [128, 24]], 2)
+bough([[100, 46], [104, 38], [108, 30]], 1)
+bough([[60, 22], [50, 26], [40, 30], [30, 30], [22, 26]], 2)
+bough([[56, 10], [46, 12], [36, 18]], 2)
+color black
+line 30, 31, 22, 34
+
+# leaves over the ends of the boughs
+let front = [[112, 26, 6, 5], [130, 18, 6, 5], [100, 30, 5, 4], [120, 6, 8, 4], [152, 10, 7, 4], [118, 52, 4, 3], [26, 31, 6, 4], [142, 8, 6, 4]]
+for i in 0..len(front) {
+  let f = front[i]
+  shape(blob(f[0], f[1], f[2], f[3], 60 + i, 0.3), i % 2 == 0 ? green : lightgreen)
+}
+
+# ---- small rock, lower left ---------------------------------------------------------------
+shape(blob(30, 140, 18, 6, 9, 0.2), green, null)
+shape([[18, 134], [20, 124], [26, 116], [34, 112], [42, 114], [46, 122], [46, 132],
+       [40, 138], [26, 139]], lightgrey)
+shape([[19, 133], [21, 124], [25, 119], [27, 128], [25, 137]], darkgrey, null)
+shape([[30, 116], [36, 114], [40, 116], [34, 118]], white, null)
+color black
+line 27, 118, 28, 128, 25, 138
+color darkgrey
+line 36, 124, 42, 128
+
+# darker foreground grass, lower left
+shape([[0, 150], [10, 146], [22, 148], [32, 156], [34, 167], [0, 167]], green, null)
+color green
+for i in 0..10 {
+  let x = 2 + noise(18, i) * 30
+  let y = 104 + noise(19, i) * 36
+  line x, y, x + 2, y - 3
+}
+
+# ---- fern bank, lower right -------------------------------------------------------------------
+shape([[62, 167], [70, 144], [78, 128], [90, 118], [104, 112], [118, 102], [128, 90],
+       [136, 80], [146, 72], [160, 68], [160, 167]], green)
+
+fn frond(x0, y0, x1, y1, w, c, rib, vein = black, teeth = 7) {
+  # a tapering, saw-edged fern leaf from (x0, y0) to its tip (x1, y1), `w` px wide
+  let dx = x1 - x0
+  let dy = y1 - y0
+  let l = sqrt(dx * dx + dy * dy)
+  let nx = -dy / l
+  let ny = dx / l
+  let left = []
+  let right = []
+  for k in 0..teeth * 2 {
+    let t = (k + 1) / (teeth * 2 + 1)
+    let ww = w * sin(t * 180) * (k % 2 == 0 ? 1 : 0.5)
+    push(left, [x0 + dx * t + nx * ww, y0 + dy * t + ny * ww])
+    push(right, [x0 + dx * t - nx * ww, y0 + dy * t - ny * ww])
+  }
+  let pts = [[x0, y0]] + left + [[x1, y1]]
+  for k in 0..len(right) { push(pts, right[len(right) - 1 - k]) }
+  shape(pts, c)
+  color vein
+  for k in 0..teeth {
+    let t = (2 * k + 1) / (teeth * 2 + 1)
+    let t2 = t + 0.6 / teeth
+    let ww = w * sin(t2 * 180) * 0.7
+    line x0 + dx * t, y0 + dy * t, x0 + dx * t2 + nx * ww, y0 + dy * t2 + ny * ww
+    line x0 + dx * t, y0 + dy * t, x0 + dx * t2 - nx * ww, y0 + dy * t2 - ny * ww
+  }
+  color rib
+  line x0, y0, x1, y1
+}
+# dark teal fronds drooping at the back right
+frond 159, 96, 132, 80, 7, cyan, lightcyan
+frond 159, 114, 122, 92, 8, cyan, lightcyan
+frond 156, 132, 114, 106, 8, cyan, lightcyan
+# green fronds fanning up in the middle
+frond 92, 167, 74, 124, 9, green, lightgreen
+frond 102, 167, 100, 114, 9, green, lightgreen
+frond 76, 167, 62, 140, 7, green, lightgreen
+frond 108, 164, 128, 114, 9, green, lightgreen
+frond 116, 160, 140, 126, 8, green, lightgreen
+# dark fronds low down
+frond 112, 167, 104, 134, 7, cyan, lightcyan
+frond 84, 167, 92, 140, 6, cyan, lightcyan
+# the big olive frond, bottom right
+frond 124, 167, 146, 124, 10, lightgreen, yellow, green, 8
+frond 142, 167, 159, 130, 8, lightgreen, yellow, green
+frond 134, 146, 159, 118, 7, lightgreen, yellow, green
+
+frame()

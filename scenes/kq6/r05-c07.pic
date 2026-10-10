@@ -1,0 +1,240 @@
+# Chessboard Land Stairs
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c07.png; reframed with:
+#   pnpm grid reference/kq6/r05-c07.png --name kq6-r05-c07
+# Method: translated by eye. Kept: pale sky, two banks of warm clouds, rolling checkerboard
+#   dunes (a left and a right dune drawn as warped square grids, a tiny far dune in the dip),
+#   the winding tan path,
+#   the stone stair, the landing slabs, both balustrades with their egg-topped newel posts, the
+#   two small side posts, the shadow across the right of the stair.
+#   Dropped: stone speckle, the cloud's soft internal shading, most of the lavender rim light
+#   on the dunes (one lightmagenta fold line kept), the small balusters behind the side posts.
+#   Moved: nothing.
+# Colours: blue sky → lightcyan, cream clouds → white with yellow shading, peach squares →
+#   lightred, purple squares → magenta (far dune lightmagenta/magenta), tan path → brown with a
+#   yellow lit edge, stone → lightgrey with darkgrey joints, shadowed stone → darkgrey.
+scene "Chessboard Land Stairs"
+variants day
+
+# ---- sky and clouds ---------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 60
+}
+
+fn puffs(list, c, seed0) {
+  for i in 0..len(list) {
+    let p = list[i]
+    shape(blob(p[0], p[1], p[2], p[3], seed0 + i, 0.15), c, null)
+  }
+}
+# left cloud bank: yellow (peach) body, white puffs on top so the yellow reads as undersides
+shape([[0, 0], [26, 0], [30, 10], [38, 22], [48, 28], [56, 34], [64, 44], [0, 46]], yellow, null)
+puffs([[30, 12, 4, 6], [37, 21, 5, 5], [47, 28, 5, 5], [56, 35, 5, 5], [62, 42, 4, 4]], yellow, 50)
+puffs([[8, 6, 14, 8], [20, 12, 9, 7], [10, 22, 10, 7], [28, 22, 7, 6], [38, 28, 7, 5],
+       [22, 32, 8, 5], [48, 34, 5, 4], [6, 36, 7, 5]], white, 10)
+# right cloud bank
+shape([[78, 46], [80, 38], [86, 30], [90, 20], [98, 12], [112, 12], [118, 4], [122, 0], [159, 0],
+       [159, 46]], yellow, null)
+puffs([[82, 36, 4, 6], [89, 24, 5, 6], [98, 14, 5, 4], [110, 12, 6, 4], [118, 5, 4, 5]], yellow, 60)
+puffs([[136, 6, 16, 8], [148, 16, 10, 8], [124, 16, 10, 7], [104, 20, 8, 6], [94, 28, 6, 6],
+       [116, 28, 8, 5], [140, 28, 8, 5], [88, 38, 4, 4], [104, 34, 5, 4], [156, 32, 6, 5]], white, 30)
+
+# ---- the far dune in the dip, tiny checks -------------------------------------------------
+fn far_dune() {
+  for row in 0..6 {
+    let y = 45 + row * 2
+    for col in 0..20 {
+      let x = 56 + col * 3 - row
+      color (col + row) % 2 == 0 ? lightmagenta : magenta
+      rect x, y, x + 2, y + 1
+    }
+  }
+  color black
+  line 60, 47, 72, 45, 86, 44, 100, 46
+  color yellow
+  polygon 56, 44, 70, 44, 66, 46, 60, 46
+}
+far_dune()
+
+# ---- the rolling checkerboard -----------------------------------------------------------
+# Each dune is a warped grid of squares hanging from its crest line, drawn back to front.
+fn interp(pts, x) {
+  let n = len(pts) - 1
+  if x <= pts[0][0] { return pts[0][1] }
+  for i in 0..n {
+    let a = pts[i]
+    let b = pts[i + 1]
+    if x <= b[0] {
+      let f = (x - a[0]) / (b[0] - a[0])
+      # ease between control points so the dunes are rounded, not peaked
+      let s = f * f * (3 - 2 * f)
+      return a[1] + (b[1] - a[1]) * s
+    }
+  }
+  return pts[n][1]
+}
+
+# corner (i, v) of a dune's grid: w0 → w1 = square width far → near, cx = vanishing column
+fn dune_pt(crest, i, v, rows, w0, w1, cx, bottom) {
+  let t = v / rows
+  let w = w0 + (w1 - w0) * t
+  let x = cx + i * w
+  let c = interp(crest, clamp(x, 0, 159))
+  let y = c + (bottom - c) * t * sqrt(sqrt(t))
+  return [x, y]
+}
+
+fn dune(crest, rows, w0, w1, cx, bottom, phase) {
+  for v in 0..rows {
+    for i in -20..=20 {
+      let a = dune_pt(crest, i, v, rows, w0, w1, cx, bottom)
+      let b = dune_pt(crest, i + 1, v, rows, w0, w1, cx, bottom)
+      if b[0] < -40 || a[0] > 200 { continue }
+      let c = dune_pt(crest, i + 1, v + 1, rows, w0, w1, cx, bottom)
+      let d = dune_pt(crest, i, v + 1, rows, w0, w1, cx, bottom)
+      color (i + v + phase) % 2 == 0 ? lightred : magenta
+      polygon a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]
+    }
+  }
+}
+
+fn crest_line(crest, x1, x2, c) {
+  let pts = []
+  for x in x1..=x2 {
+    if x % 3 == 0 || x == x2 { push(pts, [x, interp(crest, x)]) }
+  }
+  color c
+  line pts
+}
+
+# left dune: crest across the top left, sinking to the dip in the middle
+let LEFT = [[0, 44], [24, 42], [48, 44], [66, 49], [84, 54], [110, 58], [159, 60]]
+delay {
+  dune(LEFT, 8, 8, 18, 30, 112, 0)
+}
+crest_line(LEFT, 0, 84, black)
+
+# right dune: crest high on the right, its flank rolling down to the path
+let RIGHT = [[30, 118], [56, 90], [72, 66], [88, 52], [104, 44], [122, 39], [140, 38], [159, 41]]
+dune(RIGHT, 8, 9, 20, 112, 112, 1)
+crest_line(RIGHT, 70, 92, lightmagenta)
+crest_line(RIGHT, 88, 159, black)
+
+# ---- the winding path -------------------------------------------------------------------
+shape([[68, 70], [72, 70], [74, 78], [80, 88], [92, 98], [106, 104], [116, 110], [46, 110],
+       [56, 102], [64, 92], [68, 82]], brown, null)
+color yellow
+line 68, 70, 68, 82, 64, 92, 56, 102, 46, 110
+color black
+line 72, 70, 74, 78, 80, 88, 92, 98, 106, 104, 116, 110
+
+# ---- the stair --------------------------------------------------------------------------
+color lightgrey
+rect 0, 108, 159, 167
+color black
+line 0, 108, 159, 108
+# treads: a black nosing shadow and a darkgrey riser under each
+for s in 0..6 {
+  let y = 113 + s * 5
+  color black
+  line 0, y, 159, y
+  color darkgrey
+  line 0, y + 1, 159, y + 1
+}
+# landing slabs
+color black
+line 0, 142, 159, 142
+color darkgrey
+line 0, 155, 159, 155
+line 46, 142, 40, 167
+line 82, 142, 82, 155
+line 64, 155, 62, 167
+line 112, 142, 122, 167
+color black
+line 46, 143, 40, 166
+
+# shadow across the right of the stair
+shape([[106, 109], [128, 109], [128, 146], [118, 146], [112, 138], [108, 130], [104, 124],
+       [100, 120]], darkgrey, null)
+shape(blob(98, 124, 3, 2, 3), darkgrey, null)
+color black
+for s in 0..6 {
+  let y = 113 + s * 5
+  line 104, y, 128, y
+}
+
+# ---- newel posts --------------------------------------------------------------------------
+fn post(cx, top, bottom, body, shade) {
+  # tapering shaft
+  shape([[cx - 7, bottom], [cx - 5, top + 40], [cx - 5, top + 32], [cx + 5, top + 32],
+         [cx + 5, top + 40], [cx + 7, bottom]], body)
+  color shade
+  line cx + 3, top + 34, cx + 3, top + 44, cx + 5, bottom - 1
+  # dark overhanging ring under the cap
+  shape([[cx - 8, top + 27], [cx + 8, top + 27], [cx + 7, top + 32], [cx - 6, top + 33]], darkgrey)
+  color black
+  line cx - 6, top + 31, cx + 6, top + 31
+  # bulbous cap
+  shape(blob(cx, top + 22, 8, 6, 2, 0.04), body)
+  color shade
+  line arc(cx, top + 22, 6, 4, 80, 200, 20)
+  color white
+  line cx - 6, top + 21, cx - 4, top + 18, cx, top + 17
+  # neck
+  shape([[cx - 2, top + 13], [cx + 2, top + 13], [cx + 3, top + 16], [cx - 3, top + 16]], body)
+  # egg finial
+  shape(blob(cx, top + 7, 3, 7, 1, 0.02), body)
+  color white
+  line cx - 1, top + 3, cx - 1, top + 8
+  color shade
+  line cx + 2, top + 6, cx + 2, top + 10
+}
+
+fn knob_post(cx, top, bottom, body, shade) {
+  shape([[cx - 4, bottom], [cx - 4, top + 12], [cx + 4, top + 12], [cx + 4, bottom]], body)
+  shape(blob(cx, top + 10, 6, 3, 2, 0.05), body)
+  shape(blob(cx, top + 3, 3, 4, 4, 0.05), body)
+  color shade
+  line cx + 2, top + 14, cx + 2, bottom - 1
+}
+
+# ---- left balustrade (lit) -------------------------------------------------------------------
+knob_post(2, 84, 167, lightgrey, darkgrey)
+# side face of the stair wall
+shape([[6, 102], [22, 92], [34, 96], [34, 108], [28, 120], [22, 136], [20, 150], [14, 158],
+       [6, 158]], lightgrey)
+color darkgrey
+line 26, 100, 30, 108, 24, 122, 18, 140, 16, 152
+line 12, 108, 12, 150
+# heavy sloping handrail
+shape([[0, 96], [22, 82], [24, 90], [0, 106]], lightgrey)
+color darkgrey
+line 1, 104, 23, 89
+color white
+line 1, 97, 21, 84
+color black
+line 6, 158, 4, 162, 0, 162
+post(28, 40, 110, lightgrey, darkgrey)
+
+# ---- right balustrade (in shadow) ----------------------------------------------------------
+knob_post(154, 82, 167, darkgrey, black)
+shape([[150, 98], [134, 90], [124, 96], [124, 146], [134, 167], [150, 167]], darkgrey)
+color lightgrey
+line 132, 110, 134, 140, 142, 160
+color black
+line 128, 110, 130, 146, 138, 167
+# handrail, its top caught by the light
+shape([[136, 80], [159, 92], [159, 102], [136, 90]], darkgrey)
+color lightgrey
+line 136, 81, 159, 93
+color lightblue
+line 137, 83, 158, 94
+post(130, 42, 112, lightgrey, darkgrey)
+# shadow falls over the post's lower shaft
+color darkgrey
+line 133, 84, 135, 111
+line 134, 84, 136, 111
+
+frame()

@@ -1,0 +1,389 @@
+# Garden of Wonders Gate
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c06.png; reframed with:
+#   pnpm grid reference/kq6/r05-c06.png --name kq6-r05-c06
+# Method: translated by eye. Kept: blue sky and the clouds seen through the gateway, the two
+#   tree crowns over the wall, the curved stone garden wall (left and right runs), the two
+#   leaning gate pillars with knob caps and their floating broken tops, the checkerboard land
+#   and little stone landing through the gate, the winding cobble path, the bright flower bed,
+#   the four bonneted wallflower faces, the three clumps of tomatoes, the pale baby's-tears
+#   flowers, the grape vine on the left wall, the red chair and the low table, the dark tufted
+#   grass in the right foreground.
+#   Dropped: stone speckle and pitting, most vine leaves, the tomatoes' carved faces (a dot or
+#   two each), the balusters through the gate, the blades of the left lawn (a few strokes).
+#   Moved: nothing.
+# Colours: sky → blue, clouds → white with lightgrey undersides, mauve stone → lightgrey with
+#   darkgrey joints and shade, tree crowns → green with lightgreen leaf marks, checkerboard →
+#   lightred/magenta, cobbles → brown with black joints and yellow lit tops, bright bed →
+#   lightgreen, left lawn → green, right lawn → lightgreen, dark foreground grass → green with
+#   black tufts, bonnets → lightblue with lightcyan frills, faces → brown, tomatoes → red,
+#   baby's tears → lightcyan, chair → red, table → brown.
+scene "Garden of Wonders Gate"
+variants day
+
+# ---- sky and clouds ------------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color blue
+  rect 0, 0, 159, 70
+}
+
+let puffs = [[44, 30, 7, 6], [52, 40, 8, 7], [62, 48, 9, 7], [74, 50, 10, 7], [86, 46, 6, 6],
+             [70, 40, 6, 6], [40, 40, 6, 6]]
+blobs(puffs, lightgrey, null, 0.2, 3)
+let tops = []
+for p in puffs { push(tops, [p[0] - 1, p[1] - 2, p[2] - 1, p[3] - 1]) }
+blobs(tops, white, null, 0.2, 3)
+
+# ---- tree crowns behind the wall ------------------------------------------------------------
+blobs([[6, 6, 12, 10], [18, 4, 9, 8], [4, 18, 8, 8], [18, 16, 9, 7], [28, 22, 7, 6],
+       [12, 24, 8, 5]], green, black, 0.28, 2)
+blobs([[110, 14, 7, 5], [120, 8, 9, 6], [134, 5, 11, 6], [150, 6, 12, 8], [128, 14, 8, 4],
+       [144, 13, 8, 5], [100, 19, 5, 3]], green, black, 0.28, 5)
+color lightgreen
+line 4, 6, 8, 3, 12, 5
+line 16, 10, 20, 7
+line 22, 18, 26, 16
+line 6, 16, 10, 14
+line 116, 7, 121, 5, 124, 7
+line 132, 3, 138, 2
+line 146, 6, 151, 4, 155, 6
+line 106, 13, 110, 11
+color black
+line 10, 12, 14, 14
+line 24, 24, 28, 25
+line 126, 11, 132, 12
+line 140, 10, 144, 11
+
+# ---- what shows through the gateway -------------------------------------------------------
+# far checkerboard dune
+for row in 0..4 {
+  let y = 56 + row * 3
+  for col in 0..12 {
+    let x = 50 + col * 4
+    color (col + row) % 2 == 0 ? lightred : magenta
+    rect x, y, x + 3, y + 2
+  }
+}
+color black
+line 52, 56, 64, 55, 78, 55, 92, 57
+# stone landing and stair beyond the gate
+shape([[56, 66], [92, 66], [97, 87], [51, 87]], lightgrey)
+color darkgrey
+line 58, 70, 90, 70
+line 56, 74, 92, 74
+line 54, 78, 94, 78
+# newel posts
+fn post(x, top, bottom) {
+  color darkgrey
+  rect x - 1, top + 2, x + 1, bottom
+  ellipse x, top + 1, 1, 2
+  color black
+  line x + 1, top + 2, x + 1, bottom
+}
+post 66, 60, 70
+post 78, 60, 70
+
+# ---- the garden wall ------------------------------------------------------------------------
+fn edge_pts(e, x1, x2, k, b) {
+  # points along the course line k (0 = top edge, 1 = bottom edge b) between columns x1..x2
+  let pts = []
+  let x = x1
+  while x <= x2 {
+    let t = interp(e, x)
+    push(pts, [x, t + (interp(b, x) - t) * k])
+    x += 3
+  }
+  let t2 = interp(e, x2)
+  push(pts, [x2, t2 + (interp(b, x2) - t2) * k])
+  return pts
+}
+
+# left run
+let LT = [[0, 22], [20, 25], [34, 28], [46, 33]]
+let lb = [[0, 79], [159, 79]]
+shape([[0, 22], [20, 25], [34, 28], [48, 33], [48, 79], [0, 79]], lightgrey)
+color white
+stroke edge_pts(LT, 0, 44, 0.03, lb)
+for k in 1..6 {
+  color darkgrey
+  stroke edge_pts(LT, 0, 46, k / 6, lb)
+  # vertical joints, staggered
+  let off = k % 2 == 0 ? 0 : 5
+  let x = off + 2
+  while x < 44 {
+    let ya = interp(LT, x) + (79 - interp(LT, x)) * (k - 1) / 6
+    let yb = interp(LT, x) + (79 - interp(LT, x)) * k / 6
+    line x, ya + 1, x - 1, yb
+    x += 10
+  }
+}
+
+# right run (rises away from the gate)
+let RT = [[86, 32], [100, 26], [115, 22], [130, 19], [145, 15], [159, 13]]
+let RBp = [[86, 80], [100, 74], [115, 70], [135, 68], [159, 66]]
+let rb = RBp
+shape([[86, 32], [100, 26], [115, 22], [130, 19], [145, 15], [159, 13], [159, 66], [135, 68],
+       [115, 70], [100, 74], [86, 80]], lightgrey)
+color white
+stroke edge_pts(RT, 90, 159, 0.04, rb)
+for k in 1..6 {
+  color darkgrey
+  stroke edge_pts(RT, 88, 159, k / 6, rb)
+  let off = k % 2 == 0 ? 0 : 8
+  let x = 96 + off
+  while x < 159 {
+    let t = interp(RT, x)
+    let b = interp(rb, x)
+    let ya = t + (b - t) * (k - 1) / 6
+    let yb = t + (b - t) * k / 6
+    line x, ya + 1, x - 1, yb
+    x += 14 + (x - 96) / 10
+  }
+}
+color black
+stroke RT
+
+# ---- the gate pillars -----------------------------------------------------------------------
+# Each pillar is a thick curved horn: a darkgrey body, a lightgrey lit strip on the gate side,
+# a hooked knob on top bending towards the gate, and a broken top floating above it.
+fn pillar(path, w1, w2, dx, knob, frag) {
+  let body = band(path, w1, w2)
+  shape(body, darkgrey)
+  shape(band(shift(path, dx, 0), w1 * 0.5, w2 * 0.4), lightgrey, null)
+  color black
+  outline body
+  boulder(knob, lightgrey, darkgrey, black, dx > 0 ? 0.2 : -0.2)
+  boulder(frag, lightgrey, darkgrey, black, 0.3)
+}
+pillar([[47, 85], [48, 70], [50, 56], [52, 44], [55, 34]], 32, 16, 3,
+       [[49, 33], [50, 28], [54, 25], [59, 26], [62, 30], [62, 35], [59, 33], [55, 33]],
+       [[57, 6], [59, 3], [62, 4], [62, 20], [60, 23], [57, 21]])
+pillar([[93, 85], [92, 70], [89, 56], [86, 44], [82, 33]], 30, 16, -3,
+       [[87, 32], [87, 27], [83, 23], [78, 24], [75, 28], [75, 33], [78, 31], [82, 32]],
+       [[79, 18], [83, 4], [86, 2], [88, 5], [84, 20], [80, 21]])
+# a groove or two down each shaft
+color black
+stroke [[57, 46], [56, 56], [56, 66]]
+stroke [[83, 46], [85, 58], [86, 68]]
+color lightgrey
+stroke [[53, 70], [53, 80]]
+
+# ---- lawns ---------------------------------------------------------------------------------
+# left lawn (shaded green) under the left wall and pillar
+shape([[0, 79], [42, 79], [52, 82], [72, 84], [90, 84], [100, 84], [100, 167], [0, 167]], green)
+# right lawn (sunny)
+shape([[86, 82], [100, 74], [115, 70], [135, 68], [159, 66], [159, 167], [86, 167]], lightgreen)
+shape([[96, 78], [100, 74], [115, 70], [135, 68], [159, 66], [159, 80], [148, 78], [140, 82],
+       [128, 80], [118, 83], [108, 82], [100, 86]], green, null)
+color green
+for p in [[112, 92], [124, 100], [136, 90], [104, 104], [130, 110], [144, 96], [118, 108]] {
+  line p[0], p[1], p[0] + 2, p[1] - 2
+  line p[0] + 3, p[1], p[0] + 4, p[1] - 3
+}
+# dark tufted grass in the right foreground
+shape([[104, 132], [118, 130], [132, 126], [142, 116], [148, 104], [154, 96], [159, 92],
+       [159, 167], [60, 167], [80, 150], [96, 140]], green)
+fn tufts(x1, y1, x2, y2, dx, dy) {
+  color black
+  let y = y1
+  let r = 0
+  while y <= y2 {
+    let x = x1 + (r % 2) * dx / 2
+    while x <= x2 {
+      stroke [[x - 2, y + 1], [x, y - 1], [x + 2, y + 1]]
+      x += dx
+    }
+    y += dy
+    r += 1
+  }
+}
+tufts(110, 138, 159, 166, 7, 6)
+tufts(136, 124, 159, 136, 8, 6)
+tufts(150, 102, 159, 120, 8, 7)
+tufts(92, 148, 108, 166, 7, 6)
+color lightgreen
+line 120, 136, 122, 134
+line 140, 150, 142, 148
+line 128, 158, 130, 156
+line 150, 130, 152, 128
+color black
+outline [[104, 132], [118, 130], [132, 126], [142, 116], [148, 104], [154, 96], [159, 92]]
+
+# ---- the cobble path -----------------------------------------------------------------------
+let PL = [[70, 84], [80, 92], [88, 100], [93, 108], [92, 116], [86, 126], [76, 136], [62, 146],
+          [48, 156], [34, 168]]
+let PR = [[92, 84], [102, 90], [110, 100], [115, 110], [114, 120], [108, 130], [98, 140],
+          [88, 150], [82, 160], [78, 168]]
+let outlinePts = []
+for p in PL { push(outlinePts, p) }
+for i in 0..len(PR) { push(outlinePts, PR[len(PR) - 1 - i]) }
+shape(outlinePts, brown)
+fn mix(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f] }
+# cross joints: each segment between matched edge points split into rows of cobbles
+for i in 0..len(PL) - 1 {
+  let rows = i < 3 ? 2 : 3
+  for r in 0..rows {
+    let f = r / rows
+    let a = mix(PL[i], PL[i + 1], f)
+    let b = mix(PR[i], PR[i + 1], f)
+    color black
+    stroke a, b
+    # long joints inside this row, staggered
+    let a2 = mix(PL[i], PL[i + 1], (r + 1) / rows)
+    let b2 = mix(PR[i], PR[i + 1], (r + 1) / rows)
+    let n = i < 3 ? 3 : 4
+    for j in 1..n {
+      let g = (j - ((i * rows + r) % 2) * 0.5) / n
+      if g <= 0.05 { continue }
+      let p = mix(a, b, g)
+      let q = mix(a2, b2, g)
+      stroke p, q
+    }
+    # lit top of the cobbles
+    if (i * rows + r) % 2 == 0 {
+      color yellow
+      let c1 = mix(a, b, 0.2)
+      let c2 = mix(a, b, 0.32)
+      stroke [c1[0], c1[1] + 1], [c2[0], c2[1] + 1]
+    }
+  }
+}
+color black
+stroke PL
+stroke PR
+
+# ---- the bright flower bed -----------------------------------------------------------------
+shape([[48, 84], [70, 84], [80, 92], [88, 100], [93, 108], [92, 116], [86, 126], [76, 136],
+       [62, 146], [50, 140], [38, 130], [33, 116], [36, 100], [42, 90]], lightgreen)
+color green
+line 40, 126, 44, 120
+line 46, 136, 50, 130
+line 78, 128, 82, 122
+line 38, 108, 42, 104
+
+# ---- grape vine on the left wall ------------------------------------------------------------
+shape(band([[6, 82], [5, 66], [7, 52], [5, 40], [8, 32]], 5, 2), brown)
+shape(band([[6, 60], [14, 52], [20, 42], [26, 32]], 3, 1), brown)
+shape(band([[24, 80], [26, 66], [30, 54], [36, 44], [42, 36]], 3, 1), brown)
+fn leaf(x, y) {
+  shape([[x - 2, y], [x, y - 3], [x + 2, y - 2], [x + 2, y + 1], [x, y + 2]], green)
+  color lightgreen
+  line x, y - 1, x, y - 1
+}
+for p in [[10, 34], [3, 46], [14, 48], [18, 38], [24, 30], [10, 60], [30, 50], [36, 40], [40, 34],
+          [28, 62], [22, 70], [2, 56], [44, 46], [34, 58]] {
+  leaf(p[0], p[1])
+}
+# grape bunch
+blobs([[12, 43, 2, 3], [12, 47, 1, 2]], magenta, black, 0.15, 4)
+color lightmagenta
+line 11, 42, 11, 42
+line 12, 46, 12, 46
+
+# ---- red chair against the right wall -------------------------------------------------------
+color brown
+line 148, 58, 147, 67
+line 157, 58, 158, 67
+line 152, 58, 152, 64
+shape(blob(155, 48, 4, 8, 2, 0.05), red)
+color yellow
+stroke arc(155, 48, 4, 8, 250, 470, 20)
+color lightred
+line 154, 44, 154, 52
+shape([[146, 55], [159, 55], [159, 59], [146, 59]], red)
+color lightred
+line 147, 56, 158, 56
+shape([[146, 51], [149, 51], [149, 55], [146, 55]], red)
+
+# ---- low table on the lawn -----------------------------------------------------------------
+color black
+line 117, 119, 116, 128
+line 128, 120, 128, 129
+line 136, 119, 137, 128
+color brown
+line 118, 120, 117, 128
+line 129, 120, 129, 129
+shape([[114, 117], [118, 115], [134, 115], [138, 117], [134, 120], [118, 120]], brown)
+color yellow
+line 118, 116, 133, 116
+
+# ---- tomato clumps ---------------------------------------------------------------------
+fn tomato(x, y, rx = 3, ry = 3) {
+  shape(blob(x, y, rx, ry, x + y, 0.08), red)
+  color lightred
+  line x - rx + 1, y - ry + 1, x - rx + 1, y
+  color black
+  line x, y, x + 1, y
+}
+fn stalk(pts) {
+  shape(band(pts, 4, 2), black, null)
+}
+stalk([[28, 96], [28, 86], [29, 74]])
+stalk([[44, 112], [44, 98], [46, 84]])
+stalk([[60, 132], [62, 116], [64, 102]])
+for t in [[29, 76], [26, 82], [31, 85], [28, 91], [45, 86], [42, 92], [48, 95], [41, 100],
+          [47, 102], [42, 107]] {
+  tomato(t[0], t[1])
+}
+tomato(56, 112, 4, 5)
+tomato(66, 111, 4, 5)
+tomato(59, 124, 3, 4)
+tomato(52, 133, 3, 4)
+color green
+line 62, 104, 63, 101
+line 30, 72, 28, 70
+line 45, 83, 47, 81
+
+# ---- baby's tears ----------------------------------------------------------------------
+for p in [[60, 103], [72, 102], [78, 104], [86, 103], [70, 108], [76, 110], [82, 109],
+          [88, 108], [72, 114], [78, 116], [84, 114], [66, 118], [74, 120], [80, 120],
+          [56, 120], [62, 106]] {
+  color lightcyan
+  rect p[0] - 1, p[1], p[0] + 1, p[1] + 1
+  color white
+  line p[0] - 1, p[1], p[0], p[1]
+  color cyan
+  line p[0] - 1, p[1] + 2, p[0] + 1, p[1] + 2
+}
+
+# ---- wallflower faces in bonnets -----------------------------------------------------------
+fn baby(x, y, s = 1) {
+  # frilled bonnet behind the face
+  shape(blob(x, y - 1, 7 * s, 9 * s, 3, 0.18, 20), lightblue)
+  color lightcyan
+  stroke arc(x, y - 1, 6 * s, 8 * s, 290, 420, 20)
+  # face
+  shape(blob(x, y + 1, 5 * s, 6 * s, 2, 0.06), brown)
+  color yellow
+  line x - 3 * s, y - 2, x - 3 * s, y + 1
+  color black
+  line x - 2, y - 1, x - 2, y - 1
+  line x + 1, y - 1, x + 1, y - 1
+  line x, y + 2, x, y + 3
+  color white
+  line x - 1, y + 6 * s, x + 1, y + 6 * s
+  # leaves under the chin
+  color lightgreen
+  stroke [[x - 6 * s, y + 8 * s], [x - 3, y + 6 * s]]
+  stroke [[x + 6 * s, y + 8 * s], [x + 3, y + 6 * s]]
+}
+baby 9, 95
+baby 19, 107
+baby 4, 125
+baby 28, 129, 1.15
+
+# ---- a few lawn strokes on the left ------------------------------------------------------
+color lightgreen
+line 6, 150, 9, 144
+line 14, 158, 18, 152
+line 22, 146, 25, 141
+line 36, 154, 38, 148
+line 2, 110, 5, 106
+line 12, 140, 14, 136
+line 44, 146, 46, 140
+line 2, 160, 6, 164
+line 26, 160, 30, 164
+line 50, 152, 52, 158
+
+frame()

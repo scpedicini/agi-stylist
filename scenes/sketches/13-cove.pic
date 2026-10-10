@@ -1,0 +1,196 @@
+# Sunny Cove
+# Source: layout sketch tests/fixtures/sketches/13-cove.png (hybrid: words plus brushstrokes);
+#   reframed with:
+#   pnpm grid tests/fixtures/sketches/13-cove.png --crop 0,0,1024,768 --fit --name sketches-13-cove
+# Brief: A sunny cove. The boat is a small sailing boat heading right. Gulls overhead.
+# Method: composed from a layout sketch. Labels: BOAT (motion arrow pointing right, nothing at
+#   its head) → small single-masted sailing boat sailing right, hull x 47-66, waterline y 80,
+#   mast x 56, wake trailing left (label (56,74) on the sails); Sea → the blue fill ~1, a teal
+#   sea from the horizon down to the shoreline, with ripples and sun glitter; Rocks (in the sea)
+#   → grey loop ~2, a cluster of three sea rocks with foam at their foot, filling the loop
+#   (118-145, 67-93); Rocks (on the sand) → grey loop ~4, a pile of three boulders and a pebble
+#   filling the loop (8-35, 118-144); Sand → the yellow fill ~3, the beach from the shoreline to
+#   the bottom edge; Dune grass → tufts of marram grass along each green line ~5 (75-100,
+#   134-140) and ~6 (108-131, 136-142).
+#   Geometry: black line across the page → horizon y 57; blue fill ~1 → sea; yellow fill ~3 →
+#   beach; grey loops ~2, ~4 → the two rock piles' outlines; green lines ~5, ~6 → courses of
+#   dune grass.
+# Stage: horizon y 57 (drawn)
+# Interpreted: the empty top of the sketch is sky: "sunny" → blue sky with a yellow sun
+#   (placed by me) upper left at (22,17), its glitter on the water below it, and two small white
+#   clouds. Gulls (brief, no position or count) → three white gulls in the open sky between the
+#   sun and the sea rocks: two far ones at (70,27) and (84,21), a nearer one, wings up, at
+#   (110,36). The sea is cyan (a sunny, teal cove) so it reads apart from the blue sky. The
+#   paint leaves a blank strip between the sea and the sand on the left (y 90-101): the
+#   shoreline is the simplest edge between them, y 96 on the left dipping to y 104 on the right,
+#   where the sea's lowest stroke runs further down; lightcyan shallows and a white surf line
+#   along it. The sea's paint starts 3 rows below the drawn horizon: the sea runs up to the
+#   horizon. Shadows (sun upper left) fall right, brown on the sand, darkgrey on the rocks.
+#   Boat extras: white sails, red pennant. Brushstroke colours agree with the brief (no
+#   conflicts); the paler green of ~6 is read as the same dune grass.
+scene "Sunny Cove"
+variants day
+
+let hz = 57
+
+# ---------------------------------------------------------------- sky
+color blue
+rect 0, 0, 159, hz
+
+# sun, upper left
+color yellow
+ellipse 22, 17, 7, 13
+color white
+ellipse 21, 15, 3, 6
+
+cloud(96, 10, 28, 2)
+cloud(142, 24, 20, 5)
+
+# ---------------------------------------------------------------- sea (blue fill ~1)
+color cyan
+rect 0, hz + 1, 159, 110
+
+# horizon: a darker line where the sea meets the sky
+color blue
+line 0, hz + 1, 159, hz + 1
+
+# ripples, shorter and closer together towards the horizon
+color lightcyan
+for i in 0..30 {
+  let y = 61 + noise(31, i) * 32
+  let x = 4 + noise(32, i) * 150
+  if abs(x - 22) < 7 { continue }
+  if x > 112 && x < 150 && y > 64 && y < 96 { continue }
+  if x > 36 && x < 70 && y > 70 && y < 84 { continue }
+  let w = 2 + floor((y - hz) / 10)
+  line x, y, x + w, y
+}
+
+# the sun's glitter on the water, under the sun
+for g in [[21, 61, 2], [19, 65, 5], [21, 69, 3], [17, 73, 7], [20, 77, 5], [16, 82, 9],
+          [19, 87, 6], [15, 92, 10]] {
+  color white
+  line g[0], g[1], g[0] + g[2], g[1]
+}
+color yellow
+line 18, 75, 21, 75
+line 17, 85, 22, 85
+
+# ---------------------------------------------------------------- sand (yellow fill ~3)
+let shore = [[0, 96], [30, 96], [58, 97], [66, 99], [74, 102], [100, 103.5], [130, 104],
+             [160, 105]]
+
+# shallows: a lightcyan strip just above the shoreline
+shape(shift(shore, 0, -3) + reverse(shore), lightcyan, null)
+
+shape(shore + [[160, 168], [0, 168]], yellow, null)
+
+# surf line and wet sand
+color white
+stroke shore
+color lightcyan
+stroke [[4, 94], [16, 94]]
+stroke [[40, 94], [52, 94]]
+stroke [[84, 101], [98, 101]]
+stroke [[118, 102], [134, 102]]
+color brown
+stroke [[10, 99], [22, 99]]
+stroke [[48, 100], [56, 100]]
+stroke [[90, 107], [104, 107]]
+stroke [[136, 108], [148, 108]]
+
+# sand ripples and pebbles, a few
+color brown
+for r in [[50, 116, 8], [118, 118, 8], [56, 146, 12], [100, 154, 12], [138, 158, 10]] {
+  line r[0], r[1], r[0] + r[2], r[1]
+}
+color darkgrey
+for p in [[64, 112], [92, 118], [146, 116], [42, 132], [112, 160], [70, 158]] {
+  rect p[0], p[1], p[0] + 1, p[1]
+}
+
+# ---------------------------------------------------------------- rocks in the sea (grey loop ~2)
+# three rocks: the tall one at the back, one to the right, a low one in front
+boulder([[119, 90], [118, 78], [121, 70], [127, 66], [133, 68], [135, 76], [134, 90]])
+boulder([[131, 91], [133, 80], [137, 73], [142, 74], [145, 80], [146, 91]])
+boulder([[123, 93], [125, 87], [131, 84], [137, 86], [140, 93]], lightgrey, darkgrey, black, 0.2)
+color black
+line 125, 74, 127, 80
+line 139, 80, 141, 86
+# foam round their foot
+color white
+stroke [[114, 92], [118, 91]]
+stroke [[115, 94], [146, 94]]
+stroke [[147, 92], [151, 92]]
+color lightcyan
+stroke [[112, 96], [120, 96]]
+stroke [[138, 96], [150, 96]]
+
+# ---------------------------------------------------------------- the boat (sailing right)
+# wake trailing behind the stern
+color white
+line 46, 80, 36, 81
+line 45, 82, 30, 84
+line 67, 78, 69, 80
+color lightcyan
+line 34, 83, 24, 84
+
+# hull
+shape([[46, 76], [68, 75], [64, 80], [50, 80]], brown)
+color yellow
+line 48, 77, 65, 76
+# mast
+color black
+rect 56, 61, 56, 75
+# mainsail (aft) and jib (forward, towards the bow)
+shape([[55, 62], [55, 74], [47, 74]], white)
+shape([[57, 63], [65, 74], [57, 74]], white)
+# boom
+color brown
+line 47, 75, 55, 75
+# pennant
+color red
+line 57, 61, 59, 62
+line 57, 62, 58, 62
+
+# ---------------------------------------------------------------- gulls overhead
+bird(70, 27, 1, 0.5, 1, white)
+bird(84, 21, 1, 0.5, 1, white)
+bird(110, 36, -1, 1, 1, white, yellow, lightgrey)
+
+# ---------------------------------------------------------------- rocks on the sand (grey loop ~4)
+# cast shadows to the right, on the sand
+color brown
+polygon 34, 136, 41, 140, 44, 145, 36, 146
+boulder([[10, 136], [9, 126], [13, 120], [21, 118], [27, 121], [29, 130], [26, 137]])
+boulder([[22, 140], [24, 128], [30, 124], [35, 128], [36, 140]])
+boulder([[9, 144], [10, 136], [16, 133], [24, 135], [27, 144]], lightgrey, darkgrey, black, 0.1)
+boulder([[30, 145], [31, 141], [35, 141], [37, 145]])
+color black
+line 17, 123, 15, 129
+line 30, 129, 29, 134
+
+# ---------------------------------------------------------------- dune grass (green lines ~5, ~6)
+fn tuft(x, y, h, s) {
+  let lean = (noise(s, 1) - 0.5) * 2
+  color green
+  line x, y, x - 3 + lean, y - h + 2
+  line x, y, x + lean, y - h
+  line x, y, x + 3 + lean, y - h + 1
+  color lightgreen
+  line x + 1, y, x + 2 + lean, y - h + 2
+  color brown
+  line x - 3, y + 1, x + 3, y + 1
+}
+
+let grass5 = [[100, 138], [93, 134.4], [87.6, 133.8], [75.2, 140.1]]
+let grass6 = [[131, 140], [123.2, 136.4], [117.9, 136], [108, 142.1]]
+let k = 0
+for g in [grass5, grass6] {
+  for p in along(g, 7) {
+    k += 1
+    tuft(p[0], p[1] + 1, 8 + noise(41, k) * 3, k)
+  }
+}
+
+frame()

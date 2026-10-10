@@ -1,0 +1,280 @@
+# The Forest Shore
+# Source: Myst (1993) render, reference/myst/r10-c00.png; reframed with:
+#   pnpm grid reference/myst/r10-c00.png --crop 0,0,544,333 --name myst-r10-c00
+# Method: translated by eye. Kept: the pale sky, the dashed teal sea and its crisp horizon,
+#   the small orange rocky point, the sunlit headland with its shaded left face, the stand of
+#   tall red-trunked pines (crowns running off the top, a sky gap left of centre, fog showing
+#   between the trunks), tree shadows striping the forest floor, the stone box with its two
+#   brass valves and red handle and its cast shadow, the shadow at the waterline and the
+#   chain of four gear stepping-stones. Dropped: the misty far trunks deep in the wood, the
+#   wood's texture, the mottled reflections (a few ripple curls instead). Moved: nothing.
+# Colours: sky → lightcyan, sea → cyan with blue ripple dashes (blue curls, and a thin blue
+#   shadow strip at the waterline breaking into streaks), rocky point → brown with yellow
+#   ridges and red folds, sunlit turf → lightgreen, shaded face and tree/box shadows → green (shadow on sunlit turf; black would
+#   punch holes in it), pine crowns → green with black shade and lightgreen flecks, trunks →
+#   red with a black shade edge, stone box → darkgrey with a lightgrey lid, valves → brown and
+#   yellow, gears → lightgrey tops, darkgrey sides, white glints.
+scene "The Forest Shore"
+variants day
+
+# ---- sky and sea ---------------------------------------------------------------------------
+# Painted first, so everything else stands on them, but held back with delay: over the original
+# the viewer paints them last, filling in behind what's already there (the sea, then the sky).
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 88
+}
+delay {
+  color cyan
+  rect 0, 89, 159, 167
+}
+
+# ripple dashes: rows spread out and dashes lengthen towards the viewer
+let rows = [91, 93, 95, 98, 101, 104, 108, 112, 116, 121, 126, 132, 138, 145, 152, 160]
+for r in 0..len(rows) {
+  let y = rows[r]
+  let t = r / (len(rows) - 1)
+  let dash = 1 + t * 6
+  let gap = 4 + t * 9
+  let x = noise(r, 1) * gap - gap
+  let k = 0
+  color blue
+  while x < 160 {
+    let w = dash * (0.6 + noise(r, k) * 0.8)
+    stroke x, y, x + w, y
+    if t > 0.6 && noise(r + 40, k) < 0.5 {
+      stroke x + 1, y + 1, x + w - 1, y + 1
+    }
+    x += w + gap * (0.7 + noise(r + 20, k) * 0.7)
+    k += 1
+  }
+}
+
+# a thin shadow strip at the waterline, breaking into streaks as it fades out
+let waterline = [[44, 112], [52, 117], [60, 121], [75, 124], [95, 124], [110, 122], [125, 119],
+                 [140, 116], [160, 110]]
+shape(waterline + reverse(shift(waterline, 0, 2)), blue, null)
+for k in 1..=4 {
+  let x = 46 + noise(60, k) * 6
+  let j = 0
+  while x < 160 {
+    let w = (9 - k * 1.6) * (0.6 + noise(61 + k, j) * 0.8)
+    let y = interp(waterline, x) + 2 + k * 2
+    color blue
+    stroke x, y, x + w, y
+    x += w + 2 + k * 2.5 * (0.6 + noise(70 + k, j) * 0.8)
+    j += 1
+  }
+}
+# ripple curls in the darker water off the island
+color blue
+for i in 0..12 {
+  let x = 86 + noise(17, i) * 72
+  let y = 136 + noise(18, i) * 30
+  stroke arc(x, y, 2 + noise(19, i) * 4, 1.5, 70, 290, 30)
+}
+color lightcyan
+for p in [[30, 140], [12, 152], [48, 160], [24, 124], [140, 150], [118, 160]] {
+  stroke p[0], p[1], p[0] + 2, p[1]
+}
+
+# ---- the rocky point ----------------------------------------------------------------------
+blobs([[50, 92, 6, 8], [55, 93, 5, 6], [47, 86, 2, 4], [52, 87, 3, 4]], brown, black, 0.2, 3)
+color yellow
+stroke 46, 89, 48, 85
+stroke 51, 86, 54, 85
+color red
+stroke 50, 91, 51, 97
+stroke 55, 90, 56, 96
+
+# ---- the forest ---------------------------------------------------------------------------
+# a tall, ragged conifer: uneven saw-toothed tiers widening downwards; lean tips the top over
+fn pinecrown(x, top, bot, hw, seed, lean = 0) {
+  let n = max(4, round((bot - top) / 6))
+  let right = []
+  let left = []
+  for i in 1..=n {
+    let t = clamp((i + (noise(seed + 2, i) - 0.5) * 0.6) / n, 0.05, 1)
+    let y = top + (bot - top) * t
+    let cx = x + lean * (1 - t)
+    let th = (bot - top) / n
+    let wr = hw * (0.15 + 0.85 * t) * (0.7 + noise(seed, i) * 0.6)
+    let wl = hw * (0.15 + 0.85 * t) * (0.7 + noise(seed + 9, i) * 0.6)
+    let yl = y + th * (noise(seed + 4, i) - 0.3) * 0.6
+    push(right, [cx + wr * (0.25 + noise(seed + 6, i) * 0.3), y - th * (0.4 + noise(seed + 7, i) * 0.4)])
+    push(right, [cx + wr, y])
+    push(left, [cx - wl * (0.25 + noise(seed + 8, i) * 0.3), yl - th * (0.4 + noise(seed + 5, i) * 0.4)])
+    push(left, [cx - wl, yl])
+  }
+  return [[x + lean, top]] + right + [[x + 1, bot + 1], [x - 1, bot + 1]] + reverse(left)
+}
+
+fn pine_shade(x, top, bot, hw, seed, lean = 0) {
+  # short shade ticks under the tiers on the right, a few lit flecks up the left
+  let n = max(4, round((bot - top) / 6))
+  color black
+  for i in 1..n {
+    let t = i / n
+    let y = top + (bot - top) * t
+    let cx = x + lean * (1 - t)
+    let w = hw * (0.15 + 0.85 * t)
+    stroke cx + 1, y - 1, cx + 1 + w * (0.2 + noise(seed, i) * 0.3), y
+    if noise(seed + 5, i) < 0.35 { stroke cx - w * 0.5, y, cx - w * 0.2, y }
+  }
+  stroke x + lean + 1, top + 4, x + 1, bot - 2
+  color lightgreen
+  for i in 1..n {
+    if noise(seed + 3, i) < 0.55 { continue }
+    let t = i / n
+    let y = top + (bot - top) * t
+    let cx = x + lean * (1 - t)
+    let w = hw * (0.15 + 0.85 * t)
+    stroke cx - w * 0.5, y - 2, cx - w * 0.2, y - 3
+  }
+}
+
+fn bole(x, w, top, base) {
+  color red
+  rect x, top, x + w - 1, base
+  color black
+  stroke x + w, top, x + w, base
+  if w > 2 {
+    color brown
+    stroke x, top + 4, x, top + 14
+    stroke x, base - 10, x, base - 4
+  }
+}
+
+# [crown x, crown top, crown bottom, half-width, trunk base, trunk width, lean], far to near
+let pines = [
+  [116, -12, 44, 6, 70, 1, 0], [140, -2, 40, 6, 70, 2, 2], [128, 20, 46, 4, 71, 1, -1],
+  [152, -18, 42, 7, 70, 1, 0], [101, -8, 40, 4, 72, 1, 1],
+  [88, 31, 56, 3, 74, 1, 0], [83, 19, 50, 4, 76, 1, -2], [93, 10, 47, 5, 73, 1, 1],
+  [55, 46, 66, 3, 88, 1, 0], [59, 27, 62, 4, 86, 1, -1], [63, 11, 56, 5, 88, 2, 2],
+  [78, 3, 52, 4, 86, 2, 3], [74, -14, 58, 7, 87, 2, -1], [67, -28, 60, 6, 88, 2, 0],
+  [113, -8, 46, 6, 85, 2, -2], [121, -32, 52, 9, 85, 2, 1], [98, 5, 50, 6, 84, 3, -2],
+  [107, -20, 48, 7, 87, 3, 2], [134, -36, 54, 10, 82, 3, -1], [147, -4, 44, 8, 78, 3, 3],
+  [157, -30, 52, 7, 82, 3, 0]
+]
+
+# thin far trunks deep in the wood, seen through the fog
+color brown
+for x in [86, 91, 102, 110, 118, 125, 131, 138, 143, 152] {
+  stroke x, 44, x, 72
+}
+
+# the forest floor rising behind the trunks, then each pine back to front
+shape([[50, 96], [56, 88], [66, 80], [80, 73], [95, 70], [115, 68], [140, 69], [160, 68],
+       [160, 100], [50, 100]], lightgreen, null)
+for i in 0..len(pines) {
+  let p = pines[i]
+  bole(round(p[0] - p[5] / 2), p[5], p[2] - 6, p[4])
+  shape(pinecrown(p[0], p[1], p[2], p[3], i + 1, p[6]), green)
+  pine_shade(p[0], p[1], p[2], p[3], i + 30, p[6])
+}
+
+# ---- the headland -------------------------------------------------------------------------
+let turf_top = [[50, 96], [56, 89], [62, 86], [70, 86], [80, 84], [96, 87], [110, 87],
+                [126, 84], [142, 80], [160, 80]]
+let shore = [[160, 110], [140, 116], [125, 119], [110, 122], [95, 124], [75, 124], [60, 121],
+             [52, 117], [44, 112], [47, 106]]
+shape(turf_top + shore, lightgreen, null)
+color black
+stroke shore
+# the shaded left face of the headland
+shape([[44, 112], [47, 106], [50, 98], [53, 101], [57, 108], [62, 115], [70, 124], [60, 121],
+       [52, 117]], green, null)
+color green
+stroke 50, 98, 53, 101, 57, 108, 62, 115, 70, 124
+
+# the dome's curve, picked out in shade along the lower slope
+color green
+stroke 72, 112, 84, 116, 98, 117
+stroke 108, 115, 122, 113, 134, 109
+stroke 60, 104, 66, 109
+stroke 140, 104, 152, 100, 159, 99
+stroke 86, 108, 96, 110
+
+# redraw the trunks' feet over the near slope
+for p in pines {
+  if p[4] > 84 {
+    bole(round(p[0] - p[5] / 2), p[5], p[4] - 6, p[4])
+  }
+}
+
+# tree shadows striping the forest floor, falling left
+color green
+for s in [[60, 92, 74, 88], [70, 90, 92, 86], [96, 90, 108, 87], [110, 88, 130, 85],
+          [124, 86, 138, 83], [136, 83, 152, 79], [84, 80, 96, 77], [100, 78, 112, 75],
+          [116, 76, 128, 74], [138, 74, 150, 72], [66, 84, 76, 82]] {
+  stroke s[0], s[1], s[2], s[3]
+  stroke s[0] + 2, s[1] + 1, s[2] - 1, s[3] + 1
+}
+
+# ---- the stone box with its valves ----------------------------------------------------------
+# its shadow falls right and down the slope
+shape([[118, 96], [124, 98], [129, 102], [131, 107], [128, 112], [122, 110], [118, 104]],
+      green, null)
+shape([[102, 94], [120, 94], [120, 105], [102, 105]], darkgrey)
+color lightgrey
+rect 103, 92, 120, 93
+color black
+stroke 102, 91, 120, 91
+stroke 102, 94, 120, 94
+stroke 104, 97, 112, 97
+stroke 108, 100, 118, 100
+stroke 103, 103, 110, 103
+# two brass valves and a red handle
+fn valve(x) {
+  shape([[x, 87], [x + 3, 87], [x + 3, 91], [x, 91]], brown)
+  color yellow
+  rect x - 1, 86, x + 4, 86
+  stroke x + 1, 88, x + 1, 90
+  color black
+  stroke x - 1, 89, x + 4, 89
+}
+valve(107)
+valve(114)
+color red
+rect 103, 88, 105, 90
+color lightred
+stroke 103, 88, 104, 88
+
+# ---- the gear stepping-stones -------------------------------------------------------------
+fn tooth(cx, cy, rx, ry, a, h) {
+  let x = cx + (rx + 1) * sin(a)
+  let y = cy - (ry + 0.6) * cos(a)
+  let w = max(1, rx * 0.16)
+  shape([[x - w, y - 1], [x + w, y - 1], [x + w, y + h], [x - w, y + h]], darkgrey)
+  color lightgrey
+  stroke x - w + 1, y, x + w - 1, y
+}
+
+fn gear(cx, cy, rx, ry, h) {
+  # back teeth, the drum, the face, then the front teeth
+  for a in range(0, 360, 36) {
+    if cos(a) > 0 { tooth(cx, cy, rx, ry, a, h) }
+  }
+  shape([[cx - rx, cy]] + arc(cx, cy + h, rx, ry, 270, 90) + [[cx + rx, cy]], darkgrey)
+  color black
+  stroke cx - rx * 0.4, cy + ry + 1, cx - rx * 0.4, cy + ry + h - 1
+  stroke cx + rx * 0.5, cy + ry, cx + rx * 0.5, cy + ry + h - 1
+  shape(arc(cx, cy, rx, ry, 0, 360, 15), lightgrey)
+  color darkgrey
+  stroke arc(cx, cy + 0.5, rx * 0.65, ry * 0.65, 0, 360, 20)
+  color black
+  stroke arc(cx, cy, rx * 0.65, ry * 0.65, 270, 90, 20)
+  shape(arc(cx, cy, rx * 0.3, ry * 0.35, 0, 360, 30), darkgrey, null)
+  color white
+  stroke cx + rx * 0.2, cy - ry * 0.5, cx + rx * 0.45, cy - ry * 0.35
+  for a in range(18, 360, 36) {
+    if cos(a) <= 0 { tooth(cx, cy, rx, ry, a, h) }
+  }
+}
+
+gear(89, 125, 6, 2.5, 4)
+gear(80, 130, 7, 3, 5)
+gear(69, 137, 9, 4, 7)
+gear(70, 153, 11, 5, 10)
+
+frame()

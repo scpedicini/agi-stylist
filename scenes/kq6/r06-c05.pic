@@ -1,0 +1,232 @@
+# Ruined Courtyard of the Bone Spires
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c05.png; reframed with:
+#   pnpm grid reference/kq6/r06-c05.png --name kq6-r06-c05
+# Method: translated by eye. Kept: indigo night sky, three far pyramids, the curved bone
+#   horns, the dark crags behind the wall, the huge twisted rock mass on the right, the
+#   broken round tower and colonnade fragment on the left, the low brick back wall, the
+#   flagstone courtyard with two patches of dead grass, the diagonal rubble ramp on the
+#   right, the black rubble slope at lower left, and broken slabs along the bottom.
+#   Dropped: individual flagstone texture (now a few staggered slab edges), most loose
+#   stones, the step detail inside the left ruin. Moved: the green strip under the crop
+#   (from the sheet, not the picture) is covered by the foreground rubble.
+# Colours: night sky → blue, moonlit stone faces → lightblue with lightcyan glints,
+#   shadows and silhouettes → black, pyramids → lightblue lit face / darkgrey shade face,
+#   right rock mass → lightblue with black core and crevices, tower and left ruin →
+#   darkgrey with lightblue lit faces, brick wall → blue with lightblue bricks, flagstones →
+#   darkgrey with lightblue slab edges and black joints, dead grass → lightgrey with
+#   darkgrey / white blades.
+scene "Ruined Courtyard of the Bone Spires"
+variants night
+
+# ---- sky ------------------------------------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color blue
+  rect 0, 0, 159, 70
+}
+
+# ---- far pyramids ---------------------------------------------------------------------------
+fn pyramid(ax, ay, lx, rx, by, mx) {
+  shape([[ax, ay], [lx, by], [rx, by]], darkgrey)
+  shape([[ax, ay], [lx, by], [mx, by]], lightblue)
+  color black
+  line ax, ay, mx, by
+  # stepped courses on the lit face
+  color blue
+  for k in 1..4 {
+    let y = ay + (by - ay) * k / 4
+    let t = (y - ay) / (by - ay)
+    stroke [[ax + (lx - ax) * t + 1, y], [ax + (mx - ax) * t - 1, y]]
+  }
+}
+pyramid(41, 12, 26, 56, 46, 44)
+pyramid(59, 19, 49, 70, 42, 61)
+pyramid(73, 22, 63, 84, 42, 74)
+
+# ---- bone horns (behind the crags) ------------------------------------------------------------
+fn horn(pts, w, w2) {
+  shape(band(pts, w, w2), black)
+}
+horn([[46, 50], [40, 36], [35, 22], [30, 10], [27, 4]], 4, 1)
+color lightblue
+stroke [[38, 38], [34, 26], [30, 14], [28, 7]]
+horn([[50, 46], [58, 38], [64, 26], [66, 12], [64, 0], [62, -4]], 6, 3)
+color lightblue
+stroke [[56, 36], [61, 26], [63, 14], [62, 2]]
+horn([[52, 50], [62, 44], [72, 38], [84, 32], [92, 30]], 6, 1)
+color lightblue
+stroke [[62, 42], [72, 36], [84, 31]]
+
+# ---- crags behind the wall --------------------------------------------------------------------
+shape([[20, 66], [24, 50], [30, 44], [36, 46], [44, 40], [50, 44], [56, 42], [62, 46],
+       [68, 40], [76, 42], [82, 46], [88, 40], [94, 34], [98, 28], [100, 34], [104, 30],
+       [108, 36], [112, 46], [116, 66]], black)
+# moonlit faces
+shape([[28, 52], [32, 44], [38, 46], [44, 41], [40, 50], [34, 54]], lightblue, null)
+shape([[46, 50], [50, 45], [56, 43], [52, 52]], lightblue, null)
+shape([[62, 54], [66, 46], [70, 42], [76, 43], [72, 50], [66, 56]], lightblue, null)
+shape([[84, 50], [88, 42], [92, 38], [90, 48]], lightblue, null)
+shape([[96, 44], [99, 30], [101, 36], [100, 44]], lightblue, null)
+color lightcyan
+line 32, 45, 37, 47
+line 67, 46, 70, 43, 75, 44
+
+# ---- twisted rock mass on the right -----------------------------------------------------------
+# pale moonlit mass first, then its shadowed core and black crevices
+shape([[84, 62], [92, 56], [100, 52], [106, 44], [110, 34], [114, 22], [117, 10], [120, -2],
+       [162, -2], [162, 64]], lightblue)
+# gap of sky through the mass at the right edge
+shape([[162, 16], [154, 20], [148, 28], [150, 36], [156, 38], [162, 34]], blue)
+# shadowed core
+shape([[124, 62], [126, 44], [130, 32], [134, 22], [140, 18], [146, 24], [148, 36],
+       [154, 44], [158, 52], [162, 50], [162, 64]], black, null)
+shape([[140, -2], [162, -2], [162, 12], [152, 14], [146, 10]], black, null)
+# crevices running down to the left
+fn crev(pts, w, w2) { shape(band(pts, w, w2), black, null) }
+crev([[130, 2], [124, 12], [120, 22], [114, 34]], 4, 1)
+crev([[142, 8], [134, 16], [126, 28], [118, 40], [108, 50]], 5, 1)
+crev([[124, 20], [120, 26]], 6, 2)
+crev([[120, 44], [112, 50], [100, 56]], 4, 1)
+crev([[136, 36], [132, 46], [130, 56]], 3, 1)
+crev([[150, 4], [146, 8]], 3, 1)
+color lightcyan
+stroke [[119, 4], [116, 16], [112, 30], [106, 42]]
+stroke [[134, 4], [128, 14]]
+stroke [[146, 40], [152, 48]]
+color blue
+stroke [[100, 54], [108, 48], [116, 44]]
+
+# ---- broken colonnade fragment (far left) -----------------------------------------------------
+shape([[0, 16], [14, 20], [14, 25], [0, 22]], lightblue)
+shape([[2, 23], [4, 23], [4, 40], [2, 40]], lightblue)
+shape([[8, 24], [10, 24], [10, 41], [8, 41]], lightblue)
+
+# ---- round tower ------------------------------------------------------------------------------
+shape([[13, -2], [29, -2], [29, 44], [32, 48], [32, 54], [10, 54], [10, 48], [13, 44]], darkgrey)
+shape([[13, -2], [19, -2], [19, 44], [13, 44]], lightblue, null)
+shape([[25, -2], [29, -2], [29, 44], [25, 44]], black, null)
+# stacked drums: slightly bowed course lines
+color black
+for y in range(5, 44, 7) {
+  line 13, y, 16, y + 1, 21, y + 1, 26, y + 1, 29, y
+}
+color lightblue
+for y in range(5, 44, 7) {
+  line 20, y + 2, 23, y + 2
+}
+color black
+line 10, 48, 32, 48
+color lightblue
+line 10, 49, 22, 49
+
+# ---- low brick back wall ------------------------------------------------------------------------
+let walltop = [[24, 64], [34, 62], [46, 61], [58, 62], [70, 59], [80, 57], [96, 60],
+               [110, 60], [122, 62], [128, 66]]
+shape([[24, 76]] + walltop + [[128, 78]], blue)
+for r in 0..4 {
+  let y = 64 + r * 3
+  for x in range(26 + (r % 2) * 4, 126, 8) {
+    if y < interp(walltop, x) + 1 { continue }
+    color lightblue
+    line x, y, x + 5, y
+    color black
+    line x + 6, y, x + 6, y + 2
+  }
+}
+color black
+line 24, 76, 128, 78
+# rubble heap with dead grass on the wall top
+blobs([[86, 58, 9, 4], [96, 59, 7, 3]], lightgrey, black, 0.3, 2)
+color darkgrey
+for x in [81, 86, 92, 97, 101] { line x, 57, x + 1, 60 }
+
+# ---- left ruin: broken walls and steps under the tower ------------------------------------------
+shape([[0, 46], [12, 50], [34, 54], [36, 64], [26, 68], [26, 80], [16, 84], [0, 84]], black)
+fn block(x1, y1, x2, y2) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], darkgrey, black)
+  color lightblue
+  line x1 + 1, y1 + 1, x2 - 1, y1 + 1
+}
+block(0, 48, 10, 54)
+block(12, 53, 32, 58)
+block(0, 58, 14, 64)
+block(16, 60, 34, 65)
+block(0, 68, 18, 74)
+block(4, 76, 22, 81)
+
+# ---- courtyard flagstones -------------------------------------------------------------------------
+shape([[24, 76], [128, 78], [140, 72], [162, 70], [162, 150], [0, 150], [0, 84], [16, 84]], darkgrey)
+# staggered slab edges: a lit top edge with a black shadow line under part of it,
+# wider apart nearer the viewer
+let rows = [81, 86, 91, 97, 103, 110, 118, 127, 137]
+for i in 0..len(rows) {
+  let w = 9 + i * 3
+  let x = 14 + noise(5, i) * w
+  let k = 0
+  while x < 160 {
+    let y = rows[i] + round(noise(7, i * 31 + k) * 2) - 1
+    let l = w * (0.5 + noise(6, i * 17 + k) * 0.4)
+    color lightblue
+    stroke [[x, y], [x + l, y]]
+    color black
+    stroke [[x + 1, y + 1], [x + l - 1, y + 1]]
+    x += l + 2 + noise(8, i * 13 + k) * w * 0.5
+    k += 1
+  }
+}
+# a few long cracks across the slabs
+color black
+stroke [[60, 96], [70, 100], [76, 108], [90, 112]]
+stroke [[104, 118], [114, 126], [118, 136]]
+stroke [[84, 88], [96, 92]]
+
+# dead grass patches
+fn grass(list, seed) {
+  blobs(list, lightgrey, darkgrey, 0.35, seed)
+}
+grass([[56, 84, 16, 4], [78, 82, 12, 3], [98, 84, 10, 3]], 3)
+grass([[38, 115, 12, 5], [56, 112, 12, 4], [70, 116, 8, 3]], 5)
+# ragged tufts sticking up from the top of each patch
+color lightgrey
+for x in [44, 49, 55, 60, 66, 71, 77, 83, 90, 95, 101, 106] { line x, 81, x + 1, 78 + (x % 3) }
+for x in [28, 34, 40, 45, 51, 57, 63, 68, 74] { line x, 111, x + 1, 108 + (x % 3) }
+color darkgrey
+for x in [47, 53, 62, 70, 76, 87, 94, 103] { line x, 82, x + 1, 86 }
+for x in [30, 37, 44, 51, 58, 64, 71] { line x, 112, x + 1, 118 }
+color white
+for x in [50, 66, 82, 99] { line x, 81, x - 1, 83 }
+for x in [33, 47, 61] { line x, 111, x - 1, 113 }
+
+# ---- diagonal rubble ramp (right) -------------------------------------------------------------------
+shape([[112, 92], [120, 74], [128, 64], [162, 60], [162, 96], [140, 98]], darkgrey)
+fn rib(pts, w, w2) { shape(band(pts, w, w2), lightblue, black) }
+rib([[116, 90], [124, 76], [132, 66]], 3, 2)
+rib([[124, 94], [132, 80], [140, 68]], 4, 2)
+rib([[134, 96], [140, 82], [148, 70]], 4, 2)
+rib([[144, 96], [150, 84], [156, 72]], 3, 2)
+color lightblue
+line 150, 64, 159, 64
+line 152, 68, 159, 68
+
+# ---- left foreground rubble slope -------------------------------------------------------------------
+shape([[0, 80], [10, 76], [18, 80], [24, 98], [30, 118], [40, 134], [48, 148], [58, 160],
+       [62, 168], [0, 168]], black, lightblue)
+fn slab(pts, c = darkgrey) { shape(pts, c, black) }
+slab([[0, 92], [8, 88], [12, 94], [4, 98]])
+slab([[2, 116], [10, 112], [14, 118], [6, 122]], blue)
+slab([[18, 138], [28, 134], [34, 140], [22, 144]])
+slab([[6, 150], [16, 146], [20, 152], [10, 156]], blue)
+color darkgrey
+line 10, 78, 6, 96, 0, 110
+
+# ---- dark foreground band with broken slabs -----------------------------------------------------
+shape([[30, 168], [46, 146], [56, 146], [80, 142], [100, 140], [112, 134], [124, 140], [140, 136],
+       [162, 138], [162, 168]], black)
+slab([[62, 160], [70, 150], [80, 152], [74, 162]], darkgrey)
+slab([[96, 150], [112, 146], [122, 152], [104, 156]], blue)
+slab([[124, 146], [134, 136], [142, 142], [132, 152]], lightblue)
+slab([[144, 150], [152, 140], [159, 142], [159, 156], [150, 158]], lightblue)
+slab([[86, 162], [100, 158], [106, 166], [90, 168]], darkgrey)
+
+frame()

@@ -1,0 +1,348 @@
+{
+  "id": "16-castle-road",
+  "source": "tests/fixtures/sketches/holdout/16-castle-road.png",
+  "brief": "A long straight road leads to a distant castle on the horizon. Poplar trees line both sides of the road, getting smaller into the distance. Late afternoon.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "(horizon line)",
+      "kind": "boundary",
+      "at": [
+        512,
+        250
+      ],
+      "is": "the horizon",
+      "lines": [
+        [
+          [
+            0,
+            250
+          ],
+          [
+            1024,
+            250
+          ]
+        ]
+      ],
+      "pic": [
+        80,
+        54.7
+      ]
+    },
+    {
+      "label": "Road",
+      "kind": "path",
+      "at": [
+        590,
+        650
+      ],
+      "is": "a straight road from the bottom edge to the castle",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              512,
+              768
+            ],
+            [
+              512,
+              753
+            ],
+            [
+              512,
+              733
+            ],
+            [
+              512,
+              710
+            ],
+            [
+              512,
+              683
+            ],
+            [
+              512,
+              655
+            ],
+            [
+              512,
+              627
+            ],
+            [
+              512,
+              600
+            ],
+            [
+              512,
+              575
+            ],
+            [
+              512,
+              551
+            ],
+            [
+              512,
+              526
+            ],
+            [
+              511,
+              502
+            ],
+            [
+              511,
+              479
+            ],
+            [
+              511,
+              457
+            ],
+            [
+              511,
+              436
+            ],
+            [
+              510,
+              414
+            ],
+            [
+              510,
+              392
+            ],
+            [
+              510,
+              365
+            ],
+            [
+              509,
+              338
+            ],
+            [
+              509,
+              313
+            ],
+            [
+              508,
+              290
+            ],
+            [
+              508,
+              271
+            ],
+            [
+              508,
+              262
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        554,
+        639,
+        626,
+        661
+      ],
+      "pic": [
+        92.2,
+        142.2
+      ]
+    },
+    {
+      "label": "Poplars",
+      "kind": "grounded",
+      "at": [
+        300,
+        560
+      ],
+      "is": "a row of six poplars on the left of the road, one at each dab",
+      "support": "the ground",
+      "count": 6,
+      "strokes": [
+        {
+          "class": "dab",
+          "pts": [
+            [
+              372,
+              700
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              412,
+              560
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              442,
+              450
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              462,
+              370
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              474,
+              320
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              480,
+              285
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        246,
+        549,
+        354,
+        577
+      ],
+      "pic": [
+        46.9,
+        122.5
+      ]
+    },
+    {
+      "label": "Poplars",
+      "kind": "grounded",
+      "at": [
+        730,
+        560
+      ],
+      "is": "a row of six poplars on the right of the road, one at each dab",
+      "support": "the ground",
+      "count": 6,
+      "strokes": [
+        {
+          "class": "dab",
+          "pts": [
+            [
+              652,
+              700
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              612,
+              560
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              582,
+              450
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              562,
+              370
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              550,
+              320
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              544,
+              285
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        676,
+        549,
+        784,
+        577
+      ],
+      "pic": [
+        114.1,
+        122.5
+      ]
+    },
+    {
+      "label": "Castle",
+      "kind": "grounded",
+      "at": [
+        512,
+        200
+      ],
+      "is": "a small, distant castle standing on the horizon at the end of the road",
+      "support": "the horizon",
+      "supportLine": [
+        [
+          0,
+          250
+        ],
+        [
+          1024,
+          250
+        ]
+      ],
+      "labelBox": [
+        466,
+        189,
+        557,
+        211
+      ],
+      "pic": [
+        80,
+        43.8
+      ]
+    }
+  ],
+  "requirements": [
+    "late-afternoon light",
+    "the road narrows strongly towards the castle",
+    "poplars are tall and narrow",
+    "the poplars get smaller with distance",
+    "the castle is small",
+    "the castle stands at the far end of the road",
+    "the road is straight"
+  ],
+  "ambiguities": []
+}

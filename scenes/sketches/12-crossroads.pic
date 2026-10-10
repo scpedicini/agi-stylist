@@ -1,0 +1,255 @@
+# Village Crossroads at Midday
+# Source: layout sketch tests/fixtures/sketches/12-crossroads.png (hybrid: words plus brushstrokes);
+#   reframed with:
+#   pnpm grid tests/fixtures/sketches/12-crossroads.png --crop 0,0,800,600 --fit --name sketches-12-crossroads
+# Brief: A village crossroads at midday. The house is half-timbered. The market stalls have
+#   striped awnings. The road leads away to a distant castle.
+# Method: composed from a hybrid layout sketch. Labels: HOUSE → half-timbered house (white
+#   plaster, brown timbers, red tiled roof), gable end facing the camera with its right side
+#   wall receding, filling the drawn box x 16-52, y 47-82 (base y 82); Lane → dirt lane along
+#   the brown stroke from the house door (29,84) down to the right edge at y≈122; Road → dirt
+#   road along the other brown stroke from the bottom edge at x≈23 up to its far end (94,64),
+#   narrowing to the castle; Stalls x3 → three market stalls with striped awnings (red, blue,
+#   green with white), one on each red dab (106,140), (120,144), (134,148); Market → the
+#   yellow fill, a sandy market square.
+#   Geometry: brown line ~1 (branched) split by eye into two strokes: the lane (29,84) →
+#   (160,122) and the road (24,167) → (94,64), crossing at about (74,94), filled as one dirt
+#   surface; yellow fill ~2 → market square outline (outer hull of the scribble); red dabs
+#   ~3, ~4, ~5 → the three stalls; black box → the house's extent (guide mark, not painted).
+# Stage: horizon y 58 (chosen: just above the road's far end, so the road runs to the castle)
+# Interpreted: the castle has no label: per the brief it stands on the horizon at the road's
+#   far end (centre x 96, base y 58), small and grey, with lightblue hills behind it and a
+#   green treeline along the horizon either side. Midday → day variant: blue sky with two
+#   white clouds, lightgreen grass, short shadows straight under things (green on grass,
+#   brown on the sand). The road and lane are one material (dirt, brown, as the paint hints),
+#   unoutlined as KQ draws paths, joined at the crossing. The market's yellow paint read as
+#   sand; its zigzag scribble is colouring-in, so the area is the scribble's outer outline.
+#   Red dabs are only positions: the awnings' colours are mine. Small inventions: a wooden
+#   signpost on the grass just past the crossing (base (90,112), below the lane, right of
+#   the road), wares on the stall counters, a chimney on the house.
+scene "Village Crossroads at Midday"
+variants day
+
+let hz = 58
+
+# ---------------------------------------------------------------- sky
+color blue
+rect 0, 0, 159, 52
+cloud(36, 14, 34, 2)
+cloud(126, 22, 28, 5)
+
+# ---------------------------------------------------------------- far hills and treeline
+hills(34, 54, lightblue, 4, null)
+treeline(53, 60, green, 6)
+
+# ---------------------------------------------------------------- ground
+color lightgreen
+rect 0, 59, 159, 167
+
+# ---------------------------------------------------------------- distant castle (road's end)
+fn castle(cx, base) {
+  # curtain wall
+  shape([[cx - 11, base], [cx - 11, base - 8], [cx + 11, base - 8], [cx + 11, base]], lightgrey)
+  # battlements
+  color lightgrey
+  for x in range(cx - 10, cx + 10, 3) {
+    rect x, base - 10, x + 1, base - 9
+  }
+  # keep
+  shape([[cx - 4, base - 6], [cx - 4, base - 17], [cx + 4, base - 17], [cx + 4, base - 6]], lightgrey)
+  color lightgrey
+  for x in [cx - 4, cx - 1, cx + 2] {
+    rect x, base - 19, x + 1, base - 18
+  }
+  # side towers with conical blue roofs
+  for tx in [cx - 12, cx + 10] {
+    shape([[tx, base], [tx, base - 14], [tx + 3, base - 14], [tx + 3, base]], lightgrey)
+    shape([[tx - 1, base - 14], [tx + 1.5, base - 21], [tx + 4, base - 14]], blue)
+  }
+  # shade on the right of the keep and right tower
+  color darkgrey
+  line cx + 3, base - 16, cx + 3, base - 7
+  line cx + 12, base - 13, cx + 12, base - 1
+  # gate and windows
+  shape([[cx - 2, base], [cx - 2, base - 4], [cx, base - 5], [cx + 2, base - 4], [cx + 2, base]], black)
+  color black
+  rect cx - 1, base - 13, cx - 1, base - 12
+  rect cx + 1, base - 13, cx + 1, base - 12
+  # pennant on the keep
+  color black
+  line cx, base - 20, cx, base - 25
+  color red
+  line cx + 1, base - 25, cx + 3, base - 24
+  line cx + 1, base - 24, cx + 2, base - 24
+}
+castle(96, 58)
+
+# ---------------------------------------------------------------- road and lane (brown ~1)
+let road_pts = [[94, 64], [87, 73], [80, 84], [73, 94], [66, 103], [58, 114], [50, 126],
+                [42, 138], [34, 151], [26, 163], [22, 172]]
+let lane_pts = [[29, 84], [50, 88], [74, 95], [100, 103.5], [120, 110.5], [140, 116],
+                [166, 123.5]]
+let road = trail(road_pts, 13, hz)
+let lane = trail(lane_pts, 16, hz, 0.75)
+shape(road, brown, null)
+shape(lane, brown, null)
+# a few stones on the road and lane
+color darkgrey
+for p in [[36, 156], [52, 127], [74, 97], [110, 106], [139, 117], [62, 112]] {
+  rect p[0], p[1], p[0] + 1, p[1]
+}
+
+# ---------------------------------------------------------------- house (box x 16-52, y 47-82)
+let base = 82
+let eave = 64
+let px = 28
+let peak = 47
+let x1 = 16
+let x2 = 40
+# back plane = front scaled 0.3 towards the vanishing point (80, hz)
+fn back(p) { return [p[0] + 0.3 * (80 - p[0]), p[1] + 0.3 * (hz - p[1])] }
+let bb = back([x2, base])
+let be = back([x2, eave])
+let bp = back([px, peak])
+
+# short midday shadow along the foot
+color green
+polygon x1 - 1, base + 1, x2, base + 1, bb[0] + 1, bb[1] + 1, bb[0] + 1, bb[1] + 2, x2, base + 2, x1 - 1, base + 2
+
+# right side wall (shaded plaster with timbers)
+shape([[x2, eave], be, bb, [x2, base]], lightgrey)
+color brown
+stroke x2 + 1, 73, bb[0] - 1, interp([[x2, 73], be], bb[0]) + 4
+stroke 46, interp([[x2, eave], be], 46) + 1, 46, interp([[x2, base], bb], 46) - 1
+stroke x2 + 1, eave + 1, 46, interp([[x2, base], bb], 46) - 1
+
+# chimney behind the ridge
+shape([[41, 46], [45, 46], [45, 56], [41, 56]], red)
+color black
+rect 40, 45, 46, 45
+line 41, 50, 45, 50
+
+# right roof plane (red tiles)
+shape([[px, peak], bp, [be[0] + 1, be[1]], [x2 + 1, eave + 1]], red)
+color black
+for t in [0.33, 0.66] {
+  stroke px + (x2 + 1 - px) * t, peak + (eave + 1 - peak) * t,
+         bp[0] + (be[0] + 1 - bp[0]) * t, bp[1] + (be[1] - bp[1]) * t
+}
+
+# front wall with the gable (white plaster)
+shape([[x1, base], [x1, eave], [px, peak + 2], [x2, eave], [x2, base]], white)
+# timber frame: posts, rails, braces
+color brown
+line x1 + 1, 73, x2 - 1, 73
+line x1 + 1, eave + 1, x2 - 1, eave + 1
+for x in [x1 + 1, 22, 34, x2 - 1] {
+  line x, eave + 1, x, base - 1
+}
+line 17, 72, 21, 66
+line 39, 72, 35, 66
+line 17, 81, 21, 75
+line 39, 81, 35, 75
+# gable timbers
+line x1 + 4, eave - 1, x2 - 4, eave - 1
+line px, peak + 3, px, eave - 2
+line 22, 62, 26, 54
+line 34, 62, 30, 54
+
+# roof edge over the gable (bargeboards)
+color red
+line x1 - 1, eave + 1, px, peak, x2 + 1, eave + 1
+color black
+line x1 - 2, eave + 1, px, peak - 1, x2 + 2, eave + 1
+line x1 - 1, eave + 2, px, peak + 1, x2 + 1, eave + 2
+
+# door (on the lane) and windows
+shape([[26, base], [26, 75], [27, 74], [30, 74], [31, 75], [31, base]], brown)
+color black
+line 28, 76, 28, 81
+color yellow
+rect 30, 78, 30, 78
+fn window(wx, wy) {
+  shape([[wx, wy], [wx + 4, wy], [wx + 4, wy + 4], [wx, wy + 4]], lightcyan)
+  color brown
+  line wx + 2, wy + 1, wx + 2, wy + 3
+  line wx + 1, wy + 2, wx + 3, wy + 2
+}
+window(17, 75)
+window(35, 75)
+window(26, 56)
+window(23, 66)
+window(31, 66)
+# side-wall window
+shape([[42, 75], [44, 74.5], [44, 78], [42, 78.5]], blue)
+
+# ---------------------------------------------------------------- signpost at the crossing
+# on the grass in the corner below the lane, right of the road
+color green
+rect 89, 112, 93, 112
+color brown
+rect 90, 99, 91, 111
+color black
+line 92, 99, 92, 111
+shape([[86, 100], [95, 100], [97, 101.5], [95, 103], [86, 103]], yellow)
+shape([[86, 105], [95, 105], [95, 108], [86, 108], [84, 106.5]], yellow)
+
+# ---------------------------------------------------------------- market square (yellow ~2)
+let market = [[96, 127], [118, 130], [140.5, 133.7], [142.1, 136.5], [141, 142], [140.5, 153],
+              [120.1, 158.9], [94.7, 161.7], [93.9, 156.7], [94.5, 148], [94.7, 143.2],
+              [95.5, 134]]
+shape(market, yellow)
+color brown
+for p in [[100, 132], [126, 156], [104, 156], [138, 140]] {
+  rect p[0], p[1], p[0] + 1, p[1]
+}
+
+# ---------------------------------------------------------------- stalls x3 (red dabs)
+fn stall(dx, dy, c) {
+  let top = dy - 20
+  let bot = dy - 11
+  let base = dy + 6
+  # shadow under the counter
+  color brown
+  rect dx - 6, base + 1, dx + 7, base + 1
+  # posts holding up the awning
+  shape([[dx - 6, bot], [dx - 5, bot], [dx - 5, base], [dx - 6, base]], brown, null)
+  shape([[dx + 5, bot], [dx + 6, bot], [dx + 6, base], [dx + 5, base]], brown, null)
+  color black
+  line dx - 7, bot, dx - 7, base
+  line dx + 7, bot, dx + 7, base
+  # dark back of the stall between the posts
+  shape([[dx - 4, bot + 1], [dx + 4, bot + 1], [dx + 4, dy - 2], [dx - 4, dy - 2]], darkgrey, null)
+  # wares on the counter
+  color red
+  rect dx - 4, dy - 2, dx - 3, dy - 1
+  color lightgreen
+  rect dx - 1, dy - 3, dx + 1, dy - 1
+  color white
+  rect dx + 3, dy - 2, dx + 4, dy - 1
+  # counter
+  shape([[dx - 6, dy], [dx + 6, dy], [dx + 6, base], [dx - 6, base]], brown)
+  color black
+  line dx - 5, dy + 3, dx + 5, dy + 3
+  # striped awning, wider at the front edge
+  shape([[dx - 5, top], [dx + 5, top], [dx + 7, bot], [dx - 7, bot]], white)
+  for x in range(dx - 6, dx + 7) {
+    if floor((x - dx + 7) / 2) % 2 == 0 {
+      color c
+      let off = abs(x - dx) > 5 ? (abs(x - dx) - 5) * 4 : 0
+      line x, top + 1 + off, x, bot - 1
+    }
+  }
+  # scalloped valance
+  color black
+  line dx - 7, bot, dx + 7, bot
+  for x in range(dx - 6, dx + 7, 2) {
+    color floor((x - dx + 7) / 2) % 2 == 0 ? c : white
+    rect x, bot + 1, x, bot + 2
+  }
+}
+stall(106, 140, red)
+stall(120, 144, blue)
+stall(134, 148, green)
+
+frame()

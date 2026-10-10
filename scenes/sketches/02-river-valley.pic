@@ -1,0 +1,225 @@
+# River Valley at Sunset
+# Source: layout sketch tests/fixtures/sketches/02-river-valley.png; reframed with: pnpm grid tests/fixtures/sketches/02-river-valley.png --crop 0,0,1024,768 --fit --name sketches-02-river-valley
+# Brief: orange sunset sky (sketch note). The mountains have snowy peaks. The cottage has a red
+#   roof and smoke coming from the chimney. The boat is a little rowing boat.
+# Method: composed from a layout sketch. Labels: SKY: orange sunset → banded sunset sky
+#   (red / brown-orange / lightred / yellow), rows 0-72, label (34,20) in the brown band;
+#   MOUNTAINS → blue range following the drawn ridge line, snowcaps on the four peaks, label
+#   (114,61) inside it; COTTAGE → grey stone cottage with red gable roof, chimney and smoke,
+#   front wall x 117-136, base y 99, label (130,92) on its front wall; MEADOW (x2) → dusk-green
+#   meadow either side of the river, labels (27,113) and (136,140); RIVER → blue river between
+#   the two drawn banks, label (81,128); SMALL_BOAT → small brown rowing boat side-on with oars shipped, x 68-96,
+#   waterline y 155, label (81,151) on its hull.
+#   Geometry: ridge line (0,72) (19,50) (36,63) (59,37) (81,66) (100,44) (122,33) (141,57)
+#   (160,46); horizon y 72 full width; left bank (78,72) (73,92) (66,114) (53,140) (47,168);
+#   right bank (85,72) (91,94) (100,118) (108,142) (112,168).
+# Interpreted: "orange sunset" → lighting variant dusk, sky in flat bands with orange (EGA
+#   brown) and lightred; meadow green (darker than daylight lightgreen). Invented: a half-set
+#   sun in the mountain notch above the river's source (a sunset implies one; nothing else is
+#   sketched there), sunset reflections on the river, lit yellow windows, a door, brown bank
+#   edges and a pair of oars. Smoke drifts right over the mountains. Mountains are blue so the
+#   white snow and the warm sky both stand clear of them.
+scene "River Valley at Sunset"
+variants dusk
+
+let horizon = 72
+let ridge_pts = [[0, 72], [18.75, 50.3], [35.9, 63.4], [59.4, 37.2], [81.25, 65.6],
+  [100, 43.75], [121.9, 32.8], [140.6, 56.9], [160, 45.9]]
+let left_bank = [[78.1, 72], [73.4, 91.9], [65.6, 113.75], [53.1, 140], [46.9, 168]]
+let right_bank = [[85.2, 72], [90.6, 94.1], [100, 118.1], [107.8, 142.2], [112.5, 168]]
+
+# ---------- sky: orange sunset in flat bands ----------
+color red
+rect 0, 0, 159, 13
+color brown
+rect 0, 14, 159, 29
+color lightred
+rect 0, 30, 159, 49
+color yellow
+rect 0, 50, 159, horizon
+
+# thin cloud streaks lit from below
+color yellow
+line 8, 25, 30, 25
+line 14, 24, 24, 24
+line 120, 22, 148, 22
+line 126, 21, 140, 21
+color lightred
+line 70, 17, 92, 17
+line 76, 16, 86, 16
+
+# the sun, half set in the notch above the river
+color white
+ellipse 81, 56, 6, 11
+color yellow
+ellipse 81, 56, 5, 9
+
+# ---------- mountains ----------
+let mtn = ridge_pts + [[160, horizon], [0, horizon]]
+shape(mtn, blue)
+
+# a snowcap from a peak down `d` rows between its two neighbouring ridge points
+fn snowcap(peak, l, r, d, seed) {
+  let y = peak[1] + d
+  let lx = peak[0] + (l[0] - peak[0]) * d / (l[1] - peak[1])
+  let rx = peak[0] + (r[0] - peak[0]) * d / (r[1] - peak[1])
+  let pts = [[peak[0], peak[1]], [rx, y]]
+  # ragged lower edge, right to left
+  let n = 5
+  for i in 1..n {
+    let x = rx + (lx - rx) * i / n
+    let dy = (i % 2 == 0) ? 0 : 3 + noise(seed, i) * 3
+    push(pts, [x, y - 3 + dy])
+  }
+  push(pts, [lx, y])
+  shape(pts, white)
+  # shadow on the right half
+  color lightcyan
+  let sh = [[peak[0], peak[1] + 1], [rx - 1, y - 1], [peak[0] + (rx - peak[0]) * 0.3, y]]
+  polygon sh
+  color black
+  stroke lx, y, peak[0], peak[1], rx, y
+}
+
+snowcap(ridge_pts[3], ridge_pts[2], ridge_pts[4], 16, 3)
+snowcap(ridge_pts[6], ridge_pts[5], ridge_pts[7], 10, 5)
+snowcap(ridge_pts[1], ridge_pts[0], ridge_pts[2], 8, 7)
+snowcap(ridge_pts[8], ridge_pts[7], [180, 60], 7, 9)
+
+# ridges and gullies
+color lightblue
+line 59, 48, 55, 56, 50, 63
+line 62, 47, 66, 56
+line 122, 41, 117, 50, 112, 57
+line 104, 47, 98, 58
+line 19, 55, 22, 62
+color black
+stroke ridge_pts
+
+# ---------- meadow ----------
+color green
+polygon [0, horizon + 1] [78, horizon + 1] [73.4, 91.9] [65.6, 113.75] [53.1, 140] [46.9, 167] [0, 167]
+polygon [85, horizon + 1] [159, horizon + 1] [159, 167] [112.5, 167] [107.8, 142.2] [100, 118.1] [90.6, 94.1]
+# horizon line where meadow meets the mountains
+color brown
+line 0, horizon, 159, horizon
+
+# tufts of grass catching the last light
+fn tuft(x, y) {
+  color lightgreen
+  line x - 1, y, x, y - 2
+  line x + 1, y, x + 1, y - 2
+}
+for p in [[10, 90], [30, 84], [48, 96], [8, 130], [22, 150], [36, 124], [14, 104],
+  [104, 90], [150, 104], [118, 120], [140, 124], [126, 158], [148, 152], [58, 82]] {
+  tuft(p[0], p[1])
+}
+
+# ---------- river ----------
+# brown mud banks just outside the water
+shape(band(left_bank, 4, 7), brown, null)
+shape(band(right_bank, 4, 7), brown, null)
+shape(left_bank + reverse(right_bank), blue, null)
+color black
+stroke left_bank
+stroke right_bank
+
+# sunset reflections near the source, ripples lower down
+color yellow
+line 80, 76, 83, 76
+line 79, 80, 85, 80
+color lightred
+line 77, 85, 82, 85
+line 83, 89, 88, 89
+line 75, 96, 80, 96
+color lightblue
+line 70, 108, 76, 108
+line 84, 114, 92, 114
+line 64, 124, 70, 124
+line 92, 132, 100, 132
+line 60, 140, 66, 140
+line 98, 162, 106, 162
+line 55, 163, 62, 163
+
+# ---------- cottage ----------
+# chimney (behind the ridge)
+color darkgrey
+rect 121, 67, 124, 78
+color black
+outline [121, 67] [124, 67] [124, 78] [121, 78]
+# front wall
+color lightgrey
+rect 117, 86, 136, 99
+stones(117, 86, 136, 99, 4, 6, darkgrey)
+# gable end, in shade
+shape([[137, 86], [141, 76], [146, 86], [146, 99], [137, 99]], darkgrey)
+# roof: front slope and the gable's overhang
+shape([[113, 86], [137, 86], [141, 74], [117, 74]], red)
+shape([[141, 74], [147, 87], [145, 87], [140.5, 77]], red)
+color lightred
+line 118, 75, 140, 75
+color black
+line 113, 86, 137, 86
+# door
+shape([[127, 91], [131, 91], [131, 99], [127, 99]], brown)
+color yellow
+line 130, 95
+# lit windows
+shape([[119, 89], [123, 89], [123, 94], [119, 94]], yellow)
+shape([[133, 89], [135, 89], [135, 94], [133, 94]], yellow)
+shape([[140, 89], [143, 89], [143, 94], [140, 94]], yellow)
+color black
+line 121, 89, 121, 94
+line 141, 89, 141, 94
+outline [117, 86] [136, 86] [136, 99] [117, 99]
+line 117, 100, 146, 100
+
+# smoke from the chimney, drifting right
+fn puff(x, y, rx, ry) {
+  color lightgrey
+  ellipse x, y, rx, ry
+}
+puff(123, 63, 2, 3)
+puff(125, 58, 2, 4)
+puff(128, 52, 3, 4)
+puff(132, 46, 3, 5)
+puff(137, 41, 3, 4)
+color white
+line 124, 57, 125, 56
+line 127, 51, 128, 50
+
+# ---------- small rowing boat ----------
+# shadow on the water
+color black
+line 72, 156, 91, 156
+# oars resting in the rowlocks, blades out on the water (drawn first: the hull covers their ends)
+color yellow
+line 62, 152, 77, 146
+line 86, 146, 101, 152
+shape([[59, 152], [63, 151], [64, 153], [60, 154]], yellow)
+shape([[100, 151], [104, 152], [103, 154], [99, 153]], yellow)
+# inside of the boat, seen a little from above
+shape([[69, 143], [94, 142], [91, 146], [72, 146]], black, null)
+# thwart (seat) across the inside
+color brown
+rect 80, 143, 83, 145
+# hull, side-on, bow to the right, transom stern on the left
+shape([[68, 143], [72, 146], [90, 146], [96, 141], [93, 152], [88, 155], [74, 155], [70, 151]], brown)
+# gunwale and plank lines
+color yellow
+line 72, 147, 90, 147
+line 70, 143, 72, 146
+line 90, 146, 95, 142
+color black
+line 72, 151, 91, 151
+# rowlocks
+color black
+line 77, 146, 77, 145
+line 86, 146, 86, 145
+# ripples round the hull
+color lightblue
+line 62, 157, 70, 157
+line 93, 157, 101, 157
+line 66, 159, 72, 159
+
+frame()

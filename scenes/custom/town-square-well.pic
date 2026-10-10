@@ -1,0 +1,381 @@
+# Town Square with an Old Well
+# Brief: a town centre with an old well in the middle; a small bronze coin on the
+#   cobblestones to the bottom right; other town elements as needed.
+# Stage: horizon y 30 (hidden behind the shopfronts; the lane through the gap and the side
+#   walls run towards (80, 30)).
+# Inventions: a tavern, a stone shop with an awning and a yellow house across the back; two
+#   side buildings (timbered left, stone right, with a baker's sign); a lane leading off between
+#   the tavern and the yellow house towards a far church spire; a fruit stall, barrels, crates
+#   and a lamp post. The coin is drawn a little larger than life, with a glint, so it reads.
+scene "Town Square with an Old Well"
+variants day, night
+
+let hz = 30
+let base = 74          # foot of the shopfronts across the back
+
+# a point on the left / right side walls: y30 is the row at the wall's far corner
+# (x = 30 or x = 130); the wall's courses run towards (80, hz)
+fn lw(x, y30) {
+  return hz + (y30 - hz) * (80 - x) / 50
+}
+fn rw(x, y130) {
+  return hz + (y130 - hz) * (x - 80) / 50
+}
+
+let wins = []            # upright windows [x1, y1, x2, y2], lit at night
+let side_wins = []       # side-wall windows (outlines), lit at night
+fn window(x1, y1, x2, y2) {
+  color black
+  rect x1, y1, x2, y2
+  color lightcyan
+  rect x1 + 1, y1 + 1, x2 - 1, y2 - 1
+  color black
+  let mx = round((x1 + x2) / 2)
+  let my = round((y1 + y2) / 2)
+  line mx, y1, mx, y2
+  line x1, my, x2, my
+  push(wins, [x1, y1, x2, y2])
+}
+fn side_window(pts) {
+  shape(pts, lightcyan)
+  color black
+  let a = pts[0]
+  let b = pts[1]
+  let c = pts[2]
+  let d = pts[3]
+  line (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (d[0] + c[0]) / 2, (d[1] + c[1]) / 2
+  push(side_wins, pts)
+}
+# the yellow house's side wall, seen down the lane (y108 = its row at x = 108)
+fn gw(x, y108) {
+  return hz + (y108 - hz) * (x - 80) / 28
+}
+fn lquad(x1, x2, t, b) {
+  return [[x1, lw(x1, t)], [x2, lw(x2, t)], [x2, lw(x2, b)], [x1, lw(x1, b)]]
+}
+fn rquad(x1, x2, t, b) {
+  return [[x1, rw(x1, t)], [x2, rw(x2, t)], [x2, rw(x2, b)], [x1, rw(x1, b)]]
+}
+
+# ---- sky, far hills, the church spire seen down the lane ----
+color blue
+rect 0, 0, 159, 40
+hills(18, 36, lightblue, 5, null)
+color lightgrey
+rect 98, 17, 104, 36
+shape([[97, 18], [101, 6], [105, 18]], darkgrey)
+color black
+line 101, 22, 101, 25
+
+# ---- the cobbled square ----
+color lightgrey
+rect 0, base, 159, 167
+let y = base + 1
+let k = 0
+while y < 168 {
+  let g = groundscale(y, hz)
+  let dy = max(2, 9 * g)
+  color darkgrey
+  stroke 0, y, 159, y
+  if g > 0.36 {
+    for i in range(-14, 15) {
+      let X = (i + (k % 2) * 0.5 + (noise(k, i) - 0.5) * 0.3) * 10
+      let yb = min(167, y + dy - 1)
+      stroke 80 + X * groundscale(y + 1, hz), y + 1, 80 + X * groundscale(yb, hz), yb
+    }
+  }
+  y += dy
+  k += 1
+}
+
+# ---- the lane between the tavern and the yellow house ----
+shape([[96, gw(96, 34)], [108, 34], [108, base], [96, gw(96, base)]], brown)
+shape([[96, gw(96, base)], [108, base], [108, 76], [96, 76]], lightgrey, null)
+color darkgrey
+for yy in [60, 65, 70] {
+  stroke 96, yy, 96 + (yy - gw(96, base)) * 12 / (base - gw(96, base)), yy
+}
+color black
+stroke 96, gw(96, base), 108, base
+stroke 96, gw(96, 34), 108, 34
+side_window([[99, gw(99, 40)], [104, gw(104, 40)], [104, gw(104, 52)], [99, gw(99, 52)]])
+
+# ---- across the back: stone shop, tavern, yellow house ----
+# stone shop
+color lightgrey
+rect 30, 38, 58, base
+stones(30, 38, 58, base, 4, 6)
+shape([[28, 39], [60, 39], [56, 26], [32, 26]], darkgrey)
+color black
+line 33, 30, 55, 30
+line 34, 34, 57, 34
+shape([[36, 58], [43, 58], [43, base], [36, base]], blue)
+color black
+rect 41, 66, 41, 67
+window(46, 57, 55, 66)
+shape([[44, 51], [57, 51], [59, 56], [42, 56]], white)
+color red
+for x in [45, 49, 53] {
+  polygon x, 51, x + 2, 51, x + 3, 56, x + 1, 56
+}
+window(40, 42, 48, 50)
+
+# tavern
+color white
+rect 58, 34, 96, base
+color brown
+rect 58, 51, 96, 52
+for x in [58, 70, 84, 95] {
+  rect x, 34, x + 1, base
+}
+line 59, 36, 69, 50
+line 85, 50, 94, 36
+shape([[55, 35], [99, 35], [94, 18], [60, 18]], red)
+color black
+for yy in [22, 26, 30] {
+  line 59, yy, 95, yy
+}
+color darkgrey
+rect 86, 10, 90, 20
+color black
+outline 86, 10, 90, 10, 90, 20, 86, 20
+shape(archway(77, 59, 5, 4, base), brown)
+color black
+line 77, 60, 77, base
+rect 79, 67, 79, 67
+window(62, 60, 68, 67)
+window(87, 60, 93, 67)
+window(62, 38, 68, 46)
+window(74, 38, 80, 46)
+window(87, 38, 93, 46)
+# the tavern's sign: a foaming mug
+shape([[69, 52], [85, 52], [85, 57], [69, 57]], brown)
+pixmap(75, 53, ["wwww.", "yyyyy", "yyyy."], "wy", [white, yellow])
+
+# yellow house
+color yellow
+rect 108, 30, 130, base
+shape([[105, 31], [133, 31], [127, 14], [111, 14]], brown)
+color black
+line 110, 22, 128, 22
+line 108, 30, 108, base
+shape([[113, 58], [119, 58], [119, base], [113, base]], brown)
+window(122, 58, 127, 66)
+window(111, 36, 116, 44)
+window(122, 36, 127, 44)
+color green
+for w in [[109, 36, 116], [120, 36, 127], [120, 58, 127]] {
+  line w[0], w[1], w[0], w[1] + 8
+  line w[2] + 1, w[1], w[2] + 1, w[1] + 8
+}
+
+# ---- left side building: timbered, three storeys, its side facing the square ----
+shape([[-1, lw(-1, 4)], [30, 4], [30, 16], [-1, lw(-1, 16)]], red)
+color black
+stroke -1, lw(-1, 10), 30, 10
+shape([[-1, lw(-1, 16)], [30, 16], [30, base], [-1, lw(-1, base)]], white)
+color brown
+for t in [16, 34, 52] {
+  stroke -1, lw(-1, t), 30, t
+  stroke -1, lw(-1, t) + 1, 30, t + 1
+}
+for x in [2, 13, 24, 29] {
+  stroke x, lw(x, 16), x, lw(x, base)
+}
+side_window(lquad(4, 10, 21, 30))
+side_window(lquad(16, 22, 21, 30))
+side_window(lquad(4, 10, 39, 48))
+side_window(lquad(16, 22, 39, 48))
+side_window(lquad(3, 11, 57, 67))
+shape(lquad(16, 22, 56, base), brown)
+color black
+stroke 30, 16, 30, base
+stroke -1, lw(-1, base), 30, base
+
+# ---- right side building: stone, with a baker's sign ----
+shape([[130, 10], [160, rw(160, 10)], [160, rw(160, 20)], [130, 20]], darkgrey)
+shape([[130, 20], [160, rw(160, 20)], [160, rw(160, base)], [130, base]], lightgrey)
+color darkgrey
+for t in [30, 40, 50, 60, 68] {
+  stroke 130, t, 160, rw(160, t)
+}
+for i in range(0, 5) {
+  for t in [20, 30, 40, 50, 60] {
+    let x = 133 + i * 6 + (t % 20 == 0 ? 3 : 0)
+    stroke x, rw(x, t), x, rw(x, t + 10)
+  }
+}
+side_window(rquad(136, 143, 29, 39))
+side_window(rquad(149, 156, 29, 39))
+side_window(rquad(147, 157, 50, 62))
+shape(rquad(134, 141, 55, base), brown)
+color black
+stroke 130, 20, 160, rw(160, 20)
+stroke 130, 20, 130, base
+stroke 130, base, 160, rw(160, base)
+# sign on an iron bracket, hanging face-on: a loaf
+color black
+line 152, rw(152, 45), 139, rw(152, 45)
+line 141, rw(152, 45), 141, rw(152, 45) + 2
+line 149, rw(152, 45), 149, rw(152, 45) + 2
+shape([[139, rw(152, 45) + 2], [151, rw(152, 45) + 2], [151, rw(152, 45) + 9], [139, rw(152, 45) + 9]], brown)
+pixmap(141, rw(152, 45) + 4, [".yyyyy.", "yyyyyyy", ".yyyyy."], "y", [yellow])
+
+# ---- barrels by the tavern, crates by the bakery ----
+fn barrel(x, yb, w, h) {
+  shape([[x, yb - h], [x + w, yb - h], [x + w + 1, yb - h / 2], [x + w, yb], [x, yb], [x - 1, yb - h / 2]], brown)
+  color black
+  line x, yb - h + 2, x + w, yb - h + 2
+  line x, yb - 2, x + w, yb - 2
+}
+barrel(48, 80, 5, 8)
+barrel(54, 82, 5, 8)
+fn crate(x, yb, s) {
+  shape([[x, yb - s], [x + s, yb - s], [x + s, yb], [x, yb]], brown)
+  color black
+  line x, yb - s, x + s, yb
+  line x + s, yb - s, x, yb
+}
+crate(128, 96, 7)
+crate(133, 92, 6)
+
+# ---- the old well, centre stage ----
+color darkgrey
+ellipse 85, 113, 20, 4
+# stone drum: big blocks in black mortar, shaded on the right
+color lightgrey
+rect 64, 97, 96, 111
+ellipse 80, 111, 16, 3
+color darkgrey
+rect 88, 97, 96, 111
+ellipse 88, 111, 8, 3
+stones(64, 99, 96, 114, 5, 8, black)
+color black
+line 64, 97, 64, 111
+line 96, 97, 96, 111
+line arc(80, 111, 16, 3, 270, 90)
+# moss and a crack
+color green
+rect 66, 108, 69, 110
+rect 70, 111, 72, 112
+rect 84, 103, 86, 104
+rect 92, 106, 94, 107
+color black
+line 76, 104, 78, 107, 77, 110
+# capstone rim and the dark mouth
+shape(arc(80, 97, 17, 5, 0, 360, 15), white)
+color lightgrey
+line arc(80, 98, 16, 4, 100, 260, 15)
+shape(arc(80, 96, 12, 2.5, 0, 360, 20), black, null)
+# posts, windlass and crank
+color brown
+rect 66, 73, 68, 98
+rect 92, 73, 94, 98
+color black
+line 65, 73, 65, 98
+line 69, 76, 69, 95
+line 91, 76, 91, 95
+line 95, 73, 95, 98
+color brown
+rect 69, 80, 91, 81
+color black
+line 69, 79, 91, 79
+line 69, 82, 91, 82
+line 96, 80, 98, 80, 98, 84
+color brown
+rect 98, 85, 100, 85
+# rope and bucket
+color brown
+line 80, 82, 80, 87
+shape([[77, 88], [83, 88], [82, 93], [78, 93]], brown)
+color black
+line 77, 90, 83, 90
+color darkgrey
+line 77, 87, 80, 85, 83, 87
+# shingled roof, one shingle missing
+shape([[60, 76], [100, 76], [95, 64], [65, 64]], red)
+color black
+line 62, 72, 98, 72
+line 64, 68, 96, 68
+for x in [68, 74, 80, 86, 92] {
+  line x, 72, x, 76
+  line x + 3, 68, x + 3, 72
+}
+shape([[83, 69], [86, 69], [86, 71], [83, 71]], darkgrey, null)
+
+# ---- the fruit stall, front left ----
+color brown
+rect 7, 104, 8, 128
+rect 40, 104, 41, 128
+shape([[9, 116], [39, 116], [39, 126], [9, 126]], brown)
+color black
+line 9, 120, 39, 120
+shape([[2, 102], [46, 102], [49, 110], [-1, 110]], white)
+color red
+for x in range(2, 46, 8) {
+  polygon x, 102, x + 4, 102, x + 5, 110, x + 1, 110
+}
+color black
+stroke -1, 110, 49, 110
+let fr = [[11, red], [14, red], [17, yellow], [20, yellow], [24, lightgreen], [27, lightgreen], [31, red], [34, yellow]]
+for f in fr {
+  color f[1]
+  rect f[0], 114, f[0] + 2, 115
+  color black
+  rect f[0], 116, f[0] + 2, 116
+}
+color brown
+for b in [[12, 132], [24, 134]] {
+  shape([[b[0], b[1] - 6], [b[0] + 9, b[1] - 6], [b[0] + 9, b[1]], [b[0], b[1]]], brown)
+  color black
+  line b[0], b[1] - 3, b[0] + 9, b[1] - 3
+}
+pixmap(13, 125, ["rrr.yyy"], "ry", [red, yellow])
+
+# ---- lamp post, right ----
+fn lamp(x, yb, h, glass = lightgrey) {
+  color black
+  rect x - 2, yb - 3, x + 2, yb
+  rect x - 1, yb - h, x, yb
+  rect x - 3, yb - h - 1, x + 2, yb - h
+  shape([[x - 3, yb - h - 10], [x + 2, yb - h - 10], [x + 2, yb - h - 1], [x - 3, yb - h - 1]], glass)
+  color black
+  line x - 1, yb - h - 10, x - 1, yb - h - 1
+  polygon x - 4, yb - h - 11, x + 3, yb - h - 11, x, yb - h - 15
+}
+lamp(146, 140, 34)
+
+# ---- the bronze coin on the cobbles, bottom right ----
+fn coin(x, y) {
+  pixmap(x, y, [".kkkk.", "kbyybk", "kbbbbk", "kbbbbk", ".kkkk."], "kby", [black, brown, yellow])
+  sparkle(x + 5, y - 1, white, 2)
+}
+coin(124, 150)
+
+if variant == "night" {
+  night()
+  moon 44, 10, 3
+  # stars only in open sky (stars() would paint over the roofs)
+  color white
+  for st in [[36, 4], [52, 2], [62, 6], [70, 3], [80, 5], [92, 2], [108, 4], [118, 7], [126, 3], [100, 10], [56, 14], [34, 16]] {
+    rect st[0], st[1], st[0], st[1]
+  }
+  for w in wins {
+    color yellow
+    rect w[0] + 1, w[1] + 1, w[2] - 1, w[3] - 1
+    color brown
+    line round((w[0] + w[2]) / 2), w[1] + 1, round((w[0] + w[2]) / 2), w[3] - 1
+  }
+  for p in side_wins {
+    shape(p, yellow, black)
+  }
+  lamp(146, 140, 34, yellow)
+  # lamplight on the cobbles, and the coin catching it
+  color lightgrey
+  ellipse 146, 141, 14, 4
+  color black
+  rect 144, 137, 148, 140
+  rect 145, 106, 146, 140
+  coin(124, 150)
+}
+frame()

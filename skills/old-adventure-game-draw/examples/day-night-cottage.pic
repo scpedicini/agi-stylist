@@ -1,0 +1,30 @@
+# Variants: paint once, then remap for night and add lights AFTER the remap.
+scene "Cottage, day and night"
+variants day, night, dusk
+
+sky 18
+hills 10, 28, lightblue, seed: 2
+treeline 24, 34, green, seed: 8
+ground 34
+pine 20, 90, 1.2, seed: 1
+pine 140, 95, 1.4, seed: 2
+
+# the cottage: white walls, red roof, brown door, black window
+shape([[60, 120], [60, 92], [100, 92], [100, 120]], white)
+shape([[54, 94], [80, 70], [106, 94]], red)
+shape([[76, 120], [76, 104], [84, 104], [84, 120]], brown)
+shape([[88, 108], [88, 100], [96, 100], [96, 108]], black)
+path([[80, 167], [82, 140], [80, 121]], 8)
+flowers 30, 130, 60, 160, 25
+
+if variant == "night" {
+  night()
+  moon 130, 9, 4
+  stars 30, 1, 16
+  color yellow                    # lit window: drawn after night() so it stays bright
+  rect 89, 101, 95, 107
+}
+if variant == "dusk" {
+  dusk()
+}
+frame

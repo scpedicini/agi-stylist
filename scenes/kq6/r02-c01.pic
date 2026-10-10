@@ -1,0 +1,129 @@
+# Open Sea
+# Source: King's Quest VI (VGA) - reference/kq6/r02-c01.png; reframed with:
+#   pnpm grid reference/kq6/r02-c01.png --name kq6-r02-c01
+# Method: translated by eye. Kept: azure sky, the low cloud bank (left puff with its long
+#   wispy tail, the big towering mass on the right running off the top and right edges), the
+#   pale haze band above the horizon, the crisp horizon line, and the sea darkening from bright
+#   teal at the horizon to deep navy in the foreground, with horizontal ripple streaks.
+#   Dropped: the soft gradients (now three flat bands with broken, streaky edges), most of the
+#   small puffs and blue gaps inside the right-hand cloud mass.
+# Colours: azure sky → blue, pale haze → lightcyan, clouds → white with lightcyan undersides,
+#   bright sea → cyan with lightcyan ripples, deep sea → blue with lightblue ripples,
+#   darkest foreground swell → black streaks over blue.
+scene "Open Sea"
+variants day
+
+let horizon = 67
+
+# ---- sky ---------------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, horizon - 1
+}
+
+# ---- haze band just above the horizon ----------------------------------------------------
+fn haze() {
+  shape([[-1, 59], [14, 58], [18, 56], [160, 56], [160, horizon - 1],
+         [-1, horizon - 1]], lightcyan, null)
+  # broken streaks fraying into the sky
+  color lightcyan
+  line 0, 56, 14, 56
+  line 4, 54, 10, 54
+  line 22, 57, 36, 57
+  line 60, 57, 72, 57
+}
+
+# ---- clouds ------------------------------------------------------------------------------
+# Each puff: [cx, cy, rx, ry]. The whole bank is painted lightcyan (the shaded undersides),
+# then the lit tops in white, nudged up and left, so the lightcyan shows along the bottoms.
+let puffs = [
+  # left puff and its long tail
+  [24, 57, 12, 2], [38, 55, 10, 4], [50, 50, 7, 8], [56, 42, 6, 9], [62, 49, 6, 7],
+  [70, 52, 6, 5], [77, 50, 5, 6],
+  # the middle, low and joining
+  [86, 50, 7, 7], [95, 46, 7, 10], [104, 40, 7, 12],
+  # the big mass on the right
+  [110, 28, 7, 10], [120, 18, 8, 10], [132, 12, 8, 9], [145, 7, 8, 9], [156, 5, 8, 10],
+  [117, 42, 9, 12], [132, 34, 10, 14], [150, 26, 10, 14], [127, 50, 12, 8], [148, 48, 12, 11],
+  [156, 40, 6, 14], [140, 18, 8, 8], [154, 15, 6, 8]
+]
+# a flat shaded base so no sky shows between the puff bottoms and the haze
+shape([[20, 58], [40, 55], [70, 54], [100, 50], [160, 46], [160, 58]], lightcyan, null)
+delay {
+  blobs(puffs, lightcyan, null, 0.25, 3)
+}
+let lit = []
+for p in puffs {
+  push(lit, [p[0] - 1, p[1] - 2, p[2], p[3] - 1])
+}
+blobs(lit, white, null, 0.25, 3)
+
+# scalloped shadow lines: the lower-right rim of each front puff, so the bank reads as
+# billows lit from the upper left instead of one white lump
+color lightcyan
+for p in [[56, 42, 6, 9], [70, 52, 6, 5], [95, 46, 7, 10], [104, 40, 7, 12], [110, 28, 7, 10],
+          [120, 18, 8, 10], [132, 12, 8, 9], [145, 7, 8, 9], [117, 42, 9, 12],
+          [132, 34, 10, 14], [150, 26, 10, 14]] {
+  stroke arc(p[0] - 1, p[1] - 2, p[2] - 1, p[3] - 1, 80, 200, 15)
+}
+
+haze()
+
+# ---- the sea -----------------------------------------------------------------------------
+# bright teal near the horizon
+color cyan
+rect 0, horizon, 159, 167
+# deep blue further down, its top edge broken into streaks
+color blue
+rect 0, 104, 159, 167
+for i in 0..24 {
+  let y = 92 + floor(i * 12 / 24)
+  let x = noise(11, i) * 150
+  let w = 8 + noise(12, i) * 18
+  stroke x, y, x + w, y
+}
+color cyan
+for i in 0..18 {
+  let y = 104 + floor(i * 10 / 18)
+  let x = noise(13, i) * 150
+  let w = 6 + noise(14, i) * 16
+  stroke x, y, x + w, y
+}
+
+# the crisp horizon
+color blue
+line 0, horizon, 159, horizon
+
+# ripples on the bright water: short and close near the horizon, longer lower down
+color lightcyan
+for i in 0..22 {
+  let t = i / 22
+  let y = horizon + 3 + floor(t * t * 26)
+  let x = noise(21, i) * 155
+  let w = 3 + t * 12
+  stroke x, y, x + w, y
+}
+
+# ripples on the deep water
+color lightblue
+for i in 0..16 {
+  let t = i / 16
+  let y = 110 + floor(t * 28)
+  let x = noise(31, i) * 150
+  let w = 6 + t * 14
+  stroke x, y, x + w, y
+}
+
+# the darkest swell in the foreground: black troughs, denser toward the bottom
+color black
+for i in 0..40 {
+  let t = i / 40
+  let y = 124 + floor(sqrt(t) * 43)
+  let x = noise(41, i) * 150 - 6
+  let w = 10 + t * 26
+  stroke x, y, x + w, y
+}
+
+frame()

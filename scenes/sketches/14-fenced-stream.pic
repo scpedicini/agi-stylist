@@ -1,0 +1,166 @@
+# Meadow Stream below the Hills
+# Source: layout sketch tests/fixtures/sketches/14-fenced-stream.png (hybrid: words plus brushstrokes);
+#   reframed with:
+#   pnpm grid tests/fixtures/sketches/14-fenced-stream.png --crop 0,0,1024,768 --fit --name sketches-14-fenced-stream
+# Brief: A stream runs down from the hills, and a hedge of round bushes grows along the top of
+#   the meadow. The pond is clear blue water with lily pads. A spring morning.
+# Method: composed from a layout sketch. Labels: Hills → rolling green hills across the back
+#   (centre hill under the label (78,35)), pale lightblue mountains behind them, foot y≈61;
+#   Fence → wooden post-and-rail fence standing on brown line ~7, from the left edge (y≈117)
+#   to the right edge (y≈111), crossing the stream with posts on both banks; Pond → clear blue
+#   pond filling red loop ~8 (x 105-141, y 120-150) with ripples, four lily pads and a lily flower.
+#   Unlabelled strokes: blue line ~1 → the stream (brief), centre line from the hills' foot
+#   (81,64) down to the bottom edge at x≈32, narrowing with distance (trail()); green dabs
+#   ~4, ~2, ~5, ~3, ~6 → the hedge: five round bushes, one per dab, centred (94,70) (106,69)
+#   (119,70) (131,70) (144,71), standing on the meadow's top edge.
+#   Geometry: brown line ~7 → fence line; blue line ~1 → stream centre line; red loop ~8 →
+#   pond outline; green dabs → bush centres.
+# Stage: horizon y 46 (chosen; hidden behind the hills)
+# Interpreted: the red loop's colour conflicts with the brief ("clear blue water"): the brief
+#   wins, the pond is blue. The blue stroke has no word; the brief's stream is the only
+#   water course, so it is the stream. The stroke's kink where it crosses the fence (an artefact
+#   of the brown paint over it) is smoothed. "Runs down from the hills": the stroke starts at
+#   the hills' foot, so its upper reach is continued as a thin trickle down the fold between the
+#   centre and right hills (invented, from (98,38)). The bushes touch, so the five read as one
+#   hedge of round bushes along the meadow's top. The fence's rails carry on over the stream.
+#   Spring morning → day variant: blue sky, a morning sun low on the left (east) (invented
+#   position), one cloud, a few spring flowers in the meadow (invented). The hills are green so
+#   they differ from the lightgreen meadow; a thin mud bank round the pond.
+scene "Meadow Stream below the Hills"
+variants day
+
+let hz = 46
+
+# ---------------------------------------------------------------- sky, sun, cloud
+color blue
+rect 0, 0, 159, 50
+# morning sun, low in the east (left)
+color yellow
+for a in range(0, 360, 45) {
+  stroke 18 + sin(a) * 6, 15 - cos(a) * 11, 18 + sin(a) * 8, 15 - cos(a) * 15
+}
+ellipse 18, 15, 5, 9
+cloud(118, 9, 34, 2)
+
+# ---------------------------------------------------------------- the hills
+# far pale mountains behind
+hills(16, 34, lightblue, 4, null)
+
+fn hill(cx, foot, rx, h) {
+  shape(arc(cx, foot, rx, h, 270, 450, 6) + [[cx + rx, foot + 12], [cx - rx, foot + 12]], green)
+}
+# centre hill (behind), then the two side hills in front of it
+hill(70, 62, 44, 36)
+hill(-6, 62, 46, 28)
+hill(140, 62, 44, 30)
+# a few lightgreen field strokes on the slopes
+color lightgreen
+stroke 52, 40, 60, 37
+stroke 66, 46, 76, 44
+stroke 20, 46, 28, 44
+stroke 128, 44, 138, 42
+stroke 140, 52, 150, 50
+
+# the stream's upper reach, trickling down the fold between the centre and right hills
+let trickle = [[98, 38], [95, 45], [91, 51], [86, 57], [82, 62.5]]
+shape(band(trickle, 2.5, 5), blue, null)
+
+# ---------------------------------------------------------------- the meadow
+let mtop = [[-2, 60], [20, 61], [45, 60.5], [70, 61.5], [100, 60.5], [130, 61], [162, 60]]
+color lightgreen
+polygon mtop + [[162, 168], [-2, 168]]
+color black
+stroke mtop
+
+# ---------------------------------------------------------------- the stream (blue line ~1)
+let stream_pts = [[83, 59], [81.3, 64.4], [71, 92.9], [62.3, 108.4], [56.5, 120],
+                  [36.2, 165], [32, 172]]
+shape(trail(stream_pts, 9, hz), blue)
+# ripples on the near reach
+color lightblue
+for r in [[64, 103, 2], [58, 116, 3], [52, 129, 3], [47, 140, 4], [41, 153, 4], [36, 163, 4], [69, 92, 1]] {
+  line r[0], r[1], r[0] + r[2], r[1]
+}
+color white
+line 49, 135, 50, 135
+line 39, 158, 40, 158
+
+# ---------------------------------------------------------------- the hedge (green dabs)
+let dabs = [[93.8, 70], [106.3, 69], [118.8, 70.5], [131.3, 69.7], [143.8, 71.3]]
+let i = 0
+for d in dabs {
+  let base = d[1] + 7.5
+  shape(blob(d[0], d[1] - 1, 6.6, 8.5, 3 + i, 0.08, 14), green)
+  # leaf marks
+  color lightgreen
+  line d[0] - 3, d[1] - 5, d[0] - 1, d[1] - 6
+  line d[0] + 1, d[1] - 1, d[0] + 3, d[1] - 2
+  line d[0] - 2, d[1] + 3, d[0], d[1] + 3
+  i += 1
+}
+# the hedge's shadow along its foot
+color green
+for d in dabs {
+  line d[0] - 5, d[1] + 8, d[0] + 6, d[1] + 8
+}
+
+# ---------------------------------------------------------------- the fence (brown line ~7)
+let fl = [[0, 116.6], [7, 115.4], [159, 110.8]]
+fn fh(x) { return 10 * groundscale(interp(fl, x), hz) / groundscale(113, hz) }
+# rails, with a black underside
+for k in [0.45, 0.85] {
+  let r = []
+  for x in range(0, 161, 4) { push(r, [x, interp(fl, x) - fh(x) * k]) }
+  color brown
+  stroke r
+  color black
+  stroke shift(r, 0, 1)
+}
+# posts, skipping the water
+for x in range(3, 159, 9) {
+  if x > 45 && x < 71 { continue }
+  let yb = interp(fl, x)
+  let yt = yb - fh(x)
+  color brown
+  rect x, yt, x + 1, yb
+  color black
+  line x + 2, yt, x + 2, yb
+  line x, yt - 1, x + 1, yt - 1
+}
+# posts on the two banks of the stream
+for x in [50, 67] {
+  let yb = interp(fl, x)
+  let yt = yb - fh(x)
+  color brown
+  rect x, yt, x + 1, yb
+  color black
+  line x + 2, yt, x + 2, yb
+  line x, yt - 1, x + 1, yt - 1
+}
+
+# ---------------------------------------------------------------- the pond (red loop ~8)
+let pond = [[120.2, 120], [134, 122.6], [139.1, 127], [140.5, 139.7], [135.5, 149.3],
+            [120.1, 150], [106.6, 143], [104.8, 132.2], [107, 124.8], [110.9, 121.7]]
+shape(shift(scale(pond, 1.1), 0, 1.4), brown)
+shape(pond, blue)
+# ripples and a glint of clear water
+color lightblue
+line 112, 125, 118, 125
+line 126, 127, 132, 127
+line 109, 137, 113, 137
+line 126, 146, 131, 146
+color lightcyan
+line 131, 136, 136, 136
+# lily pads
+for p in [[112, 129], [125, 132], [115, 143], [131, 141]] {
+  pixmap(p[0], p[1], ["gg.gg", "ggggg", ".ggg."], "g", [lightgreen])
+}
+# a lily flower on one pad
+pixmap(126, 131, ["mwm"], "mw", [lightmagenta, yellow])
+
+# ---------------------------------------------------------------- spring flowers
+flowers(70, 126, 100, 160, 9, 4, [yellow, lightmagenta, lightred, white])
+flowers(4, 124, 30, 160, 6, 7, [yellow, lightmagenta, white])
+flowers(80, 78, 150, 100, 6, 3, [yellow, white])
+
+frame()

@@ -1,0 +1,230 @@
+# Ribbed Root Path of the Dead
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c10.png; reframed with:
+#   pnpm grid reference/kq6/r06-c10.png --name kq6-r06-c10
+# Method: translated by eye. Kept: the black void below, the pale ribbed root bridge rising
+#   from the lower left into the lit golden branch, the big curling ramp root at the lower
+#   left, the hanging root legs with their feet, the pale green pods (top, left, top-centre),
+#   the tall pale green stalk, the big teal leaf on the right, the golden ribbed tubes, the
+#   maroon-shadowed hollows behind, the ribbed fan sheets in the background.
+#   Dropped: the dense rib texture on every tube (ribs every 5-7 px instead), most of the
+#   small tendrils, the green specks in the hollows, the soft lavender/green tints.
+#   Moved: nothing.
+# Colours: deep navy gaps in the tangle → blue with black ribs, slate ribbed tubes and
+#   sheets → darkgrey with black ribs and a cyan lit rim, olive near root bridge and ramp →
+#   green with black ribs and a lightgreen rim, pale green pods → lightgreen with green
+#   shade, tall stalk → green with a lightgreen lit side, teal leaf → cyan with lightcyan
+#   veins, ochre ribbed columns → brown with yellow lit ribs, lit branch → yellow with brown
+#   ribs, maroon hollows → black with red edges and drips, void → black.
+scene "Ribbed Root Path of the Dead"
+variants night
+
+# ---- helpers ---------------------------------------------------------------------------
+# evenly spaced [x, y] points along a path
+fn pts_along(path, step) {
+  let out = []
+  for p in along(path, step) { push(out, [p[0], p[1]]) }
+  push(out, path[-1])
+  return out
+}
+
+# ribbed tube: body band, rib lines across it (from fraction `from` of the width on the
+# left side to the right side), and a lit rim inside its left-hand (upper) edge
+fn tube(path, w, w2, body = darkgrey, rib = black, rim = cyan, step = 6, from = 0) {
+  let d = pts_along(path, step)
+  let p = band(d, w, w2)
+  shape(p, body)
+  let n = len(d)
+  color rib
+  for i in 1..n - 1 {
+    let a = p[i]
+    let b = p[2 * n - 1 - i]
+    let bx = b[0] + (a[0] - b[0]) * from
+    let by = b[1] + (a[1] - b[1]) * from
+    stroke a[0], a[1], bx, by
+  }
+  if rim != null {
+    color rim
+    stroke offset(d, -(min(w, w2) / 2 - 1.5))
+  }
+}
+
+# fan of rib strokes in the background: from radius r1 to r2 around (cx, cy), angles a1..a2
+fn fan(cx, cy, r1, r2, a1, a2, n, c = black, seed = 1) {
+  color c
+  for i in 0..n {
+    let a = a1 + (a2 - a1) * (i + 0.5 * noise(seed, i)) / n
+    let rr = r2 * (0.85 + 0.15 * noise(seed + 7, i))
+    stroke cx + sin(a) * r1 / 2, cy - cos(a) * r1, cx + sin(a) * rr / 2, cy - cos(a) * rr
+  }
+}
+
+# maroon-shadowed hollow: black with red drips hanging from its top edge
+fn hollow(pts, drips) {
+  shape(pts, black, red)
+  color red
+  for d in drips { stroke d[0], d[1], d[0] + d[3], d[1] + d[2] }
+}
+
+# ---- background tangle and the void ------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 0, 0, 159, 123
+}
+color black
+rect 0, 120, 159, 167
+
+# ribbed fan sheets behind everything
+fan(10, 90, 20, 90, -40, 30, 11, black, 1)
+fan(70, 60, 10, 60, -70, 20, 12, black, 2)
+fan(150, 30, 4, 44, 200, 320, 8, black, 3)
+fan(120, 130, 10, 50, -80, 40, 12, black, 4)
+fan(0, 0, 6, 40, 100, 170, 7, black, 6)
+
+# big ribbed sheets: the skirt under the top pod and the top right corner
+shape([[18, 44], [30, 62], [44, 68], [56, 48], [62, 72], [60, 92], [40, 98], [20, 102]], darkgrey)
+fan(42, 30, 34, 72, 140, 220, 9, black, 8)
+shape([[122, -1], [160, -1], [160, 44], [146, 41], [134, 36], [126, 20]], darkgrey)
+fan(170, 40, 10, 50, 250, 340, 7, black, 9)
+color cyan
+stroke [[126, 20], [134, 36], [146, 41]]
+
+# the low ribbed sheets behind the bridge and the legs
+delay {
+  shape([[56, 80], [90, 74], [126, 66], [159, 74], [159, 122], [40, 122], [40, 100]], darkgrey)
+}
+fan(100, 150, 40, 80, -60, 60, 13, black, 10)
+color cyan
+stroke [[92, 76], [126, 68], [158, 76]]
+
+# ---- maroon hollows -----------------------------------------------------------------------
+hollow([[56, 47], [63, 47], [70, 55], [80, 63], [80, 70], [70, 73], [63, 77], [59, 64]],
+       [[60, 49, 10, 0], [64, 50, 18, 0], [68, 55, 14, 0], [73, 59, 11, 0], [77, 63, 7, 0]])
+hollow([[30, 54], [33, 64], [39, 68], [46, 64], [51, 56], [45, 60], [38, 61]],
+       [[33, 60, 6, 0], [38, 62, 6, 0], [44, 61, 5, 0]])
+hollow([[96, 86], [106, 86], [114, 92], [118, 104], [112, 119], [100, 120], [94, 102]],
+       [[100, 88, 18, 3], [106, 88, 24, 4], [112, 93, 18, 3]])
+hollow([[124, 96], [134, 98], [142, 104], [144, 114], [138, 119], [126, 116]],
+       [[128, 98, 14, 3], [135, 100, 12, 3]])
+hollow([[36, 108], [50, 104], [66, 100], [80, 98], [78, 118], [36, 118]],
+       [[44, 107, 8, 1], [52, 105, 10, 1], [60, 103, 12, 1], [68, 101, 10, 1]])
+
+# ---- far tubes in the tangle --------------------------------------------------------------
+# long pale tube arching across the top left
+tube([[-4, 40], [6, 28], [18, 18], [34, 9], [52, 3], [72, -2]], 12, 10)
+# the sheath curling round the top pod
+tube([[30, 64], [29, 48], [31, 34], [38, 22], [50, 13], [66, 8]], 12, 9)
+# broad pale sheet down the left side
+tube([[10, 60], [9, 80], [6, 104]], 16, 14)
+# thin tube down the left side
+tube([[24, 100], [20, 82], [20, 64], [24, 48]], 6, 5)
+
+# ---- pale green pods and the tall stalk ---------------------------------------------------
+# top pod, inside its sheath
+shape([[37, 44], [35, 35], [39, 25], [47, 17], [56, 11], [62, 11], [64, 17], [62, 27],
+       [56, 35], [47, 42]], lightgreen)
+color green
+stroke [[39, 42], [38, 33], [43, 24], [52, 16]]
+stroke [[45, 41], [52, 36], [58, 30]]
+# left bulb
+shape([[0, 40], [9, 38], [15, 42], [18, 51], [16, 61], [9, 66], [0, 64]], lightgreen)
+color green
+stroke [[3, 62], [10, 61], [14, 54]]
+# top-centre pod
+tube([[70, 26], [70, 14], [74, 4], [80, -2]], 9, 8, darkgrey, black, null, 5)
+shape(blob(78, 7, 5, 11, 3, 0.1), lightgreen)
+color green
+stroke [[75, 14], [74, 6], [76, 0]]
+
+# tall stalk: shaded left half, lit right half
+shape([[99, -1], [122, -1], [120, 20], [118, 40], [116, 56], [112, 68], [104, 72], [100, 52],
+       [98, 26]], green)
+shape([[110, -1], [122, -1], [120, 20], [118, 40], [116, 56], [112, 66], [111, 40], [111, 18]],
+      lightgreen, null)
+color black
+stroke [[102, 6], [101, 30], [103, 54]]
+stroke [[106, 4], [106, 36], [107, 62]]
+color green
+stroke [[114, 20], [114, 44]]
+
+# ---- golden lit tubes ---------------------------------------------------------------------
+# broad ochre column in the middle, flaring at the top: brown body, yellow lit ribs,
+# a black shadow down its right side
+shape([[66, 40], [66, 26], [72, 16], [82, 12], [92, 16], [97, 26], [95, 44], [90, 58],
+       [88, 76], [79, 77], [80, 62], [74, 50]], brown)
+color yellow
+stroke [[68, 36], [68, 26], [73, 18], [80, 14]]
+stroke [[71, 40], [72, 28], [77, 18]]
+stroke [[75, 46], [76, 32], [80, 20], [84, 16]]
+stroke [[80, 52], [80, 36], [86, 22]]
+stroke [[81, 74], [82, 60], [86, 46], [90, 30], [90, 20]]
+color black
+stroke [[93, 30], [91, 44], [87, 58], [86, 74]]
+# ochre column on the right, hooking off to the top right
+shape([[117, 68], [116, 50], [118, 36], [123, 25], [133, 16], [146, 9], [152, 13], [140, 22],
+       [132, 32], [129, 48], [128, 66]], brown)
+color yellow
+stroke [[119, 64], [118, 48], [121, 36], [127, 26], [136, 18], [146, 12]]
+stroke [[123, 60], [122, 46], [126, 34]]
+color black
+stroke [[126, 64], [127, 48], [130, 36], [138, 24]]
+
+# ---- big teal leaf on the right ---------------------------------------------------------
+shape([[112, 50], [120, 43], [132, 40], [146, 42], [156, 47], [161, 55], [161, 80], [150, 81],
+       [139, 75], [127, 66], [117, 58]], cyan)
+color lightcyan
+stroke [[118, 50], [132, 56], [146, 64], [159, 72]]
+stroke [[130, 45], [138, 52]]
+stroke [[144, 46], [150, 56]]
+stroke [[128, 60], [134, 66]]
+color blue
+stroke [[124, 62], [138, 72], [150, 79]]
+
+# ---- background tubes on the right and the red crack at the top right -------------------
+tube([[159, 90], [150, 96], [145, 106], [147, 118]], 12, 10)
+tube([[120, 84], [127, 97], [133, 110], [135, 122]], 8, 8)
+tube([[87, 80], [85, 98], [84, 114], [83, 130]], 6, 5)
+color red
+stroke [[144, 14], [141, 26], [138, 38]]
+stroke [[141, 26], [148, 24]]
+stroke [[140, 33], [150, 34]]
+
+# ---- the bridge and its golden branch ------------------------------------------------------
+tube([[58, 84], [72, 80], [86, 76], [100, 72], [112, 68], [122, 62], [128, 55]], 14, 10,
+     yellow, brown, null, 13, 0.6)
+color brown
+stroke offset(pts_along([[58, 84], [72, 80], [86, 76], [100, 72], [112, 68], [122, 62], [128, 55]], 6), 4)
+tube([[-6, 116], [8, 108], [22, 101], [38, 95], [52, 90], [64, 85]], 24, 14, green,
+     black, lightgreen, 8, 0.55)
+
+# ---- hanging root legs ----------------------------------------------------------------------
+fn leg(path, w, w2) {
+  tube(path, w, w2, darkgrey, black, cyan, 5)
+  let e = path[-1]
+  shape([[e[0] - 4, e[1] + 1], [e[0] - 2, e[1] - 2], [e[0] + 2, e[1] - 2], [e[0] + 4, e[1] + 1]],
+        darkgrey)
+}
+leg([[38, 110], [39, 122], [37, 132]], 6, 4)
+leg([[48, 108], [54, 121], [60, 131]], 5, 3)
+leg([[76, 100], [78, 116], [77, 127]], 7, 5)
+leg([[106, 110], [105, 121]], 6, 6)
+leg([[136, 104], [137, 114], [135, 123]], 10, 8)
+
+# ---- great curling ramp root at the lower left ----------------------------------------------
+let ramp_edge = [[12, 109], [18, 120], [24, 127], [30, 135], [36, 142], [44, 150], [52, 157],
+                 [58, 163], [61, 168]]
+shape([[-1, 104]] + ramp_edge + [[-1, 168]], green)
+color black
+for i in 1..len(ramp_edge) - 1 {
+  let e = ramp_edge[i]
+  stroke e[0], e[1], e[0] - 14, e[1] + 4 + i
+}
+color lightgreen
+stroke offset(ramp_edge, -2)
+color lightgreen
+stroke [[8, 104], [8, 130], [7, 168]]
+color black
+stroke [[11, 112], [11, 168]]
+
+frame()

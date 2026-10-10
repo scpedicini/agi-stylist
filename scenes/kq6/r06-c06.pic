@@ -1,0 +1,290 @@
+# Thorn Shore of the Golden Idol
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c06.png; reframed with:
+#   pnpm grid reference/kq6/r06-c06.png --name kq6-r06-c06
+# Method: translated by eye. Kept: moon, teal sky, two dark islands, strip of sea, row of
+#   thorn spires, the golden spiked idol head and its fallen arm, pale moonlit ledge, the
+#   lit ribbed floor, twisted left trunk, ceiling with drips, thorny tentacle mass on the
+#   right, ribbed root-tentacles in the foreground, the toothed tentacle mouth.
+#   Dropped: hundreds of small thorns, rib texture on every root, haze gradients.
+# Colours: teal night sky → cyan, pale lime moon → yellow, sea → blue + cyan ripples,
+#   islands → darkgrey, thorns → black with lightcyan moonlit rims, idol → yellow / brown,
+#   ledge → cyan + lightcyan edge, roots / tentacles → blue with black ribs and lightblue
+#   rims, lit floor → lightblue with blue rib arcs, trunk / tendrils / ceiling → black
+#   silhouettes with lightcyan moonlit rims.
+scene "Thorn Shore of the Golden Idol"
+variants night
+
+# ---- helpers ---------------------------------------------------------------------------
+# a thick band following a path (w = half-width in rows), as polygon points
+fn band(pts, w, w2 = -1) {
+  if w2 < 0 { w2 = w }
+  let left = []
+  let right = []
+  let n = len(pts)
+  for i in 0..n {
+    let a = pts[max(i - 1, 0)]
+    let b = pts[min(i + 1, n - 1)]
+    let dx = (b[0] - a[0]) * 2
+    let dy = b[1] - a[1]
+    let d = sqrt(dx * dx + dy * dy)
+    let t = n > 1 ? i / (n - 1) : 0
+    let ww = w + (w2 - w) * t
+    let nx = -dy / d * ww / 2
+    let ny = dx / d * ww
+    push(left, [pts[i][0] + nx, pts[i][1] + ny])
+    push(right, [pts[i][0] - nx, pts[i][1] - ny])
+  }
+  let out = left
+  for i in 0..n {
+    push(out, right[n - 1 - i])
+  }
+  return out
+}
+
+# points along a path, about `step` rows/columns apart
+fn dense(pts, step = 2.5) {
+  let out = [pts[0]]
+  for i in 1..len(pts) {
+    let a = pts[i - 1]
+    let b = pts[i]
+    let k = max(1, round(sqrt((b[0] - a[0]) * (b[0] - a[0]) * 4 + (b[1] - a[1]) * (b[1] - a[1])) / step))
+    for j in 1..=k {
+      push(out, [a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k])
+    }
+  }
+  return out
+}
+
+# ribbed root / tentacle: body, rib stripes across it, a lit rim on its upper side
+fn root(pts, w, w2 = -1, body = blue, rib = black, rim = lightblue, every = 2) {
+  if w2 < 0 { w2 = w }
+  let d = dense(pts, 3.5)
+  let p = band(d, w, w2)
+  shape(p, body)
+  let n = len(d)
+  color rib
+  for i in 1..n - 1 {
+    if i % every != 0 { continue }
+    let a = p[i]
+    let b = p[2 * n - 1 - i]
+    if max(a[0], b[0]) > 159 || max(a[1], b[1]) > 167 || min(a[0], b[0]) < 0 { continue }
+    line a[0], a[1], b[0], b[1]
+  }
+  color rim
+  for i in 1..n {
+    let a = p[2 * n - i]
+    let b = p[2 * n - 1 - i]
+    if max(a[0], b[0]) > 159 || max(a[1], b[1]) > 167 || min(a[0], b[0]) < 0 { continue }
+    line a[0], a[1], b[0], b[1]
+  }
+}
+
+# moonlit silhouette (trunk, thorny tendril): black band with a lightcyan rim all round,
+# and optional thorns sticking out of its upper side
+fn sil(pts, w, w2 = -1, thorns = 0) {
+  if w2 < 0 { w2 = w }
+  let d = dense(pts, 3)
+  let p = band(d, w, w2)
+  shape(p, black, lightcyan)
+  let n = len(d)
+  if thorns > 0 {
+    color lightcyan
+    for i in 1..n - 1 {
+      if i % thorns != 0 { continue }
+      let a = p[2 * n - 1 - i]
+      let b = p[i]
+      line a[0], a[1], a[0] + (a[0] - b[0]) * 0.5 - 1, a[1] + (a[1] - b[1]) * 0.5 - 2
+    }
+  }
+}
+
+# a thorn spire: base centre (x, y), height h, half-width w, tip leaning by `lean`
+fn spire(x, y, h, w, lean = 0, body = black) {
+  shape([[x - w, y], [x - w / 3 + lean / 2, y - h / 2], [x + lean, y - h],
+         [x + w / 3 + lean / 2, y - h / 2], [x + w, y]], body)
+  color lightcyan
+  line x + lean, y - h + 1, x + w / 3 + lean / 2, y - h / 2, x + w - 1, y - 1
+}
+
+# ---- sky and moon ----------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color cyan
+  rect 0, 0, 159, 75
+}
+shape(blob(67, 33, 8, 12, 2, 0), yellow, null)
+color lightgreen
+line arc(67, 33, 7, 11, 200, 320, 20)
+
+# ---- far islands -----------------------------------------------------------------------
+shape([[44, 58], [49, 52], [53, 45], [56, 44], [58, 49], [62, 52], [66, 46], [69, 40],
+       [72, 38], [75, 44], [80, 50], [84, 58]], darkgrey)
+color lightcyan
+line 72, 38, 75, 44, 79, 50
+line 56, 44, 58, 49
+
+# ---- sea, and the shadowed ground below everything ---------------------------------------
+color blue
+rect 0, 58, 120, 76
+color cyan
+line 30, 62, 44, 62
+line 56, 64, 72, 64
+line 36, 67, 50, 67
+line 60, 70, 76, 70
+color lightcyan
+line 48, 59, 64, 59
+delay 2 {
+  color black
+  rect 0, 76, 159, 167
+}
+
+# ---- the row of thorn spires behind the idol --------------------------------------------
+delay {
+  shape([[30, 78], [30, 72], [50, 72], [66, 70], [80, 64], [100, 60], [130, 50], [159, 40],
+         [159, 95], [30, 95]], black, null)
+}
+spire 34, 78, 14, 3, -2
+spire 42, 78, 10, 2, 1
+spire 52, 78, 18, 3, 2
+spire 60, 78, 24, 3, 3
+spire 70, 76, 20, 3, 2
+spire 77, 74, 30, 3, 3
+spire 85, 74, 38, 4, 3
+spire 92, 76, 26, 3, 2
+spire 114, 72, 32, 3, 2
+spire 120, 70, 38, 4, 4
+spire 127, 70, 32, 3, 3
+spire 134, 68, 28, 3, 4
+
+# ---- the golden idol: crown of spikes, face, fallen arm --------------------------------
+fn idol() {
+  # the arm, lying down to the left (drawn first so the head sits on it)
+  let arm = band(dense([[110, 72], [96, 77], [82, 81], [70, 84], [62, 86]]), 5, 3)
+  shape(arm, yellow)
+  color brown
+  line 62, 88, 74, 86, 90, 81, 106, 77
+  # crown of spikes, like a ragged flame of leaves
+  let spikes = [[100, 14, 1], [96, 20, -2], [104, 22, 3], [92, 28, -3], [108, 30, 4],
+                [89, 36, -4], [112, 38, 4]]
+  for s in spikes {
+    shape([[s[0] - 3, 48], [s[0] - 1 + s[2] / 2, (s[1] + 48) / 2], [s[0], s[1]],
+           [s[0] + 1 + s[2] / 2, (s[1] + 48) / 2], [s[0] + 3, 48]], yellow)
+    color brown
+    line s[0] + 1, s[1] + 6, s[0] + 1 + s[2] / 2, (s[1] + 48) / 2 + 2
+  }
+  # head: long, grim, skull-like
+  shape([[88, 45], [111, 45], [110, 54], [107, 62], [104, 72], [100, 76], [95, 76], [91, 70],
+         [88, 60]], yellow)
+  color brown
+  line 89, 46, 110, 46
+  # heavy brow, deep eye sockets
+  color brown
+  line 89, 50, 95, 49, 99, 52, 104, 49, 110, 50
+  shape([[91, 52], [96, 51], [97, 57], [93, 58]], black, null)
+  shape([[102, 51], [107, 52], [106, 58], [102, 57]], black, null)
+  # nose, sunken cheeks, grim mouth, beard
+  color brown
+  line 99, 54, 98, 61, 100, 62
+  line 91, 58, 93, 63
+  line 107, 58, 105, 63
+  color black
+  line 93, 69, 95, 67, 104, 67, 106, 69
+  color brown
+  line 96, 70, 97, 75
+  line 99, 70, 99, 76
+  line 102, 70, 101, 75
+}
+idol()
+# a few black thorns crossing the arm
+color black
+for t in [[72, 86, 10], [82, 83, 14], [94, 80, 10]] {
+  line t[0], t[1] + 3, t[0] + 2, t[1] - t[2]
+}
+
+# ---- the pale moonlit ledge -------------------------------------------------------------
+shape([[54, 92], [64, 93], [80, 91], [96, 88], [110, 90], [114, 98], [104, 103], [86, 104],
+       [70, 102], [56, 100]], cyan)
+color lightcyan
+line 55, 92, 64, 93, 80, 91, 96, 88, 110, 90
+color black
+line 60, 97, 76, 98, 94, 97
+# lower slab, in shadow behind the floor
+shape([[78, 107], [100, 105], [116, 108], [114, 118], [96, 120], [78, 116]], cyan)
+color lightcyan
+line 79, 107, 100, 105, 116, 108
+
+# ---- the lit ribbed floor -------------------------------------------------------------
+shape([[40, 140], [60, 128], [82, 122], [110, 118], [140, 124], [159, 132], [159, 167],
+       [40, 167]], lightblue)
+color blue
+for i in 0..7 {
+  let pts = []
+  for q in arc(118, 196, 74 - i * 9, 68 - i * 8, 285, 365, 8) {
+    if q[1] <= 167 && q[0] <= 159 { push(pts, q) }
+  }
+  if len(pts) > 1 { line pts }
+}
+
+# ---- right: thorny tentacle mass under the arch ----------------------------------------
+shape([[159, 14], [152, 24], [144, 40], [132, 56], [120, 72], [112, 88], [110, 104],
+       [114, 120], [124, 132], [159, 136]], black)
+sil([[112, 110], [122, 94], [134, 74], [146, 54], [156, 36]], 5, 3, 4)
+root([[122, 124], [132, 108], [144, 90], [154, 72], [162, 56]], 6, 4, blue, black, lightblue)
+sil([[132, 104], [140, 90], [148, 74], [156, 62], [162, 50]], 4, 3)
+root([[136, 134], [146, 118], [152, 102], [162, 88]], 6, 5, blue, black, lightblue)
+# the overhanging arch on the top right, with drips
+shape([[108, 0], [159, 0], [159, 34], [155, 18], [146, 9], [130, 4], [114, 2]], black)
+color lightcyan
+line 114, 2, 130, 4, 146, 9, 155, 18, 158, 30
+color darkgrey
+line 133, 4, 133, 14
+line 137, 5, 137, 18
+line 143, 8, 143, 24
+line 147, 10, 147, 20
+
+# ---- left: wall, ceiling, drips and the twisted trunk ----------------------------------
+shape([[0, 0], [44, 0], [38, 6], [28, 10], [18, 14], [12, 24], [8, 40], [6, 70], [10, 100],
+       [0, 110]], black)
+color lightcyan
+line 44, 0, 38, 6, 28, 10, 18, 14, 12, 24, 8, 40
+color darkgrey
+line 47, 0, 47, 28
+line 61, 0, 61, 8
+line 64, 0, 64, 5
+line 22, 13, 22, 34
+line 26, 11, 25, 42
+# wall roots climbing the left edge
+sil([[2, 104], [10, 86], [14, 66], [18, 52], [22, 42]], 6, 3)
+sil([[16, 98], [24, 84], [26, 70], [30, 60]], 5, 2)
+# the trunk winds down from the top and splits into roots
+let trunk = [[38, 0], [35, 14], [40, 26], [36, 40], [33, 56], [36, 70], [34, 86]]
+sil(trunk, 10, 12)
+# roots spreading from the trunk's foot
+sil([[34, 84], [24, 96], [14, 108], [4, 118]], 6, 4)
+sil([[36, 84], [32, 100], [26, 116], [22, 132]], 5, 4)
+
+# ---- foreground ribbed roots ------------------------------------------------------------
+root([[20, 104], [30, 98], [40, 96], [52, 100], [62, 108]], 5, 3)
+root([[0, 124], [14, 112], [26, 104], [36, 104]], 6, 4)
+root([[0, 150], [20, 136], [40, 124], [56, 120], [70, 124]], 7, 5)
+# the toothed tentacle mouth reaching for the ledge
+root([[30, 167], [44, 150], [56, 134], [64, 124], [72, 116]], 8, 5)
+color lightcyan
+for i in 0..6 {
+  let x = 62 + i * 3
+  let y = 110 + i * 2
+  line x, y, x + 1, y + 5
+}
+root([[0, 167], [12, 158], [24, 152], [34, 150]], 6, 5)
+root([[10, 140], [16, 150], [20, 167]], 6, 6)
+# right foreground roots
+root([[96, 167], [112, 156], [128, 148], [144, 144], [162, 140]], 7, 6)
+root([[88, 140], [104, 133], [120, 131], [136, 134]], 4, 3)
+color lightcyan
+for i in 0..7 {
+  let x = 92 + i * 6
+  line x, 127, x + 1, 132
+}
+
+frame()

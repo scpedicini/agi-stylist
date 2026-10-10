@@ -1,0 +1,211 @@
+# Path Below the Castle Wall
+# Source: King's Quest VI VGA background, reference/kq6/r03-c04.png
+#   (a dirt path climbing beside the lavender castle wall); reframed with:
+#   pnpm grid reference/kq6/r03-c04.png --name kq6-r03-c04
+# Method: translated by eye. Kept: the receding lavender wall with its two dark pilasters,
+#   the cornice ledge, the upper-storey arched and rose windows, the bare vines, the dirt path
+#   climbing to the upper right, the sky gap with far trees and a grey boulder, the overhanging
+#   foliage and fronds on the right, the dark bush, the fern clump and the two foreground
+#   boulders.
+# Dropped: the wall's plaster mottling, grass tufts along the wall foot, individual blades of
+#   grass, most of the fern detail, the small dark plant behind the left boulder.
+# Colours: lavender lit wall -> lightmagenta, shaded wall -> magenta, pilaster shadow -> blue,
+#   ledge -> white, rose windows -> lightred, arched windows -> blue, vines -> brown,
+#   path -> brown with yellow ruts, sky -> blue, far teal trees -> cyan, grass -> lightgreen,
+#   dark foliage -> green with black, boulders -> darkgrey with lightgrey rims.
+scene "Path Below the Castle Wall"
+variants day
+
+# ---- sky, far trees, back boulder ----------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color blue
+  rect 100, 0, 159, 70
+}
+blobs([[116, 50, 5, 10], [122, 44, 5, 10], [129, 38, 6, 12], [136, 46, 6, 10],
+       [143, 42, 6, 10], [151, 46, 6, 10], [158, 50, 5, 10], [130, 58, 16, 8],
+       [150, 58, 12, 8], [116, 58, 4, 6]], cyan, jag: 0.3, seed: 3)
+color black
+line 120, 52, 122, 48, 124, 52
+line 127, 44, 129, 40, 131, 46
+line 140, 50, 143, 46, 146, 50
+line 154, 52, 156, 48
+# ---- grass slope -----------------------------------------------------------------------------
+delay {
+  color lightgreen
+  rect 0, 60, 159, 167
+}
+# grey boulder behind the grass (drawn after the grass so its foot sits in it)
+shape([[114, 70], [117, 62], [121, 56], [127, 52], [136, 50], [146, 51], [154, 54], [159, 58],
+       [159, 70]], darkgrey)
+color lightgrey
+line 116, 64, 119, 58, 123, 54, 128, 52, 136, 51, 145, 52
+color black
+line 130, 58, 140, 62, 150, 60
+color green
+line 128, 74, 136, 72, 146, 74
+line 104, 112, 120, 110, 140, 112
+line 66, 140, 74, 134
+line 82, 124, 90, 118
+line 120, 80, 126, 78
+
+# ---- dirt path -------------------------------------------------------------------------------
+let wall_base = [[0, 132], [18, 130], [30, 128], [40, 122], [50, 114], [60, 107], [70, 99],
+                 [80, 86], [90, 76], [100, 69], [112, 64]]
+let path_low = [[126, 66], [118, 68], [108, 72], [98, 82], [88, 98], [80, 110], [72, 122],
+                [62, 132], [52, 140], [40, 148], [20, 152], [0, 152]]
+shape(wall_base + [[118, 63], [125, 63]] + path_low, brown)
+# pale far end of the path where it tops the rise
+shape([[112, 64], [118, 63], [125, 63], [126, 66], [118, 68], [112, 67]], yellow, null)
+color yellow
+line 30, 138, 44, 130, 56, 120
+line 64, 114, 72, 106, 80, 96
+line 86, 88, 94, 80, 102, 74
+line 46, 142, 58, 132
+color black
+line path_low
+
+# ---- castle wall -----------------------------------------------------------------------------
+# lit face receding to the right
+shape([[22, 0], [113, 0], [113, 64]] + [[100, 69], [90, 76], [80, 86], [70, 99], [60, 107],
+      [50, 114], [40, 122], [30, 128]], lightmagenta)
+# shaded section on the left and its dark pilaster
+shape([[0, 0], [22, 0], [22, 130], [0, 132]], magenta)
+shape([[22, 8], [30, 10], [30, 128], [22, 130]], blue)
+color black
+line 30, 10, 30, 128
+# second pilaster
+shape([[80, 20], [83, 21], [83, 83], [80, 86]], blue, null)
+color magenta
+line 50, 15, 50, 113
+line 112, 30, 112, 64
+# cornice ledges: white top, magenta shadow under it
+shape([[0, 0], [22, 6], [22, 10], [0, 4]], white, null)
+color magenta
+line 0, 5, 22, 11
+color white
+line 30, 10, 50, 13, 80, 20, 113, 29
+color magenta
+line 30, 11, 50, 14, 80, 21, 113, 30
+line 30, 12, 50, 15, 80, 22, 113, 31
+
+# upper storey windows
+fn rosewin(x1, y1, x2, y2) {
+  shape([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], white)
+  shape([[x1 + 2, y1], [x2 - 2, y1], [x2 - 2, y2 - 2], [x1 + 2, y2 - 2]], lightred, null)
+  color white
+  stroke (x1 + x2) / 2, y1, (x1 + x2) / 2, y2 - 2
+}
+rosewin 33, -2, 46, 6
+rosewin 86, -2, 97, 21
+fn archwin(cx, top, bottom) {
+  shape(archway(cx, top, 2, 3, bottom), blue)
+  color lightblue
+  line cx, top + 3, cx, bottom - 1
+}
+archwin 56, -2, 10
+archwin 65, -1, 13
+archwin 74, 0, 15
+archwin 102, 5, 26
+archwin 107, 9, 27
+archwin 111, 11, 28
+
+# bare vines climbing the wall
+fn vine(pts) {
+  color black
+  line shift(pts, 1, 0)
+  color brown
+  line pts
+}
+vine [[100, 68], [99, 58], [96, 48], [92, 40], [90, 30]]
+vine [[96, 48], [90, 44], [86, 38]]
+vine [[99, 58], [104, 52], [108, 46], [110, 40]]
+vine [[92, 40], [96, 34], [98, 28]]
+vine [[86, 38], [82, 42], [78, 50]]
+vine [[104, 52], [102, 44], [104, 38]]
+vine [[112, 50], [110, 44], [112, 36], [111, 30]]
+vine [[90, 56], [94, 52], [96, 48]]
+vine [[90, 56], [86, 54], [84, 50]]
+
+# ---- overhanging tree and fronds (right) ------------------------------------------------------
+blobs([[140, 4, 10, 6], [152, 6, 9, 10], [158, 2, 4, 4], [134, 14, 6, 5], [146, 20, 8, 6], [158, 26, 6, 10],
+       [130, 4, 6, 4]], green)
+color black
+line 136, 6, 140, 10, 146, 8
+line 148, 16, 152, 20, 156, 18
+line 132, 14, 136, 16
+color lightgreen
+line 142, 2, 146, 4
+line 150, 10, 154, 8
+blobs([[156, 46, 6, 14], [154, 70, 7, 14], [156, 94, 6, 14], [150, 60, 4, 8]], green,
+      jag: 0.3, seed: 9)
+color black
+line 154, 44, 152, 52, 156, 58
+line 152, 76, 156, 84
+line 154, 96, 152, 104
+frond(159, 34, 30, 250, 40)
+frond(159, 48, 34, 235, 50)
+frond(159, 62, 30, 220, 50)
+frond(150, 56, 24, 200, 30)
+frond(159, 90, 26, 240, 40)
+
+# ---- dark bush beside the path -----------------------------------------------------------------
+blobs([[98, 94, 8, 8], [108, 92, 8, 6], [116, 98, 6, 6], [94, 102, 6, 5], [106, 102, 8, 6]],
+      green, jag: 0.3, seed: 4)
+color black
+line 92, 96, 96, 100, 100, 98
+line 102, 90, 106, 96, 110, 94
+line 108, 100, 112, 104, 116, 100
+line 96, 104, 100, 106
+line 104, 98, 106, 104
+line 92, 92, 94, 90
+color lightgreen
+line 96, 90, 99, 88
+line 106, 88, 109, 87
+line 112, 96, 115, 94
+line 100, 100, 103, 98
+
+# ---- fern clump, lower right --------------------------------------------------------------------
+shape([[56, 167], [64, 154], [76, 146], [92, 140], [104, 134], [120, 126], [159, 120],
+       [159, 167]], green, null)
+color lightgreen
+line 70, 156, 76, 150
+line 86, 150, 92, 146
+blobs([[116, 144, 20, 16], [140, 134, 18, 16], [152, 150, 12, 18], [100, 158, 14, 10],
+       [130, 158, 20, 10], [148, 118, 10, 8]], green, jag: 0.3, seed: 7)
+shape(blob(126, 156, 16, 8, 3, 0.3), black, null)
+shape(blob(146, 144, 10, 8, 5, 0.3), black, null)
+color black
+for i in 0..14 {
+  let x = 100 + noise(51, i) * 58
+  let y = 130 + noise(52, i) * 36
+  line x - 4, y + 4, x, y, x + 4, y + 4
+}
+fern(108, 148, 28, 24, seed: 2, rib: cyan)
+fern(138, 142, 30, 28, seed: 5, rib: cyan)
+fern(124, 167, 34, 22, seed: 3, rib: cyan)
+fern(152, 167, 20, 18, seed: 6, rib: cyan)
+
+# ---- foreground boulders ----------------------------------------------------------------------
+color green
+line 2, 112, 6, 108, 10, 112
+line 12, 118, 16, 114
+shape([[0, 114], [6, 112], [14, 118], [22, 126], [30, 136], [40, 142], [50, 148], [58, 154],
+       [62, 160], [64, 167], [0, 167]], darkgrey)
+color lightgrey
+line 1, 115, 6, 113, 14, 119, 22, 127, 30, 137, 40, 143, 50, 149, 58, 155, 61, 160
+shape([[0, 146], [10, 150], [20, 156], [32, 160], [44, 164], [48, 167], [0, 167]],
+      black, null)
+color black
+line 10, 122, 16, 130, 18, 140
+line 28, 142, 34, 150
+color lightgrey
+line 4, 120, 8, 124
+line 22, 134, 26, 138
+shape([[50, 167], [54, 158], [62, 152], [72, 150], [80, 152], [86, 160], [88, 167]], darkgrey)
+color lightgrey
+line 55, 158, 62, 153, 72, 151, 79, 153
+shape([[70, 167], [74, 163], [82, 163], [86, 167]], black, null)
+
+frame()

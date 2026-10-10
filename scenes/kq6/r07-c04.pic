@@ -1,0 +1,260 @@
+# Castle Entry Hall
+# Source: King's Quest VI VGA background, reference/kq6/r07-c04.png
+#   (the Castle of the Crown entry hall); reframed with:
+#   pnpm grid reference/kq6/r07-c04.png --name kq6-r07-c04
+# Method: translated by eye. Kept: the vaulted arch and its lit back wall, the chandelier,
+#   the upper gallery balustrade, the three horseshoe arches with the throne-room doorway in
+#   the middle, the arcade pillars, the four big marble columns, the two staircase banisters
+#   with red-carpeted steps, the teal wall panels, the two vases and the patterned marble floor.
+# Dropped: column marbling, the two short columns behind the gallery rail, the dentil cornice detail, side-gallery stairs at the far edges,
+#   the floor reflections, most of the floor's diamond pattern and throne-room ornament.
+# Colours: cream/peach walls -> brown, lit vault back wall -> yellow, pink marble columns ->
+#   lightred with red shade and a white highlight, terracotta arcade -> red with yellow arch
+#   rims, cream balusters -> white on brown, dark recesses -> black, red stair carpet -> red
+#   with lightred/magenta steps, teal panels -> cyan, peach marble floor -> yellow with red
+#   patterned strips, chandelier -> black with yellow candles, vases -> red and black.
+scene "Castle Entry Hall"
+variants day
+
+# ---- helpers ---------------------------------------------------------------------------------
+fn column(x1, x2, top, bottom, cap = true) {
+  # pink marble shaft, shaded right side, white highlight, red base on a black plinth
+  shape([[x1, top], [x2, top], [x2, bottom], [x1, bottom]], lightred)
+  let sx = x2 - floor((x2 - x1) / 3)
+  shape([[sx, top + 1], [x2 - 1, top + 1], [x2 - 1, bottom - 1], [sx, bottom - 1]], red, null)
+  color white
+  line x1 + 2, top + 2, x1 + 2, bottom - 4
+  if cap {
+    shape([[x1 - 1, top], [x2 + 1, top], [x2 + 1, top + 2], [x1 - 1, top + 2]], red)
+  }
+  shape([[x1 - 1, bottom - 4], [x2 + 1, bottom - 4], [x2 + 1, bottom], [x1 - 1, bottom]], red)
+  shape([[x1 - 2, bottom], [x2 + 2, bottom], [x2 + 2, bottom + 2], [x1 - 2, bottom + 2]], darkgrey)
+}
+
+fn horseshoe(cx, top, rx, ry, bottom) {
+  # points of a horseshoe-arch opening: circle carried past the spring line, then straight down
+  let cy = top + ry
+  let pts = arc(cx, cy, rx, ry, 240, 480, 10)
+  push(pts, [cx + rx * 0.87, bottom])
+  push(pts, [cx - rx * 0.87, bottom])
+  return pts
+}
+
+fn balusters(x1, x2, y1, y2) {
+  color white
+  for x in range(x1, x2, 3) {
+    line x, y1, x, y2
+  }
+  color lightgrey
+  for x in range(x1, x2, 3) {
+    line x, y2 - 1, x, y2
+  }
+}
+
+# ---- walls and vault ---------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color brown
+  rect 0, 0, 159, 167
+}
+# dark recesses of the side galleries
+shape([[30, 0], [44, 0], [44, 47], [30, 47]], black, null)
+shape([[116, 0], [130, 0], [130, 47], [116, 47]], black, null)
+# the big vaulted arch: bright rim, shadowed soffit band, then the lit back wall
+shape(arc(80, 44, 46, 46, 270, 450, 10) + [[126, 50], [34, 50]], yellow)
+shape(arc(80, 45, 43, 43, 270, 450, 10) + [[123, 50], [37, 50]], brown, null)
+shape(arc(80, 46, 38, 39, 270, 450, 10) + [[118, 50], [42, 50]], yellow)
+# cornice across the back wall
+color brown
+line 42, 30, 118, 30
+color red
+line 42, 32, 118, 32
+
+# ---- upper gallery columns ---------------------------------------------------------------------
+column 40, 46, 14, 60
+column 114, 120, 14, 60
+
+# ---- chandelier --------------------------------------------------------------------------------
+color darkgrey
+line 80, 0, 80, 23
+shape([[78, 22], [82, 22], [83, 27], [77, 27]], black)
+# upper ring of candles, a cage of iron arms, then the lower bowl and its finial
+shape([[68, 28], [92, 28], [93, 31], [67, 31]], black)
+color black
+line 69, 31, 76, 39
+line 91, 31, 84, 39
+line 74, 31, 78, 39
+line 86, 31, 82, 39
+line 80, 31, 80, 39
+shape([[72, 38], [88, 38], [85, 42], [75, 42]], black)
+shape([[78, 42], [82, 42], [80, 46]], black, null)
+color yellow
+plot 68, 27, 72, 27, 76, 27, 84, 27, 88, 27, 92, 27
+line 69, 29, 91, 29
+line 74, 39, 86, 39
+color darkgrey
+line 70, 30, 90, 30
+
+# ---- gallery balustrade -----------------------------------------------------------------------
+shape([[46, 46], [114, 46], [114, 60], [46, 60]], brown)
+balusters 48, 113, 50, 56
+shape([[45, 45], [115, 45], [115, 48], [45, 48]], yellow)
+shape([[45, 57], [115, 57], [115, 60], [45, 60]], yellow)
+
+# ---- arcade wall with its three horseshoe arches ---------------------------------------------
+delay {
+  shape([[40, 60], [120, 60], [120, 122], [40, 122]], red)
+}
+color lightred
+line 41, 62, 119, 62
+color yellow
+for x in range(44, 118, 6) { plot x, 64 }
+
+# arch rims
+shape(horseshoe(55, 65, 11, 14, 120), yellow)
+shape(horseshoe(105, 65, 11, 14, 120), yellow)
+shape(horseshoe(80, 64, 12, 15, 120), yellow)
+# left and right openings: dark hall beyond
+shape(horseshoe(55, 68, 8, 11, 120), black)
+shape(horseshoe(105, 68, 8, 11, 120), black)
+shape([[48, 90], [62, 90], [62, 119], [48, 119]], brown, null)
+shape([[98, 90], [112, 90], [112, 119], [98, 119]], brown, null)
+# the far pillars seen through the side arches
+shape([[52, 82], [55, 82], [55, 112], [52, 112]], red)
+shape([[105, 82], [108, 82], [108, 112], [105, 112]], red)
+# the middle doorway into the throne room
+shape(horseshoe(80, 67, 9, 12, 120), lightred)
+shape([[73, 72], [87, 72], [87, 84], [73, 84]], yellow)
+color brown
+line 74, 76, 86, 76
+line 74, 80, 86, 80
+color red
+plot 76, 74, 80, 74, 84, 74, 76, 78, 80, 78, 84, 78, 78, 82, 82, 82
+# thrones and the red carpet running to the dais
+shape([[74, 88], [77, 88], [77, 96], [74, 96]], red)
+shape([[83, 88], [86, 88], [86, 96], [83, 96]], red)
+shape([[77, 96], [83, 96], [87, 120], [73, 120]], red)
+color brown
+line 72, 97, 77, 97
+line 83, 97, 88, 97
+
+# ---- floor ---------------------------------------------------------------------------------------
+shape([[30, 120], [130, 120], [160, 148], [160, 167], [0, 167], [0, 148]], yellow, null)
+# patterned strips running toward the arches
+fn strip(pts) {
+  shape(pts, red)
+}
+strip [[62, 121], [69, 121], [50, 167], [38, 167]]
+strip [[91, 121], [98, 121], [122, 167], [110, 167]]
+strip [[22, 132], [138, 132], [142, 136], [18, 136]]
+strip [[6, 150], [154, 150], [158, 155], [2, 155]]
+# yellow diamond zigzags inside the strips
+color yellow
+let zz = []
+for x in range(20, 141, 4) { push(zz, [x, x % 8 == 0 ? 133 : 135]) }
+line zz
+zz = []
+for x in range(4, 157, 6) { push(zz, [x, x % 12 == 4 ? 151 : 154]) }
+line zz
+zz = []
+for y in range(124, 166, 6) {
+  let t = (y - 121) / 46
+  push(zz, [65 - t * 21 + (y % 12 == 4 ? -2 : 2), y])
+}
+line zz
+zz = []
+for y in range(124, 166, 6) {
+  let t = (y - 121) / 46
+  push(zz, [95 + t * 21 + (y % 12 == 4 ? 2 : -2), y])
+}
+line zz
+# dark inlaid ovals
+fn inlay(cx, cy) {
+  shape([[cx - 3, cy], [cx - 2, cy - 1], [cx + 2, cy - 1], [cx + 3, cy], [cx + 2, cy + 1], [cx - 2, cy + 1]], darkgrey)
+}
+inlay 60, 128
+inlay 100, 128
+inlay 46, 143
+inlay 114, 143
+inlay 58, 162
+inlay 102, 162
+
+# ---- arcade pillars ------------------------------------------------------------------------------
+column 64, 70, 82, 120
+column 90, 96, 82, 120
+column 42, 47, 86, 117
+column 113, 118, 86, 117
+
+# ---- staircases and banisters ----------------------------------------------------------------------
+fn stairs(pts, x0, x1, dir) {
+  shape(pts, red)
+  for y in range(88, 168, 5) {
+    color lightred
+    line x0, y, x1, y
+    color magenta
+    line x0, y + 1, x1, y + 1
+  }
+}
+stairs([[0, 84], [6, 84], [16, 120], [24, 150], [32, 167], [0, 167]], 0, 30, 1)
+stairs([[160, 84], [154, 84], [144, 120], [136, 150], [128, 167], [160, 167]], 130, 159, -1)
+# re-cut the stair edge so the step lines don't spill onto the floor
+shape([[16, 121], [30, 121], [30, 167], [33, 167], [24, 150]], yellow, null)
+shape([[144, 121], [130, 121], [130, 167], [127, 167], [136, 150]], yellow, null)
+color yellow
+line 6, 84, 16, 120, 24, 150, 32, 167
+line 154, 84, 144, 120, 136, 150, 128, 167
+
+fn banister(top, bot) {
+  # brown band between a yellow hand-rail and a yellow stringer, white balusters inside
+  shape([top[0], top[1], bot[1], bot[0]], brown)
+  color white
+  for i in range(1, 10) {
+    let t = i / 10
+    let ax = top[0][0] + (top[1][0] - top[0][0]) * t
+    let ay = top[0][1] + (top[1][1] - top[0][1]) * t
+    let bx = bot[0][0] + (bot[1][0] - bot[0][0]) * t
+    let by = bot[0][1] + (bot[1][1] - bot[0][1]) * t
+    line ax, ay + 2, bx, by - 2
+  }
+  color yellow
+  line top[0], top[1]
+  line shift([top[0], top[1]], 0, 1)
+  line bot[0], bot[1]
+  color black
+  line shift([bot[0], bot[1]], 0, 1)
+}
+banister([[44, 47], [12, 100]], [[44, 60], [16, 116]])
+banister([[116, 47], [148, 100]], [[116, 60], [144, 116]])
+
+# ---- teal wall panels ----------------------------------------------------------------------------
+shape([[34, 92], [37, 92], [37, 122], [34, 122]], cyan)
+shape([[123, 92], [126, 92], [126, 122], [123, 122]], cyan)
+
+# ---- the big marble columns ----------------------------------------------------------------------
+column 25, 32, -2, 134, false
+column 128, 135, -2, 134, false
+column 9, 21, -2, 146, false
+column 139, 151, -2, 146, false
+
+# ---- vases -----------------------------------------------------------------------------------------
+fn vase(cx) {
+  # tall amphora: flared lip, narrow neck, handle, round belly, black foot
+  color black
+  line arc(cx + 3, 124, 3, 6, 0, 180, 30)
+  shape([[cx - 3, 113], [cx + 3, 113], [cx + 1, 116], [cx + 1, 122], [cx - 1, 122], [cx - 1, 116]], red)
+  shape(blob(cx, 133, 5, 11, 2, 0.05), red)
+  shape([[cx - 5, 131], [cx + 5, 131], [cx + 5, 135], [cx - 5, 135]], black, null)
+  color yellow
+  line cx - 3, 113, cx + 3, 113
+  line cx - 4, 131, cx + 4, 131
+  line cx - 4, 135, cx + 4, 135
+  plot cx - 2, 133, cx, 134, cx + 2, 133
+  color lightred
+  line cx - 3, 125, cx - 3, 128
+  shape([[cx - 2, 144], [cx + 2, 144], [cx + 3, 148], [cx - 3, 148]], black)
+}
+vase 24
+vase 136
+
+frame()

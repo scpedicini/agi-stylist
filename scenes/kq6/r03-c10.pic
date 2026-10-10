@@ -1,0 +1,302 @@
+# Fireside Library
+# Source: King's Quest VI (VGA) - reference/kq6/r03-c10.png; reframed with:
+#   pnpm grid reference/kq6/r03-c10.png --name kq6-r03-c10
+# Method: translated by eye. Kept: beamed plank ceiling, plaster side wall with its corner,
+#   trophy shield, sunlit doorway and window, the small bookcase, the wall of bookshelves, the
+#   round stone fireplace with its fire and chandelier, the red armchair, footstool, round rug,
+#   the bench on the right, the stacked green and red books on the left and the row of giant
+#   books in the foreground. Dropped: wood grain, individual books and stones, candles on the
+#   chandelier, the little box by the bookcase, the sunlit landscape through the door.
+# Colours: plank ceiling → brown with yellow seams, dark beams → red with black undersides,
+#   peach plaster → yellow, sunlight → white, wood floor → brown, rug → yellow, blue-grey stone
+#   → lightgrey/darkgrey, armchair → red/lightred, page edges → lightgrey with darkgrey lines,
+#   maroon book covers → magenta, olive book → green.
+scene "Fireside Library"
+variants day
+
+# ---- plaster walls and the wooden floor -------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 3 {
+  color yellow
+  rect 0, 0, 159, 122
+}
+delay 2 {
+  shape([[38, 120], [76, 100], [159, 100], [159, 167], [0, 167], [0, 120]], brown, null)
+}
+
+# ---- ceiling: dark top band, planks and two beams ---------------------------------------
+# the planked ceiling, from the top band down to the back wall and the left wall top
+shape([[20, 22], [60, 17], [100, 10], [159, 3], [159, 50], [76, 50], [63, 48], [38, 39],
+       [20, 26]], brown, null)
+# plank seams: short slanted yellow strokes between the bands
+fn seams(x1, x2, ytop1, ytop2, ybot1, ybot2, step, s) {
+  color yellow
+  for x in range(x1, x2, step) {
+    let t = (x - x1) / (x2 - x1)
+    let yt = ytop1 + (ytop2 - ytop1) * t
+    let yb = ybot1 + (ybot2 - ybot1) * t
+    line x + 2, yt + 1, x - 1, yb - 1
+  }
+}
+seams 26, 159, 20, 4, 37, 22, 7, 1
+seams 42, 159, 41, 28, 44, 34, 6, 2
+seams 66, 159, 49, 42, 50, 49, 6, 3
+# top band (dark beam along the top of the picture)
+shape([[0, 0], [159, 0], [159, 3], [100, 10], [60, 17], [20, 22], [0, 24]], red, null)
+color black
+line 20, 22, 60, 17, 100, 10, 159, 3
+line 0, 8, 60, 6, 120, 2
+# two beams across the ceiling
+fn beam(x1, y1, x2, y2, h) {
+  shape([[x1, y1], [x2, y2], [x2, y2 + h], [x1, y1 + h]], red, null)
+  color black
+  line x1, y1 + h, x2, y2 + h
+  color lightred
+  line x1, y1, x2, y2
+}
+beam 38, 35, 159, 21, 4
+beam 62, 43, 159, 35, 4
+
+# ---- left corner: dark wood post and the wall corner -------------------------------------
+shape([[0, 24], [20, 22], [20, 110], [0, 110]], red, null)
+color black
+line 6, 26, 6, 60
+line 13, 25, 13, 62
+color white
+line 20, 26, 20, 64
+
+# left wall top edge, where it meets the ceiling
+color black
+line 20, 26, 38, 39, 63, 48, 76, 50
+
+# ---- trophy shield on the left wall ------------------------------------------------------
+shape([[32, 50], [36, 47], [40, 50], [40, 58], [36, 66], [32, 58]], brown)
+shape([[34, 52], [36, 50], [38, 52], [38, 57], [36, 61], [34, 57]], yellow, null)
+color red
+line 36, 52, 36, 58
+
+# ---- the sunlit doorway ------------------------------------------------------------------
+shape([[28, 70], [40, 70], [40, 118], [28, 118]], white)
+shape([[28, 104], [32, 98], [36, 101], [40, 96], [40, 118], [28, 118]], yellow, null)
+shape([[40, 70], [43, 70], [43, 117], [40, 118]], brown)
+
+# ---- the window behind the small bookcase ------------------------------------------------
+shape([[50, 62], [72, 62], [72, 96], [50, 98]], white)
+color yellow
+line 55, 63, 55, 97
+line 61, 63, 61, 97
+line 67, 63, 67, 96
+line 51, 72, 71, 72
+
+# ---- the wall of bookshelves --------------------------------------------------------------
+let book_colors = [red, blue, magenta, darkgrey, green, lightred, cyan, red, blue, brown]
+fn books(x1, x2, ybot, h, s) {
+  for x in x1..=x2 {
+    if noise(s, x) >= 0.15 {
+      color book_colors[floor(noise(s + 1, x) * len(book_colors))]
+      line x, ybot - 1, x, ybot - h + floor(noise(s + 2, x) * 3)
+    }
+  }
+}
+delay {
+  shape([[76, 50], [159, 50], [159, 101], [76, 101]], brown)
+}
+for i in 0..6 {
+  let y = 58 + i * 8
+  books 77, 158, y, 6, 40 + i * 3
+  color yellow
+  line 76, y, 159, y
+  color black
+  line 76, y + 1, 159, y + 1
+}
+# uprights
+for x in [86, 143] {
+  color yellow
+  line x, 50, x, 100
+  color black
+  line x + 1, 50, x + 1, 100
+}
+
+# ---- round stone fireplace -----------------------------------------------------------------
+let hearth = [[108, 47], [110, 44], [114, 43], [118, 44], [121, 48], [122, 55], [124, 60],
+              [124, 67], [126, 72], [126, 80], [128, 86], [127, 93], [129, 101], [100, 101],
+              [101, 94], [100, 88], [103, 80], [103, 72], [105, 66], [105, 58], [107, 53]]
+shape(hearth, black)
+# cobbles: courses of lumpy stones on black mortar, lit on the left, shadowed on the right
+for row in 0..10 {
+  let sy = 49 + row * 5.4
+  let half = 5 + row * 0.9
+  let off = (row % 2) * 2
+  for k in 0..8 {
+    let sx = 114 - half + off + k * 4.5
+    if sx > 114 + half { break }
+    let c = sx > 114 + half * 0.45 ? darkgrey : lightgrey
+    shape(blob(sx, sy, 1.5, 1.9, 70 + row * 8 + k, 0.3, 7), c, null)
+  }
+}
+color white
+line 109, 46, 107, 53, 105, 60
+line 104, 70, 103, 78
+# the firebox and the fire
+shape([[103, 101], [103, 88], [106, 82], [111, 79], [116, 81], [120, 87], [121, 101]], black)
+shape([[104, 101], [105, 92], [108, 85], [110, 90], [112, 83], [115, 88], [118, 86], [120, 101]],
+      lightred, null)
+shape([[107, 101], [108, 94], [110, 90], [111, 94], [113, 89], [115, 95], [115, 101]], yellow, null)
+color white
+line 111, 96, 111, 100
+line 113, 97, 113, 100
+
+# ---- chandelier: an iron ring of red candles hanging over the chimney top ---------------
+color black
+line 114, 28, 114, 45
+line 107, 46, 121, 46
+for x in [108, 112, 116, 120] {
+  color red
+  line x, 42, x, 45
+  color yellow
+  line x, 41
+}
+
+# ---- the small bookcase in front of the window -------------------------------------------
+shape([[52, 84], [75, 77], [75, 99], [55, 108], [52, 106]], brown)
+for i in 0..3 {
+  let y0 = 91 + i * 7
+  for x in 53..=74 {
+    if noise(90 + i, x) >= 0.15 {
+      color book_colors[floor(noise(91 + i, x) * len(book_colors))]
+      let base = y0 - (x - 53) * 0.32
+      line x, base - 1, x, base - 5
+    }
+  }
+  color yellow
+  line 53, y0, 74, y0 - 7
+  color black
+  line 53, y0 + 1, 74, y0 - 6
+}
+color black
+line 52, 84, 52, 106
+
+# ---- floor, rug, armchair and footstool ---------------------------------------------------
+color black
+line 38, 120, 76, 100, 159, 100
+color red
+line 60, 116, 100, 104
+line 50, 126, 70, 120
+line 126, 104, 159, 102
+color yellow
+line 46, 112, 70, 102
+line 78, 104, 96, 101
+
+shape(blob(107, 114, 19, 7, 1, 0.05, 20), yellow, brown)
+color brown
+line 92, 116, 98, 118
+line 116, 118, 122, 116
+
+fn armchair() {
+  # back
+  shape([[94, 91], [99, 88], [104, 91], [103, 104], [95, 104]], red)
+  color lightred
+  line 97, 91, 97, 102
+  line 100, 90, 100, 102
+  # seat and arm
+  shape([[95, 103], [104, 102], [108, 106], [99, 108]], red)
+  color lightred
+  line 97, 104, 104, 103
+  color black
+  line 96, 108, 96, 116
+  line 99, 108, 99, 117
+  line 107, 106, 107, 113
+}
+armchair()
+# footstool
+shape([[109, 105], [118, 104], [119, 107], [110, 108]], brown)
+color yellow
+line 110, 105, 117, 104
+color black
+line 110, 108, 110, 113
+line 118, 107, 118, 112
+
+# small box by the bookcase
+shape([[52, 105], [59, 104], [60, 111], [53, 112]], lightgrey)
+color darkgrey
+line 53, 108, 59, 107
+
+# ---- the bench on the right ----------------------------------------------------------------
+shape([[134, 116], [150, 100], [155, 102], [140, 120]], brown)
+color yellow
+line 135, 116, 150, 101
+line 137, 117, 152, 102
+shape([[134, 119], [140, 120], [140, 136], [134, 134]], brown)
+color black
+line 137, 121, 137, 134
+shape([[150, 104], [155, 102], [155, 122], [150, 124]], red)
+# right wall sliver
+shape([[155, 98], [159, 98], [159, 128], [155, 128]], yellow)
+
+# ---- the stacked books on the left ---------------------------------------------------------
+# olive book on top
+shape([[0, 62], [23, 62], [23, 92], [0, 92]], green)
+color lightgreen
+line 3, 66, 20, 66
+line 2, 74, 8, 72
+line 12, 80, 19, 78
+color white
+line 24, 63, 24, 110
+color lightgrey
+line 25, 64, 25, 110
+# red book below, its pages along the top
+shape([[0, 88], [36, 88], [37, 118], [0, 142]], red)
+shape([[0, 90], [30, 89], [30, 92], [0, 100]], lightgrey, null)
+color darkgrey
+line 0, 94, 30, 90
+color magenta
+line 4, 110, 30, 102
+line 2, 124, 34, 110
+color black
+line 37, 90, 37, 118
+
+# ---- the row of giant books in the foreground -------------------------------------------
+# one tome seen end-on: page block between a left and right edge, with a dark top rim
+fn tome(tl, tr, br, bl) {
+  shape([tl, tr, br, bl], lightgrey, null)
+  color darkgrey
+  let n = floor((tr[0] - tl[0]) / 2.5)
+  for i in 1..n {
+    let t = i / n
+    let xt = tl[0] + (tr[0] - tl[0]) * t
+    let yt = tl[1] + (tr[1] - tl[1]) * t + 2
+    let xb = bl[0] + (br[0] - bl[0]) * t
+    let yb = 167
+    if xb < 0 {
+      yb = yt + (167 - yt) * xt / (xt - xb)
+      xb = 0
+    }
+    line xt, yt, xb, yb
+  }
+  # rounded top rim of the spine
+  color black
+  let mx = (tl[0] + tr[0]) / 2
+  line tl[0], tl[1] + 1, tl[0] + 2, tl[1] - 1, mx, tl[1] - 2, tr[0] - 2, tr[1] - 1, tr[0], tr[1] + 1
+  color magenta
+  line tl[0] + 2, tl[1], mx, tl[1] - 1, tr[0] - 2, tr[1]
+}
+fn cover(top_l, top_r, bot_r, bot_l) {
+  shape([top_l, top_r, bot_r, bot_l], magenta)
+}
+# gold-edged cover of the leftmost book, running up to the red book
+color yellow
+line 0, 141, 37, 118
+tome [40, 121], [55, 122], [28, 167], [-40, 167]
+cover [55, 121], [59, 121], [36, 167], [28, 167]
+tome [59, 121], [76, 122], [64, 167], [36, 167]
+cover [76, 120], [81, 122], [70, 167], [64, 167]
+tome [81, 129], [98, 129], [102, 167], [77, 167]
+cover [98, 128], [102, 131], [107, 167], [102, 167]
+tome [102, 134], [113, 134], [124, 167], [107, 167]
+cover [113, 130], [117, 130], [130, 167], [124, 167]
+tome [117, 131], [133, 132], [154, 167], [130, 167]
+tome [139, 130], [159, 127], [159, 167], [150, 167]
+shape([[133, 131], [138, 129], [159, 160], [159, 167], [154, 167]], magenta)
+
+frame()

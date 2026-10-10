@@ -1,0 +1,206 @@
+# The Rocket Ship
+# Source: Myst (1993) render, reference/myst/r00-c13.png; reframed with:
+#   pnpm grid reference/myst/r00-c13.png --crop 0,0,544,333 --name myst-r00-c13
+# Method: translated by eye. Kept: the pale sky and the sea with its flecks, the brass rocket
+#   (needle, dark nose cone, two riveted bands, the hatch, the side intake, the rounded tail),
+#   its two dark swept fins and the wire running off to the right, the round pad, the brick
+#   tower split by the cracked walkway, the rope railings, porthole and mooring rings, the post
+#   at the rear band, the little marker box on the pad, and the yellow rocks in the corner.
+#   Dropped: the plating seams and most rivets, the coiled pipe over the rear band, the small
+#   rope posts on the pad, the mesh texture of the bricks, the sea's green tint near the front.
+#   Moved: nothing.
+# Colours: sky → lightcyan, sea → cyan with blue flecks, brass hull → brown with a yellow lit
+#   band and black underside line, nose cone and fins → darkgrey with lightgrey lit edges,
+#   riveted bands → darkgrey with yellow rivets, pad and walkway → lightgrey with darkgrey
+#   rims, olive brick → darkgrey faces with brown joints (black inner faces), ropes → yellow,
+#   marker box → brown panel, yellow studs, grey pedestal, corner rocks → yellow and darkgrey.
+scene "The Rocket Ship"
+variants day
+
+let horizon = 105
+
+# ---- sky and sea ----------------------------------------------------------------------------
+# Painted first, so everything else stands on them, but held back with delay: over the original
+# the viewer paints them last, filling in behind what's already there (the sea, then the sky).
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, horizon
+}
+delay {
+  color cyan
+  rect 0, horizon + 1, 159, 167
+}
+
+# short dark flecks, sparser and shorter towards the horizon
+seed 13
+for y in range(horizon + 3, 168, 3) {
+  let t = (y - horizon) / (167 - horizon)
+  let gap = 16 - t * 8
+  let x = random(0, 10)
+  while x < 160 {
+    let w = round(t * 2) + random(0, 1)
+    let yy = y + random(0, 1)
+    color blue
+    stroke x, yy, x + w, yy
+    x += gap + random(0, 8)
+  }
+}
+# a few glints
+color lightcyan
+for g in [[12, 128], [30, 150], [118, 126], [140, 116], [22, 112], [126, 138], [8, 162]] {
+  stroke g[0], g[1], g[0] + 2, g[1]
+}
+
+# ---- the brick tower and its walkway ---------------------------------------------------------
+# the whole block, then the lit front faces and the shaded inner faces
+shape([[49, 106], [110, 106], [110, 167], [49, 167]], darkgrey)
+stones(50, 107, 60, 166, 5, 7, brown)
+stones(98, 107, 109, 166, 5, 7, brown)
+# inner faces in shadow
+shape([[61, 107], [73, 107], [64, 167], [61, 167]], black, null)
+shape([[86, 107], [97, 107], [97, 167]], black, null)
+# the walkway, lit, with its cracked join
+shape([[73, 107], [86, 107], [97, 167], [63, 167]], lightgrey)
+color darkgrey
+stroke 74, 108, 64, 166
+stroke 85, 108, 95, 166
+color black
+line 79, 108, 77, 114, 80, 120, 78, 126, 74, 132, 73, 140, 76, 147, 75, 154, 71, 160, 70, 166
+color darkgrey
+line 77, 114, 76, 118
+line 73, 140, 70, 143
+# porthole and the dark port on the right face
+ellipse 53, 123, 2, 4
+color lightgrey
+ellipse 53, 123, 1, 3
+color black
+ellipse 106, 121, 1, 3
+# mooring rings on their posts
+fn ring(x, y) {
+  color black
+  rect x - 1, y + 3, x + 1, 167
+  color darkgrey
+  stroke x, y + 4, x, 166
+  color black
+  ellipse x, y, 3, 4
+  color darkgrey
+  ellipse x, y, 2, 3
+  color black
+  rect x, y - 1, x, y + 1
+}
+ring(56, 137)
+ring(101, 139)
+# rope railings sagging from the pad to the rings
+color yellow
+line 68, 107, 66, 116, 63, 125, 60, 132, 58, 135
+line 88, 107, 90, 116, 93, 125, 96, 132, 99, 136
+
+# ---- the pad --------------------------------------------------------------------------------
+shape(arc(80, 104, 29, 4, 0, 360, 15), lightgrey)
+color darkgrey
+stroke arc(80, 104, 28, 3, 100, 260, 15)
+color white
+stroke arc(80, 103, 26, 2, 300, 360, 15)
+
+# ---- the fins (behind the hull) --------------------------------------------------------------
+# lower fin, sweeping back under the tail
+let lofin = [[96, 90], [118, 88], [132, 90], [142, 93], [158, 95], [150, 98], [138, 102], [122, 104],
+             [108, 102], [98, 98]]
+shape(lofin, darkgrey)
+color lightgrey
+stroke 120, 89, 132, 91, 142, 94, 154, 95
+# upper fin, a raked dorsal blade
+let upfin = [[102, 66], [106, 58], [111, 52], [118, 48], [128, 46], [138, 48], [146, 52], [151, 55],
+             [142, 56], [132, 58], [128, 64], [127, 72], [112, 70]]
+shape(upfin, darkgrey)
+color lightgrey
+stroke 106, 58, 111, 52, 118, 48, 128, 46
+
+# ---- the hull -------------------------------------------------------------------------------
+let top = [[30, 69], [40, 66], [50, 64], [60, 63], [70, 62], [90, 62], [100, 63], [110, 66],
+           [120, 70], [128, 73], [133, 76], [136, 80]]
+let bot = [[136, 84], [133, 87], [125, 90], [115, 93], [105, 96], [95, 99], [85, 100], [70, 101],
+           [60, 100], [50, 98], [40, 95], [30, 91]]
+shape(top + bot, brown)
+# the lit band along the top, and a dark line along the underside
+shape(shift(slice(top, 0, 9), 0, 2) + [[120, 73]] + reverse(shift(slice(top, 0, 8), 0, 7)), yellow, null)
+color black
+stroke shift(slice(bot, 2, 11), 0, -2)
+# rounded tail with a dark rim
+color black
+stroke 132, 75, 131, 80, 131, 85, 132, 87
+# the nose cone and its needle
+shape([[14, 81], [20, 76], [26, 72], [31, 69], [33, 80], [31, 91], [24, 87], [18, 84]], darkgrey)
+color lightgrey
+stroke 18, 79, 23, 75, 29, 71
+color brown
+stroke 1, 81, 13, 81
+color yellow
+stroke 4, 80, 12, 80
+
+# riveted bands
+fn hoop(xt, yt, xb, yb, w) {
+  shape([[xt, yt], [xt + w, yt - 1], [xb + w, yb + 1], [xb, yb]], darkgrey)
+  color yellow
+  for k in range(0, 5) {
+    let y = yt + 4 + k * (yb - yt - 7) / 4
+    let x = xt + (xb - xt) * (y - yt) / (yb - yt)
+    rect x + 1, y, x + 1, y
+    rect x + w - 1, y + 2, x + w - 1, y + 2
+  }
+}
+hoop(41, 66, 38, 95, 5)
+hoop(101, 64, 101, 98, 6)
+
+# the hatch
+color black
+line 67, 69, 79, 69
+line 67, 69, 67, 92
+line 79, 69, 79, 92
+color yellow
+stroke 68, 70, 78, 70
+color brown
+rect 72, 75, 74, 76
+# a plate seam up front
+color black
+stroke 48, 76, 58, 76
+# the side intake behind the rear band
+shape([[108, 69], [114, 70], [114, 77], [108, 75]], black)
+color darkgrey
+stroke 110, 71, 110, 74
+
+# the wire off the rear band, across the fin and out of the picture
+color black
+stroke 101, 64, 159, 46
+
+# ---- the post and the marker box ------------------------------------------------------------
+color black
+rect 97, 63, 99, 107
+color lightgrey
+stroke 98, 66, 98, 106
+color black
+ellipse 98, 63, 2, 2
+color yellow
+rect 98, 62, 98, 63
+
+# grey pedestal, then the panel
+shape([[82, 98], [90, 98], [90, 106], [82, 106]], lightgrey)
+color darkgrey
+stroke 82, 102, 90, 102
+shape([[83, 84], [89, 84], [89, 98], [83, 98]], yellow)
+shape([[84, 86], [88, 86], [88, 96], [84, 96]], brown, null)
+color black
+for y in range(86, 97, 3) { rect 83, y, 83, y; rect 89, y, 89, y }
+color red
+stroke 85, 88, 85, 95
+shape([[83, 81], [89, 81], [89, 83], [83, 83]], darkgrey)
+
+# ---- the rocks in the corner ----------------------------------------------------------------
+boulder([[129, 141], [137, 140], [141, 152], [134, 160], [130, 167], [128, 167]], darkgrey, black, black, 0.2)
+boulder([[136, 156], [146, 147], [160, 152], [160, 167], [134, 167]], yellow, brown, black, 0.2)
+boulder([[141, 150], [154, 139], [160, 140], [160, 152], [148, 153]], darkgrey, black, black, 0.3)
+color brown
+stroke 140, 162, 146, 156, 152, 160
+stroke 150, 167, 156, 159
+
+frame()

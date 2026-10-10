@@ -1,0 +1,355 @@
+# The Library
+# Source: Myst (1993) render, reference/myst/r04-c08.png; reframed with:
+#   pnpm grid reference/myst/r04-c08.png --crop 0,0,544,333 --name myst-r04-c08
+# Method: translated by eye. Kept: the pale sky, the library with its pediment, portico columns
+#   and door, the water tower on its tan rock, the planetarium dome, the far sea and rock arch,
+#   the pines on both sides with their red trunks, the four freestanding columns, the lamp
+#   stands, the lit and shadowed lawn with the columns' long shadows, the round stepped platform
+#   with its drum and stair flight, the marker-switch box on its granite pedestal, the two rope
+#   posts. Dropped: the brick crates behind the library, the small box at the right edge, marble
+#   veining, granite grain (a few flecks only), the grass texture. Moved: nothing.
+# Colours: sky → lightcyan, sea → cyan with blue dashes, marble columns and stone → lightgrey /
+#   darkgrey / white, library → lightgrey with a darkgrey portico, door → brown with red panels,
+#   tan rock → yellow with brown folds (pale and far, so yellow rather than the roster's brown
+#   hillside body), dome → cyan with lightcyan ribs, pines → green with black shade and red
+#   trunks, lawn → green, sunlit lawn → lightgreen, cast shadows → black, switch box → brown
+#   panel, yellow studded border, cyan lever, darkgrey granite.
+scene "The Library"
+variants day
+
+# ---------- sky ----------
+# Painted first, so everything else stands on it, but held back with delay: over the original
+# the viewer paints it last, filling in behind what's already there.
+delay {
+  color lightcyan
+  rect 0, 0, 159, 167
+}
+
+# ---------- far: water tower on its rock ----------
+shape([[84, 17], [85, 15], [88, 14], [92, 14], [95, 15], [96, 17], [96, 34], [84, 34]], lightgrey)
+color darkgrey
+rect 93, 17, 95, 33
+color white
+line 85, 18, 85, 30
+color darkgrey
+line 85, 18, 95, 18
+
+let rockpk = [[79, 46], [82, 38], [84, 34], [86, 27], [88, 23], [90, 27], [91, 25], [93, 30],
+  [95, 28], [97, 33], [99, 37], [102, 46]]
+shape(rockpk, yellow)
+color brown
+stroke [[90, 27], [89, 34], [91, 42]]
+stroke [[95, 29], [94, 36], [96, 44]]
+stroke [[86, 29], [85, 36]]
+stroke [[99, 38], [98, 44]]
+
+# ---------- far: planetarium dome ----------
+shape(arc(134, 52, 13, 20, 270, 450), cyan)
+color lightcyan
+stroke arc(134, 52, 7, 20, 330, 360)
+stroke arc(134, 52, 1, 20, 350, 360)
+color blue
+stroke arc(134, 52, 7, 20, 0, 30)
+color black
+rect 133, 31, 134, 32
+
+# ---------- far: sea and rock arch on the left ----------
+color cyan
+rect 0, 76, 62, 88
+color blue
+for d in [[3, 79, 3], [14, 81, 3], [26, 79, 2], [8, 84, 4], [33, 83, 3], [21, 86, 4], [40, 80, 2], [54, 85, 3]] {
+  line d[0], d[1], d[0] + d[2], d[1]
+}
+shape([[43, 78], [45, 73], [49, 70], [55, 69], [60, 70], [62, 73], [58, 72], [54, 74], [52, 78]], lightgrey)
+color darkgrey
+line 53, 73, 57, 72
+
+# ---------- tan rock wall right of the library ----------
+shape([[98, 45], [102, 48], [105, 55], [108, 61], [110, 67], [111, 78], [98, 79]], yellow)
+color brown
+stroke [[103, 52], [102, 62], [104, 72]]
+stroke [[108, 63], [107, 72]]
+
+# ---------- the library ----------
+shape([[61, 44], [100, 44], [100, 80], [61, 80]], lightgrey)
+color darkgrey
+rect 97, 46, 99, 79
+shape([[59, 42], [102, 42], [102, 45], [59, 45]], lightgrey)
+shape([[62, 50], [80, 39], [98, 50]], lightgrey)
+color darkgrey
+line 68, 48, 80, 42, 92, 48, 68, 48
+color white
+line 61, 43, 79, 39
+shape([[62, 50], [98, 50], [98, 53], [62, 53]], lightgrey)
+color darkgrey
+line 63, 52, 97, 52
+# the portico
+shape([[64, 54], [96, 54], [96, 78], [64, 78]], darkgrey)
+color black
+line 65, 54, 95, 54
+# door
+shape([[77, 58], [85, 58], [85, 78], [77, 78]], black)
+color brown
+rect 78, 60, 84, 78
+color black
+line 81, 60, 81, 78
+color red
+for pn in [[79, 61, 80, 67], [82, 61, 83, 67], [79, 70, 80, 76], [82, 70, 83, 76]] {
+  rect pn[0], pn[1], pn[2], pn[3]
+}
+color yellow
+rect 80, 69, 80, 69
+rect 82, 69, 82, 69
+# portico columns
+for cx in [66, 72, 88, 94] {
+  shape([[cx, 55], [cx + 1, 55], [cx + 1, 78], [cx, 78]], white, null)
+  color lightgrey
+  line cx + 1, 56, cx + 1, 77
+  color black
+  line cx - 1, 55, cx + 2, 55
+}
+# base steps
+shape([[59, 78], [102, 78], [102, 81], [59, 81]], lightgrey)
+color white
+line 60, 79, 101, 79
+
+# ---------- lawn ----------
+shape([[0, 85], [30, 84], [56, 82], [60, 81], [102, 80], [160, 78], [160, 168], [0, 168]], green, null)
+# sunlit lawn
+shape([[0, 87], [58, 82], [62, 92], [40, 95], [0, 99]], lightgreen, null)
+shape([[0, 104], [34, 100], [50, 103], [46, 112], [0, 116]], lightgreen, null)
+shape([[62, 82], [160, 79], [160, 168], [36, 168], [42, 157], [96, 146], [106, 110], [96, 92], [62, 92]], lightgreen, null)
+# long shadows of the columns and pines, and the platform's shade
+shape([[0, 116], [46, 112], [56, 118], [48, 150], [28, 158], [0, 156]], black, null)
+shape(band([[39, 90], [16, 95], [-4, 99]], 3, 4), black, null)
+shape(band([[21, 103], [6, 106], [-4, 108]], 4, 4), black, null)
+shape(band([[60, 92], [44, 96], [36, 99]], 3, 2), black, null)
+shape([[0, 92], [20, 92], [24, 96], [0, 100]], green, null)
+# the switch pedestal's shadow
+shape([[128, 128], [150, 126], [160, 134], [160, 150], [134, 158], [130, 150]], black, null)
+shape(band([[150, 122], [156, 126], [162, 128]], 2, 2), black, null)
+# grass streaks
+color green
+for s in [[70, 160, 8], [110, 162, 10], [140, 160, 6], [126, 104, 8], [140, 112, 6], [100, 96, 6], [20, 100, 6], [38, 85, 5]] {
+  line s[0], s[1], s[0] + s[2], s[1] - 1
+}
+
+# ---------- pines ----------
+fn mpine(x, top, bot, w, seed = 1, tb = -1, tw = 1) {
+  if tb > bot {
+    color red
+    rect x - tw + 1, bot - 3, x + tw - 1, tb
+    color black
+    line x + tw, bot - 3, x + tw, tb
+  }
+  let n = max(3, round((bot - top) / 7))
+  let right = []
+  let left = []
+  let tips = []
+  for i in 1..=n {
+    let t = i / n
+    let y = top + (bot - top) * t
+    let hw = w * t * (0.85 + 0.3 * noise(seed, i))
+    let hw0 = w * (i - 1) / n
+    let yn = top + (bot - top) * (i - 1) / n + 2
+    push(right, [x + hw0 * 0.45 + 0.5, yn])
+    push(right, [x + hw, y])
+    push(left, [x - hw0 * 0.45 - 0.5, yn + 1])
+    push(left, [x - hw * (0.9 + 0.2 * noise(seed + 7, i)), y + 1])
+    push(tips, [x, y, hw])
+  }
+  shape([[x, top]] + right + [[x, bot + 1]] + reverse(left), green)
+  for k in 1..len(tips) {
+    let p = tips[k]
+    color black
+    stroke p[0] + p[2] * 0.7, p[1] - 1, p[0] + 1, p[1] - 4
+    if k % 2 == 1 && p[2] > 3 {
+      color lightgreen
+      stroke p[0] - p[2] * 0.6, p[1] - 1, p[0] - 2, p[1] - 3
+    }
+  }
+}
+
+# left pines
+mpine(1, 40, 74, 4, 3, 96)
+mpine(13, 21, 70, 6, 2, 98, 2)
+mpine(6, 24, 72, 6, 1, 100, 2)
+mpine(19, 36, 74, 5, 4, 96)
+mpine(26, 40, 74, 4, 5, 92)
+mpine(35, 40, 70, 4, 6, 86)
+# right pines
+mpine(112, 25, 76, 5, 7, 86)
+mpine(120, 33, 72, 4, 8, 84)
+mpine(135, 37, 78, 5, 9, 94)
+mpine(142, 32, 80, 5, 10, 100, 2)
+
+# the tall dark tree at the right edge
+color red
+rect 148, 78, 150, 112
+rect 156, 80, 157, 108
+color black
+line 151, 78, 151, 112
+line 158, 80, 158, 108
+blobs([[155, 6, 7, 12], [153, 24, 8, 14], [155, 42, 8, 14], [152, 60, 8, 12], [156, 74, 6, 10]], green, black, 0.3, 4)
+color black
+for s in [[156, 14, 152, 20], [158, 32, 153, 38], [157, 50, 152, 56], [158, 66, 153, 70], [150, 28, 148, 34]] {
+  stroke s[0], s[1], s[2], s[3]
+}
+color lightgreen
+stroke 149, 22, 151, 19
+stroke 148, 46, 150, 43
+
+# ---------- lamp stands ----------
+fn stand(x1, x2, top, boxh, bottom) {
+  color black
+  line x1 + 1, top + boxh, x1 + 1, bottom
+  line x2 - 1, top + boxh, x2 - 1, bottom
+  shape([[x1, top], [x2, top], [x2, top + boxh], [x1, top + boxh]], darkgrey)
+  color lightgrey
+  line x1 + 1, top + 1, x2 - 1, top + 1
+}
+stand(33, 39, 63, 6, 90)
+stand(49, 53, 63, 5, 81)
+stand(104, 109, 61, 6, 80)
+
+# ---------- the freestanding columns ----------
+fn bigcol(x1, x2, top, bottom, px1, px2, pb) {
+  column(x1, x2, top + 3, bottom, lightgrey, darkgrey, white)
+  # dark capital: abacus and echinus
+  let ov = x2 - x1 > 5 ? 2 : 1
+  shape([[x1 - ov, top], [x2 + ov, top], [x2 + 1, top + 2], [x1 - 1, top + 2]], darkgrey)
+  shape([[x1 - 1, top + 3], [x2 + 1, top + 3], [x2, top + 5], [x1, top + 5]], lightgrey)
+  # plinth
+  if pb > bottom {
+    shape([[px1, bottom], [px2, bottom], [px2, pb], [px1, pb]], lightgrey)
+    color darkgrey
+    rect px2 - max(1, round((px2 - px1) / 3)), bottom + 1, px2 - 1, pb - 1
+    color white
+    line px1 + 1, bottom + 1, px2 - 2, bottom + 1
+  }
+}
+bigcol(42, 46, 33, 81, 39, 49, 90)
+bigcol(111, 114, 33, 80, 109, 116, 84)
+bigcol(23, 30, 19, 90, 20, 33, 103)
+bigcol(125, 132, 19, 89, 123, 136, 102)
+
+# ---------- the round stepped platform ----------
+fn tier(cx, cy, rx, ry, h) {
+  let top = arc(cx, cy, rx, ry, 270, 450)
+  let low = arc(cx, cy + h, rx, ry, 90, 270)
+  shape(top + low, darkgrey)
+  shape(arc(cx, cy, rx, ry, 0, 360), lightgrey)
+  color white
+  stroke arc(cx, cy, rx - 1, ry - 1, 170, 120)
+}
+# each tier runs from the stair flight (left) to behind the switch box (right)
+tier(74, 136, 34, 12, 5)
+tier(76, 125, 31, 12, 5)
+tier(78, 114, 29, 11, 5)
+tier(79, 104, 28, 9, 5)
+# the drum on top
+shape([[61, 84], [93, 84], [93, 104], [61, 104]], lightgrey)
+shape([[78, 86], [92, 86], [92, 103], [78, 103]], darkgrey, null)
+color black
+rect 87, 87, 92, 103
+shape([[65, 89], [73, 89], [73, 100], [65, 100]], black)
+color lightgrey
+rect 66, 90, 68, 100
+color white
+line 62, 102, 77, 102
+shape(arc(77, 83, 17, 4, 0, 360), lightgrey)
+color white
+stroke arc(77, 83, 16, 3, 250, 330)
+# the stair flight down the left side
+let flight = []
+let treads = []
+for i in 0..6 {
+  let y = 103 + 8 * i
+  let xo = 50 - 2.6 * i
+  let xi = 66 - 1.8 * i
+  push(flight, [xo, y])
+  push(flight, [xo, y + 8])
+  push(treads, [xo, y, xi])
+}
+let fl = [[66, 103]] + flight + [[58, 152], [55, 151]]
+shape(fl, darkgrey)
+for t in treads {
+  color lightgrey
+  line t[0] + 1, t[1] + 1, t[2] - 2, t[1] + 1
+  color black
+  line t[0] + 1, t[1] + 2, t[2] - 2, t[1] + 2
+  rect t[0], t[1] + 3, t[0] + 1, t[1] + 7
+}
+color black
+line 66, 103, 56, 151
+
+# ---------- the marker-switch box ----------
+# granite pedestal
+shape([[104, 132], [131, 132], [131, 157], [109, 157], [104, 150]], darkgrey)
+shape([[104, 132], [131, 132], [131, 135], [104, 135]], lightgrey)
+shape([[106, 121], [128, 121], [128, 132], [106, 132]], darkgrey)
+color black
+line 131, 135, 131, 157
+color lightgrey
+for f in [[109, 140], [116, 146], [124, 139], [112, 152], [121, 154], [126, 147], [110, 126], [119, 128], [124, 124]] {
+  rect f[0], f[1], f[0], f[1]
+}
+# studded brass frame and wooden panel
+shape([[106, 84], [128, 84], [128, 121], [106, 121]], yellow)
+shape([[109, 87], [125, 87], [125, 118], [109, 118]], brown)
+color red
+line 112, 89, 111, 116
+line 117, 88, 118, 117
+line 121, 89, 122, 116
+color black
+for k in 0..6 {
+  rect 107, 86 + k * 6, 107, 87 + k * 6
+  rect 127, 86 + k * 6, 127, 87 + k * 6
+}
+for k in 0..4 {
+  rect 109 + k * 5, 85, 110 + k * 5, 85
+  rect 109 + k * 5, 120, 110 + k * 5, 120
+}
+# pyramid cap and the switch lever
+shape([[105, 84], [117, 63], [129, 84]], darkgrey)
+shape([[117, 63], [129, 84], [120, 84]], black, null)
+color lightgrey
+line 116, 65, 108, 82
+shape([[111, 72], [121, 72], [121, 77], [111, 77]], cyan)
+color lightcyan
+line 112, 73, 120, 73
+shape([[109, 71], [111, 71], [111, 78], [109, 78]], yellow)
+shape([[121, 70], [124, 70], [124, 78], [121, 78]], yellow)
+color brown
+line 123, 71, 123, 77
+
+# ---------- near stands at the edges ----------
+color black
+line 150, 76, 150, 126
+line 151, 76, 151, 126
+line 157, 76, 157, 120
+shape([[148, 61], [161, 61], [161, 76], [148, 76]], darkgrey)
+shape([[151, 63], [161, 63], [161, 71], [151, 71]], yellow, black)
+color black
+line 0, 66, 0, 126
+line 2, 72, 2, 126
+shape([[-2, 64], [3, 64], [3, 72], [-2, 72]], darkgrey)
+
+# ---------- rope posts ----------
+fn ropepost(x, y, dx) {
+  color yellow
+  stroke [[x - 1, y + 2], [x - 2 + dx * 0.5, y + 9], [x - 3 + dx, y + 18]]
+  stroke [[x - 2, y + 2], [x - 3 + dx * 0.5, y + 9], [x - 4 + dx, y + 18]]
+  color black
+  stroke [[x - 3, y + 3], [x - 4 + dx * 0.5, y + 10], [x - 5 + dx, y + 18]]
+  rect x + 1, y + 2, x + 2, 167
+  shape(blob(x + 1, y + 1, 2.5, 3, 2, 0.05, 10), black, null)
+  color darkgrey
+  rect x + 1, y, x + 1, y + 1
+  color black
+  stroke x + 3, y + 14, x + 12, y + 11
+}
+ropepost(58, 149, 0)
+ropepost(98, 148, 2)
+
+frame()

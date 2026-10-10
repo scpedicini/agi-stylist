@@ -1,0 +1,245 @@
+# Mossy Swamp
+# Source: King's Quest VI (VGA) - reference/kq6/r05-c05.png (the swamp on the
+#   Isle of Wonder); reframed with:
+#   pnpm grid reference/kq6/r05-c05.png --name kq6-r05-c05
+# Method: translated by eye. Kept: the huge gnarled trunk on the left with its teal lichen, the
+#   dark canopy and the arching mossy branch with hanging moss, the misty glow between the far
+#   trees, three gnarled swamp trees with spreading roots, the band of swamp water, moss mounds,
+#   the marsh with lit strips and black reed sticks, the half-sunk log, the milk-bottle bush on
+#   the root, the dirt path sweeping down to the bottom, the roots in the lower left, the mossy
+#   boulders and the foreground grass. Dropped: individual moss strands, bark texture, most of
+#   the reeds and grass blades, the mist trees' detail.
+# Colours: misty glow → lightcyan, far mist trees → lightgreen, canopy → green with black
+#   shadows, moss → lightgreen, bark → brown with black grooves, lichen → cyan/lightcyan,
+#   swamp water → cyan with lightcyan ripples, marsh → green with lightgreen lit strips,
+#   tan path → yellow with brown ruts, milk bottles → white with lightgrey.
+scene "Mossy Swamp"
+variants day
+
+# ---- dark under-canopy backdrop ----------------------------------------------------------
+# (delay: the viewer paints this backdrop last, filling in behind the rest; the picture itself is
+# unchanged)
+delay {
+  color green
+  rect 0, 0, 159, 90
+}
+
+# ---- the mist between the far trees --------------------------------------------------------
+shape([[30, 52], [50, 50], [70, 52], [90, 49], [110, 51], [130, 49], [159, 52], [159, 76],
+       [30, 76]], lightgreen, null)
+# pale glow patches seen through the mist
+for g in [[38, 54, 68, 5], [42, 58, 66, 3], [55, 52, 64, 4], [76, 56, 66, 3], [80, 60, 68, 4],
+          [90, 54, 62, 3], [105, 56, 68, 5], [109, 60, 66, 3], [118, 58, 66, 3], [132, 52, 66, 5],
+          [137, 58, 66, 3], [146, 56, 64, 4]] {
+  shape(band([[g[0], g[1]], [g[0], g[2]]], g[3], g[3] - 1), lightcyan, null)
+}
+# faint far trunks standing in the mist
+fn misttrunk(x, top, w) {
+  shape(band([[x, top], [x + 1, 62], [x - 1, 72]], w, w + 2), green, null)
+}
+misttrunk 47, 48, 3
+misttrunk 84, 46, 3
+misttrunk 112, 46, 2
+misttrunk 140, 48, 3
+# misty shoreline strip under the far trees
+color green
+line 34, 70, 46, 71
+line 70, 71, 84, 70
+line 108, 70, 126, 71
+line 136, 71, 150, 70
+
+# ---- mid swamp trees: gnarled leaning trunks with arms and spreading roots ---------------
+fn swamptree(x, top, base, w, lean) {
+  # arms reaching up and out into the canopy
+  let side = lean > 0 ? 1 : -1
+  shape(band([[x + lean / 2, top + 10], [x + side * 7, top + 4], [x + side * 10, top - 2]], w * 0.8, 2), brown)
+  shape(band([[x + lean, top], [x + lean / 2, (top + base) / 2], [x, base]], w, w * 1.6), brown)
+  # roots
+  shape(band([[x - 1, base - 8], [x - 7, base - 1], [x - 13, base + 3]], 5, 1), brown)
+  shape(band([[x + 2, base - 8], [x + 8, base - 1], [x + 13, base + 2]], 5, 1), brown)
+  shape(band([[x, base - 3], [x - 1, base + 4]], 4, 1), brown)
+  color black
+  stroke [x + lean + 1, top + 3], [x + lean / 2 + 1, (top + base) / 2], [x + 1, base - 5]
+}
+swamptree 62, 40, 74, 9, 4
+swamptree 98, 44, 74, 7, -3
+swamptree 124, 40, 76, 8, 3
+swamptree 155, 42, 78, 9, -2
+
+# ---- canopy: black along the top with dark leaf masses -------------------------------------
+color black
+rect 0, 0, 159, 14
+blobs([[70, 8, 14, 5], [116, 10, 16, 5], [150, 4, 10, 4]], green, black, 0.3, 3)
+# the high limb running along the top
+shape(band([[30, 9], [56, 5], [90, 7], [118, 3], [159, 6]], 4, 2), brown)
+color red
+stroke [40, 7], [56, 3], [80, 4]
+
+# ---- moss curtain: one ragged lightgreen mass hanging out of the canopy ---------------------
+fn drape(x, y, h, w = 4, edge = null) {
+  shape(band([[x, y], [x + 1, y + h]], w, 1), lightgreen, edge)
+}
+let curtain = [[36, 15], [159, 15]]
+for x in range(159, 35, -3) {
+  push(curtain, [x, 24 + noise(11, x) * 14 + (x % 2) * 2])
+}
+shape(curtain, lightgreen, null)
+# dark gaps and strands inside the curtain, unevenly spaced
+for x in [39, 44, 52, 57, 66, 73, 79, 88, 93, 101, 107, 116, 120, 129, 137, 142, 151, 156] {
+  let h = 5 + noise(12, x) * 12
+  shape(band([[x, 15], [x, 15 + h]], 5, 1), x % 3 == 0 ? black : green, null)
+}
+
+# ---- the big mossy limb arching out of the trunk -------------------------------------------
+let arch = [[24, 30], [40, 30], [54, 33], [68, 38], [80, 42], [92, 47], [100, 52]]
+shape(band(shift(slice(arch, 1), 0, 8), 10, 3), black, null)
+shape(band(arch, 22, 8), brown)
+color black
+stroke shift(slice(arch, 1, 6), 0, 5)
+stroke shift(slice(arch, 2, 5), 1, 2)
+# moss thick along its top
+shape(band(shift(slice(arch, 1, 6), 0, -5), 7, 3), lightgreen, null)
+color green
+stroke shift(slice(arch, 1, 6), 0, -3)
+drape 50, 38, 10, 3, green
+drape 62, 42, 14, 3, green
+drape 76, 47, 8, 3, green
+
+# ---- swamp water ---------------------------------------------------------------------------
+shape([[30, 74], [70, 72], [110, 74], [159, 72], [159, 96], [120, 92], [80, 96], [40, 92],
+       [30, 90]], cyan, null)
+color lightcyan
+for r in [[44, 78, 56], [72, 76, 88], [110, 78, 124], [134, 76, 150], [52, 84, 66], [92, 82, 104],
+          [140, 84, 152], [60, 90, 72], [100, 88, 112]] {
+  line r[0], r[1], r[2], r[1]
+}
+
+# ---- marsh ground --------------------------------------------------------------------------
+shape([[0, 100], [30, 90], [40, 92], [80, 96], [120, 92], [159, 94], [159, 167], [0, 167]], green, null)
+# lit strips running diagonally across the marsh
+shape([[64, 104], [100, 102], [130, 110], [159, 116], [159, 120], [122, 116], [88, 108]],
+      lightgreen, null)
+shape([[48, 120], [70, 114], [100, 122], [140, 130], [110, 132], [70, 124]], lightgreen, null)
+shape([[86, 98], [120, 96], [150, 100], [130, 102]], lightgreen, null)
+
+# ---- moss mounds in the water --------------------------------------------------------------
+fn mound(x, y, rx, ry, s) {
+  shape(blob(x, y, rx, ry, s, 0.15), lightgreen)
+  color green
+  stroke arc(x + 1, y + 1, rx - 1, ry - 1, 100, 200)
+}
+mound 72, 81, 7, 5, 1
+mound 82, 83, 5, 4, 2
+mound 103, 82, 7, 5, 3
+mound 125, 89, 5, 4, 4
+mound 147, 93, 5, 4, 5
+mound 156, 86, 4, 4, 6
+
+# ---- half-sunk log with moss -----------------------------------------------------------------
+shape(blob(140, 110, 9, 6, 7, 0.2), lightgreen)
+shape([[120, 110], [126, 104], [132, 100], [140, 106], [136, 112], [124, 112]], darkgrey)
+color black
+line 126, 106, 134, 104
+line 124, 110, 136, 109
+
+# ---- reeds -------------------------------------------------------------------------------------
+fn reed(x, y, h) {
+  color black
+  line x, y, x + 1, y - h
+  line x + 1, y, x + 2, y - h + 2
+}
+reed 55, 98, 7
+reed 76, 98, 6
+reed 95, 100, 8
+reed 112, 114, 9
+reed 124, 102, 8
+reed 136, 96, 6
+reed 150, 106, 6
+reed 86, 140, 8
+
+# ---- dirt path sweeping down from the tree to the bottom ------------------------------------
+shape([[0, 112], [24, 111], [40, 116], [56, 123], [68, 130], [78, 138], [84, 150], [88, 167],
+       [28, 167], [16, 150], [0, 140]], yellow)
+shape([[40, 152], [56, 150], [72, 156], [82, 152], [88, 167], [44, 167]], brown, null)
+color brown
+line 6, 118, 30, 117, 48, 124
+line 22, 126, 46, 130, 64, 138
+line 40, 142, 62, 150, 76, 160
+line 34, 156, 52, 162
+
+# ---- big trunk on the left ------------------------------------------------------------------
+let trunk = [[0, 0], [44, 0], [40, 10], [36, 22], [32, 36], [30, 50], [28, 66], [27, 82], [29, 96],
+             [36, 106], [44, 113], [30, 116], [16, 115], [4, 113], [0, 112]]
+shape(trunk, brown)
+# shadowed right half: long dark grooves
+color black
+stroke [22, 4], [20, 30], [21, 60], [20, 90], [18, 112]
+stroke [28, 6], [26, 30], [24, 60], [24, 84], [26, 100]
+stroke [34, 4], [30, 24], [28, 40]
+stroke [12, 70], [13, 100], [10, 112]
+shape(band([[24, 66], [23, 90], [24, 110]], 4, 6), black, null)
+# lit highlights on the left half
+color yellow
+stroke arc(18, 30, 6, 16, 200, 330)
+stroke arc(16, 70, 5, 14, 200, 320)
+# teal lichen down the left edge
+shape(band([[4, 0], [8, 30], [6, 60], [10, 90], [8, 110]], 6, 3), cyan, null)
+color lightcyan
+stroke [3, 4], [6, 30], [4, 56], [8, 84]
+color black
+stroke [9, 2], [12, 30], [10, 60], [14, 92], [12, 110]
+
+# root running right from the trunk base
+shape(band([[30, 100], [44, 104], [52, 110], [58, 116]], 6, 2), brown)
+
+# ---- milk-bottle bush on the root ----------------------------------------------------------
+color black
+line 38, 106, 34, 92, 30, 86
+line 40, 104, 42, 94, 46, 88
+line 44, 104, 50, 96
+fn bottle(x, y) {
+  ellipse x, y, 1.5, 2.5
+  color lightgrey
+  line x + 1, y + 1, x + 1, y + 2
+  color white
+}
+color white
+bottle 31, 86
+bottle 36, 88
+bottle 45, 88
+bottle 41, 93
+bottle 49, 95
+
+# ---- dark undergrowth in the lower-left corner ----------------------------------------------
+blobs([[6, 146, 8, 6], [10, 162, 12, 6], [30, 166, 10, 4]], green, black, 0.3, 6)
+# ---- roots across the lower left -----------------------------------------------------------
+shape(band([[0, 128], [16, 136], [32, 148], [46, 160], [54, 167]], 8, 5), brown)
+shape(band([[0, 150], [12, 156], [24, 167]], 7, 5), brown)
+color yellow
+stroke [2, 127], [16, 134], [30, 145], [42, 156]
+
+# ---- mossy boulders ------------------------------------------------------------------------
+shape(blob(106, 146, 8, 6, 9, 0.12), lightgreen)
+color green
+stroke arc(107, 147, 7, 5, 100, 200)
+shape(blob(160, 152, 12, 22, 4, 0.12), lightgreen)
+color green
+stroke arc(161, 154, 10, 20, 180, 280)
+
+# ---- foreground grass ----------------------------------------------------------------------
+fn tuft(x, y, h, c = lightgreen) {
+  color c
+  line x - 3, y - h + 2, x, y
+  line x, y - h, x, y
+  line x + 3, y - h + 1, x + 1, y
+}
+shape([[86, 150], [96, 146], [120, 152], [150, 148], [150, 167], [86, 167]], green)
+blobs([[110, 162, 22, 8], [136, 164, 16, 6], [90, 166, 10, 4]], black, null, 0.3, 4)
+tuft 94, 160, 10
+tuft 104, 158, 8
+tuft 122, 160, 10
+tuft 138, 158, 9
+tuft 60, 140, 8, green
+tuft 112, 140, 7, black
+
+frame()

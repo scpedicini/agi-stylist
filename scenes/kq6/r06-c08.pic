@@ -1,0 +1,234 @@
+# Ribbed Halls of the Underworld
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c08.png; reframed with:
+#   pnpm grid reference/kq6/r06-c08.png --name kq6-r06-c08
+# Method: translated by eye. Kept: the striated violet walls, the big beaded left loop with
+#   the misty far grotto seen through it, the far tower and its candle, the lit walkway and
+#   the fan-vaulted arches under it, the lamp on its ribbed mound and its glow, the dark
+#   central trunk, the blue ribbed wing and the warm glow and stair on the right, the right
+#   walkway, the crouching figure, the bottom-right rope loop, the pale spike, the tan
+#   ribbed floor bottom left.
+#   Dropped: most of the hundreds of rib striations, haze gradients, small ropes inside the
+#   right wing, the figure's fine detail.
+# Colours: dark violet walls → darkgrey with black and blue striations, trunk → black with
+#   blue grooves, misty grotto → cyan, glows → lightcyan / yellow round a white core,
+#   beaded ropes → brown with yellow lit line and black beads, walkways → yellow over brown,
+#   fan arches → lightblue on black, right wing → blue with lightblue ribs, warm fan →
+#   brown with yellow ribs, spike and figure → lightgrey with darkgrey shade.
+scene "Ribbed Halls of the Underworld"
+variants night
+
+# ---- helpers ---------------------------------------------------------------------------
+# a beaded rope: brown body, a yellow lit line, black bead ticks across it
+fn rope(path, w = 4, step = 4) {
+  shape(band(path, w), brown)
+  color yellow
+  stroke offset(path, -w / 5)
+  color black
+  for p in along(path, step) {
+    let tx = p[2]
+    let ty = p[3]
+    let L = sqrt(ty * ty + 4 * tx * tx)
+    let h = w / 2
+    let nx = -ty / (2 * L) * h
+    let ny = 2 * tx / L * h
+    stroke [p[0] - nx, p[1] - ny], [p[0] + nx, p[1] + ny]
+  }
+}
+
+# parallel striation strokes following a path
+fn striae(path, d0, d1, step, c, seed = 1) {
+  color c
+  let d = d0
+  let i = 0
+  while d <= d1 {
+    stroke offset(path, d)
+    d += step + round(noise(seed, i) * 3) - 1
+    i += 1
+  }
+}
+
+# ---- walls -----------------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color darkgrey
+  rect 0, 0, 159, 167
+}
+
+let loop_path = [[48, -2], [30, 8], [18, 26], [12, 50], [10, 75], [11, 100], [16, 122],
+                 [25, 138], [40, 150], [55, 160], [64, 170]]
+striae(loop_path, 6, 44, 5, black)
+striae(loop_path, 9, 44, 11, blue, 2)
+let br_path = [[100, 108], [112, 122], [124, 138], [136, 152], [150, 160], [165, 162]]
+striae(br_path, -44, -6, 5, black, 3)
+striae(br_path, -40, -8, 11, blue, 4)
+let bc_path = [[62, 125], [72, 140], [78, 155], [80, 170]]
+striae(bc_path, -10, 20, 6, blue, 5)
+striae(bc_path, -7, 20, 6, black, 6)
+let tc_path = [[66, -2], [70, 12], [74, 20]]
+striae(tc_path, -6, 12, 4, black)
+
+# ---- far grotto through the left loop ----------------------------------------------------
+delay {
+  shape([[16, 46], [24, 30], [36, 22], [48, 22], [58, 28], [64, 20], [78, 12], [88, 18],
+         [92, 40], [94, 70], [96, 100], [98, 134], [14, 134], [12, 100], [12, 70]], cyan, null)
+}
+# haze bands
+color lightcyan
+for i in 0..3 {
+  stroke [22 + i * 4, 52 + i * 12], [36 + i * 3, 52 + i * 12]
+}
+# glow above the lamp
+ellipse 76, 32, 10, 18
+color white
+ellipse 76, 32, 5, 10
+
+# far ribbed vaults deep in the grotto
+color blue
+stroke arc(44, 96, 26, 66, 280, 420, 8)
+stroke arc(46, 96, 18, 50, 290, 410, 8)
+color lightcyan
+stroke arc(30, 64, 6, 10, 300, 420, 15)
+
+# the far tower and its candle
+shape([[29, 98], [30, 76], [32, 72], [35, 72], [37, 76], [38, 98]], blue)
+color lightblue
+stroke [[31, 78], [31, 96]]
+color yellow
+rect 33, 68, 34, 71
+color white
+line 33, 69
+
+# under the walkway: darkness, a mist band, fan-vaulted arches
+color black
+rect 12, 100, 98, 134
+color cyan
+for i in 0..8 {
+  stroke [14 + i * 11, 118 + i % 2], [20 + i * 11, 118 + i % 2]
+}
+fn fan(x, top, bot, spread) {
+  shape([[x - 1.5, bot], [x - 1.5, top + 16], [x - 3, top + 9], [x - spread * 0.7, top + 3],
+         [x - spread, top], [x + spread, top], [x + spread * 0.7, top + 3], [x + 3, top + 9],
+         [x + 1.5, top + 16], [x + 1.5, bot]], lightblue, blue)
+  color blue
+  for k in [-3, -1.5, 1.5, 3] {
+    stroke [x, top + 14], [x + k * spread / 3.5, top + 1]
+  }
+  stroke [x, top + 16], [x, bot - 1]
+}
+fan(22, 100, 130, 9)
+fan(40, 101, 132, 9)
+fan(58, 100, 128, 9)
+fan(77, 100, 129, 9)
+fan(94, 100, 130, 7)
+
+# the walkway
+let walk = [[12, 96], [30, 99], [50, 99], [70, 97], [96, 96]]
+shape(band(walk, 7, 6), yellow)
+color brown
+stroke offset(walk, 2)
+
+# ---- the ribbed mound and lamp -----------------------------------------------------------
+shape([[60, 96], [66, 78], [72, 62], [80, 56], [88, 62], [94, 76], [98, 96]], brown)
+color yellow
+for i in 0..7 {
+  stroke [80, 60], [64 + i * 5, 95]
+}
+color black
+for i in 0..6 {
+  stroke [80, 62], [66 + i * 5 + 2, 95]
+}
+# the lamp
+shape([[74, 56], [74, 50], [72, 46], [82, 46], [80, 50], [80, 56]], yellow, brown)
+color white
+line 75, 47, 79, 47
+
+# ---- right side: ribbed wing, warm glow, stair -------------------------------------------
+shape([[118, 0], [160, 0], [160, 96], [118, 96]], brown, null)
+color yellow
+ellipse 147, 40, 9, 16
+color white
+ellipse 147, 40, 4, 8
+color yellow
+for i in 0..9 {
+  let a = 200 + i * 18
+  stroke [147 + sin(a) * 11, 40 - cos(a) * 20], [147 + sin(a) * 30, 40 - cos(a) * 60]
+}
+color black
+for i in 0..9 {
+  let a = 209 + i * 18
+  stroke [147 + sin(a) * 14, 40 - cos(a) * 26], [147 + sin(a) * 30, 40 - cos(a) * 60]
+}
+# the stair
+shape([[136, 92], [140, 72], [146, 62], [154, 56], [160, 54], [160, 92]], yellow)
+color brown
+for i in 0..6 {
+  stroke [140 + i * 3, 90], [142 + i * 3, 70 - i * 2]
+}
+# blue ribbed wing
+shape([[108, 0], [140, 0], [134, 20], [127, 42], [123, 66], [122, 90], [109, 90]], blue)
+color lightblue
+for i in 0..7 {
+  let r = [[110, 8 + i * 12], [124 + i * 0.5, 2 + i * 13], [132 - i * 1.5, 4 + i * 12]]
+  stroke r
+  stroke shift(r, 0, 1)
+}
+color black
+for i in 0..7 {
+  stroke [110, 13 + i * 12], [124 + i * 0.5, 7 + i * 13]
+}
+# right walkway
+let rwalk = [[108, 92], [124, 93], [140, 97], [152, 101]]
+shape(band(rwalk, 8, 6), yellow)
+color brown
+stroke offset(rwalk, 3)
+
+# ---- the dark trunk ----------------------------------------------------------------------
+let trunk = [[90, -2], [108, -2], [108, 40], [107, 80], [110, 100], [118, 124], [128, 145],
+             [140, 170], [76, 170], [84, 140], [92, 110], [95, 80], [94, 50], [90, 25]]
+shape(trunk, black, null)
+color blue
+stroke [[99, 2], [99, 40], [100, 80], [102, 120], [104, 167]]
+stroke [[95, 120], [90, 145], [86, 167]]
+stroke [[104, 104], [112, 135], [120, 167]]
+color darkgrey
+stroke [[103, 10], [103, 60], [105, 100]]
+
+# ---- ropes -------------------------------------------------------------------------------
+rope(loop_path, 9)
+rope([[40, 16], [49, 28], [55, 46], [57, 66], [58, 90]], 6)
+rope([[82, -2], [86, 20], [90, 42], [94, 54]], 6)
+rope([[110, -2], [109, 40], [108, 80], [111, 100], [119, 120], [129, 136], [140, 148],
+      [151, 150], [162, 140]], 8)
+rope([[144, -2], [141, 24], [133, 46], [127, 66], [125, 90]], 6)
+# ring round the lamp's mound
+shape(band([[70, 58], [80, 55], [92, 58]], 4), brown)
+
+# ---- foreground ----------------------------------------------------------------------------
+# tan ribbed floor bottom left
+shape([[0, 140], [18, 132], [30, 142], [48, 150], [60, 158], [68, 168], [0, 168]], brown)
+color yellow
+for i in 0..6 {
+  stroke [2 + i * 10, 146 + i], [12 + i * 10, 167]
+}
+# the pale spike
+shape([[72, 118], [76, 140], [80, 167], [64, 167], [68, 140]], lightgrey)
+color white
+stroke [[71, 122], [67, 145], [65, 166]]
+color darkgrey
+stroke [[74, 128], [77, 150], [78, 166]]
+
+# the crouching figure, reaching left along the walkway
+shape(band([[153, 98], [149, 106], [143, 114]], 10, 8), lightgrey)
+shape(band([[151, 102], [143, 106], [134, 108]], 4, 3), lightgrey)
+shape(band([[143, 114], [151, 118], [156, 126]], 6, 4), lightgrey)
+shape(band([[145, 115], [139, 120], [134, 126]], 5, 3), lightgrey)
+shape(blob(154, 92, 3.5, 6, 2, 0.1), lightgrey)
+color darkgrey
+stroke [[151, 100], [147, 108], [144, 113]]
+stroke [[150, 119], [154, 125]]
+color black
+line 155, 91
+line 153, 95, 155, 95
+
+frame()

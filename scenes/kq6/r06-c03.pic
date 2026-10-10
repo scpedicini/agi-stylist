@@ -1,0 +1,174 @@
+# Druids' Stone Circle
+# Source: King's Quest VI (VGA) - reference/kq6/r06-c03.png; reframed with:
+#   pnpm grid reference/kq6/r06-c03.png --name kq6-r06-c03
+# Method: translated by eye. Kept: pale sky, two huge near standing stones framing the
+#   sides, the ring of uprights with their lintels, misty forest seen between them, the
+#   gnarled dead tree's limbs reaching over the circle, the sandy floor, the ash ring of the
+#   fire pit, a few faint far branches. Dropped: stone mottling, most of the twig tangle,
+#   ground speckle, the haze gradient.
+# Colours: pale cyan sky → lightcyan, misty far forest → cyan, ring uprights → darkgrey with
+#   black shade, lintels → lightgrey with darkgrey underside, near stones → black with a
+#   darkgrey lit face and lightgrey rim, tree limbs → brown with black edge and yellow lit
+#   tops, sand → yellow with brown shadows, ash pit → brown with darkgrey/black embers.
+scene "Druids' Stone Circle"
+variants day
+
+# ---- sky and the misty forest behind the circle ----------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color lightcyan
+  rect 0, 0, 159, 104
+}
+
+# faint far branches in the haze (upper left)
+color cyan
+stroke [[36, 30], [40, 22], [38, 14], [44, 8]]
+stroke [[40, 22], [47, 19], [50, 12]]
+stroke [[38, 14], [34, 10]]
+stroke [[44, 30], [50, 27], [55, 30]]
+# faint far trunks seen through the gaps
+stroke [[40, 64], [39, 80], [41, 96]]
+stroke [[62, 64], [64, 78], [62, 96]]
+stroke [[86, 64], [85, 80], [87, 96]]
+stroke [[109, 64], [108, 96]]
+
+# far undergrowth band at the foot of the gaps
+shape([[30, 104], [30, 90], [38, 86], [46, 89], [56, 85], [66, 88], [76, 86], [88, 89],
+       [98, 85], [110, 88], [122, 86], [122, 104]], cyan, null)
+color green
+stroke [[38, 92], [46, 94], [54, 91]]
+stroke [[62, 93], [70, 91], [78, 94]]
+stroke [[86, 92], [96, 94], [104, 91], [114, 93]]
+
+# ---- sandy floor -----------------------------------------------------------------------
+delay {
+  color yellow
+  rect 0, 100, 159, 167
+}
+# shadow at the foot of the ring
+shape([[30, 99], [60, 98], [90, 97], [122, 98], [122, 104], [104, 102], [80, 102],
+       [60, 104], [44, 107], [30, 110]], brown, null)
+# darker sand near the viewer
+shape([[0, 150], [30, 148], [60, 154], [90, 156], [120, 152], [159, 156], [159, 167], [0, 167]],
+      brown, null)
+color brown
+stroke [[48, 136], [60, 135]]
+stroke [[96, 140], [110, 139]]
+stroke [[40, 124], [50, 123]]
+stroke [[104, 112], [114, 111]]
+stroke [[70, 146], [84, 146]]
+
+# fire pit: a ring of ash and charcoal
+blobs([[82, 121, 20, 5], [70, 119, 9, 4], [96, 122, 9, 4]], brown, null, 0.3, 4)
+color darkgrey
+stroke [[74, 122], [78, 123]]
+stroke [[92, 119], [96, 120]]
+color darkgrey
+stroke [[66, 119], [72, 118], [78, 120]]
+stroke [[86, 118], [94, 119]]
+stroke [[80, 124], [90, 125], [98, 123]]
+color black
+stroke [[70, 121], [76, 122]]
+stroke [[88, 121], [93, 121]]
+stroke [[62, 120], [65, 121]]
+stroke [[99, 120], [102, 121]]
+
+# ---- the ring of uprights --------------------------------------------------------------
+fn upright(x1, x2, top, bot) {
+  shape([[x1, top], [x2, top], [x2 + 1, bot - 3], [x2 - 1, bot], [x1 + 1, bot], [x1 - 1, bot - 4]],
+        darkgrey)
+  # shaded right third
+  let s = x2 - round((x2 - x1) / 3)
+  shape([[s, top + 1], [x2 - 1, top + 1], [x2, bot - 3], [x2 - 1, bot - 1], [s + 1, bot - 1]],
+        black, null)
+}
+upright(31, 38, 56, 112)
+upright(44, 55, 58, 104)
+upright(68, 79, 58, 101)
+upright(92, 104, 58, 99)
+upright(113, 121, 58, 101)
+
+# lintels: a slab seen at an angle on the left, then a straight run
+shape([[32, 26], [44, 32], [56, 42], [64, 46], [122, 46], [122, 61], [64, 61], [44, 59],
+       [32, 58]], lightgrey)
+# underside / front face shadow
+shape([[32, 52], [44, 54], [64, 57], [122, 57], [122, 61], [64, 61], [44, 59], [32, 58]],
+      darkgrey, null)
+color black
+stroke [[32, 58], [44, 59], [64, 61], [122, 61]]
+# edge between the slab top and its front face, and the joints
+color darkgrey
+stroke [[32, 40], [44, 44], [56, 47], [64, 48], [122, 48]]
+stroke [[84, 48], [84, 56]]
+stroke [[106, 48], [106, 56]]
+stroke [[60, 48], [60, 56]]
+color white
+stroke [[33, 28], [44, 34]]
+stroke [[66, 47], [80, 47]]
+
+# ---- the gnarled tree reaching over the circle -----------------------------------------
+fn limb(pts, w, w2) {
+  shape(band(pts, w, w2), brown)
+}
+# upper limbs first: broad S-curves spreading up and out from the main limb
+limb([[60, 4], [68, 3], [76, 6], [86, 8], [96, 5], [106, 9], [116, 7], [124, 9]], 5, 4)
+limb([[86, 44], [83, 36], [77, 29], [70, 23], [64, 18], [62, 11], [66, 4]], 8, 4)
+limb([[100, 41], [98, 32], [102, 25], [110, 21], [118, 22], [124, 26]], 8, 4)
+limb([[98, 30], [92, 23], [87, 15], [89, 8]], 6, 3)
+limb([[110, 39], [108, 32], [114, 29], [122, 30]], 5, 3)
+limb([[70, 23], [62, 26], [55, 22], [50, 24]], 4, 2)
+limb([[70, 48], [63, 44], [56, 41], [49, 43]], 5, 2)
+limb([[118, 22], [116, 15], [120, 12]], 4, 2)
+# thin twigs
+limb([[64, 18], [57, 14], [52, 16], [47, 12]], 3, 1.5)
+limb([[66, 4], [60, 9], [54, 7]], 3, 1.5)
+limb([[87, 15], [80, 13], [76, 16]], 3, 1.5)
+limb([[106, 9], [104, 15], [108, 17]], 3, 1.5)
+limb([[56, 41], [52, 35], [46, 33]], 3, 1.5)
+# the main limb from behind the right stone
+limb([[124, 36], [116, 37], [108, 40], [100, 41], [90, 43], [80, 45], [70, 48], [62, 52]], 11, 5)
+# a root hanging down in front of the ring
+limb([[63, 52], [60, 59], [62, 66], [59, 73], [60, 80]], 5, 2)
+limb([[63, 52], [56, 50], [50, 53], [46, 52]], 4, 2)
+# bark lines along the limbs
+color black
+stroke [[118, 38], [108, 41], [98, 42]]
+stroke [[88, 45], [78, 46]]
+# lit top edge of the main limb
+color yellow
+stroke [[121, 33], [114, 34], [104, 37], [94, 39], [84, 41], [74, 44]]
+stroke [[99, 33], [103, 26], [110, 22]]
+stroke [[82, 35], [76, 29], [70, 24]]
+
+# ---- the two near standing stones ------------------------------------------------------
+# left
+let lstone = [[-1, -1], [33, -1], [34, 20], [32, 40], [33, 60], [31, 90], [32, 120], [31, 140],
+              [28, 150], [22, 158], [14, 163], [4, 166], [-1, 167]]
+shape(lstone, black)
+shape([[22, -1], [33, -1], [34, 20], [32, 40], [33, 60], [31, 90], [32, 120], [31, 140],
+       [28, 150], [24, 152], [22, 120], [23, 80], [21, 40]], darkgrey, null)
+color lightgrey
+stroke [[32, -1], [33, 20], [31, 40], [32, 60], [30, 90], [31, 120], [30, 140], [27, 149]]
+color darkgrey
+stroke [[12, 10], [11, 50], [13, 90], [12, 130]]
+color black
+stroke [[27, 30], [26, 60], [28, 80]]
+stroke [[26, 110], [27, 134]]
+
+# right
+let rstone = [[160, -1], [121, -1], [122, 20], [121, 50], [120, 80], [121, 110], [119, 140],
+              [118, 148], [121, 155], [128, 160], [140, 163], [160, 163]]
+shape(rstone, black)
+shape([[121, -1], [131, -1], [130, 40], [132, 90], [130, 130], [132, 160], [128, 160],
+       [121, 155], [118, 148], [119, 140], [121, 110], [120, 80], [121, 50], [122, 20]],
+      darkgrey, null)
+color lightgrey
+stroke [[122, -1], [123, 20], [122, 50], [121, 80], [122, 110], [120, 140], [119, 148]]
+color black
+stroke [[126, 20], [127, 60], [125, 90]]
+stroke [[127, 112], [126, 140]]
+color darkgrey
+stroke [[146, 6], [148, 50], [145, 100], [147, 150]]
+
+frame()

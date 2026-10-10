@@ -1,0 +1,190 @@
+# Rotunda with the Spiral Stair
+# Source: King's Quest VI VGA background, reference/kq6/r07-c09.png
+#   (a round teal hall in the Castle of the Crown); reframed with:
+#   pnpm grid reference/kq6/r07-c09.png --name kq6-r07-c09
+# Method: translated by eye. Kept: the curving spiral staircase on the left with its gold
+#   handrail, newel posts, solid balustrade panel and red stringer; the navy cornice band with
+#   gold trim sweeping round the rotunda; the four slim blue columns; the two lit wall sconces
+#   and their glow; the wooden door in its stone arch; the red baseboard; the compass-star
+#   marble floor; the two pale stone ledges in the foreground.
+# Dropped: the mottling of the walls and ceiling, the column joints, the door's fine iron
+#   work, floor reflections, most of the star's inlay subtlety.
+# Colours: teal-green walls and teal ceiling -> cyan, torch glow -> lightcyan, navy cornice ->
+#   blue with yellow gold trim, sky-blue columns -> lightcyan with cyan shade and brown plinths,
+#   red-brown baseboard -> red with a yellow top line, mint marble floor -> lightcyan, dark
+#   star points -> black / cyan halves, slate stair panel -> darkgrey, teal steps -> lightgrey
+#   treads over darkgrey risers, gold rail and posts -> yellow with brown shade, door -> brown
+#   with black planks in a lightgrey stone arch, pale foreground ledges -> yellow and brown.
+scene "Rotunda with the Spiral Stair"
+variants lit
+
+# ---- walls and ceiling ----------------------------------------------------------------------
+# (delay: the viewer paints these backdrops last, farthest last, filling in behind the rest; the
+# picture itself is unchanged)
+delay 2 {
+  color cyan
+  rect 0, 0, 159, 167
+}
+
+# torch glow on the wall behind each sconce
+shape(blob(48, 58, 7, 14, 3, 0.08), lightcyan, null)
+shape(blob(114, 60, 7, 14, 5, 0.08), lightcyan, null)
+
+# ---- cornice band sweeping round the rotunda -------------------------------------------------
+let band_top = [[-2, -6], [12, 3], [22, 12], [33, 20], [40, 23], [50, 28], [60, 32], [70, 35],
+  [80, 36], [90, 35], [100, 34], [110, 31], [120, 27], [130, 20], [140, 13], [150, 5], [161, -4]]
+let band_bot = [[-2, 3], [10, 11], [20, 19], [33, 26], [40, 29], [50, 34], [60, 38], [70, 40],
+  [80, 42], [90, 41], [100, 40], [110, 37], [120, 33], [130, 28], [140, 22], [150, 16], [161, 8]]
+shape(band_top + reverse(band_bot), blue)
+color yellow
+stroke band_top
+stroke shift(band_top, 0, 1)
+color black
+stroke shift(band_top, 0, -1)
+
+# ---- floor ------------------------------------------------------------------------------------
+delay {
+  shape([[0, 114], [20, 111], [30, 109], [45, 106], [60, 103], [80, 101], [100, 103], [120, 109],
+    [140, 117], [161, 127], [161, 169], [0, 169]], lightcyan, null)
+}
+# the medallion: a ring with dark sectors, then the eight-point compass star on top
+let cx = 81
+let cy = 123
+fn sector(a0, a1) {
+  shape([[cx, cy + 6]] + arc(cx, cy + 6, 74, 32, a0, a1, 5), black, null)
+}
+sector 100, 132
+sector 166, 194
+sector 214, 250
+sector 300, 318
+color cyan
+stroke arc(cx, cy + 6, 74, 32, 0, 360, 6)
+
+# each point: one dark half and one shaded half
+for k in 0..8 {
+  let a = k * 45
+  let main = k % 2 == 0
+  let rx = main ? 48 : 26
+  let ry = main ? 16 : 10
+  if sin(a) < -0.1 { ry = ry * 0.8 }
+  if sin(a) > 0.1 { ry = ry * 1.4 }
+  let tip = [cx + rx * cos(a), cy + ry * sin(a)]
+  let w = main ? 22.5 : 16
+  let l = [cx + 11 * cos(a - w), cy + 5 * sin(a - w)]
+  let r = [cx + 11 * cos(a + w), cy + 5 * sin(a + w)]
+  shape([l, tip, [cx, cy]], black, null)
+  shape([[cx, cy], tip, r], cyan, null)
+}
+shape(arc(cx, cy, 10, 4, 0, 360, 15), lightcyan, cyan)
+
+# ---- baseboard ---------------------------------------------------------------------------------
+let base_top = [[20, 108], [30, 106], [45, 103], [60, 100], [80, 98], [100, 100], [120, 106],
+  [140, 114], [161, 124]]
+let base_bot = [[20, 115], [30, 112], [45, 108], [60, 105], [80, 103], [100, 105], [120, 112],
+  [140, 121], [161, 132]]
+shape(base_top + reverse(base_bot), red)
+color yellow
+stroke base_top
+color black
+stroke shift(base_bot, 0, 1)
+
+# ---- door in its stone arch --------------------------------------------------------------------
+shape([[69, 101], [69, 74], [80, 66], [91, 74], [91, 101]], lightgrey)
+color darkgrey
+for p in [[70, 82, 73, 82], [70, 90, 73, 90], [87, 82, 90, 82], [87, 90, 90, 90],
+  [71, 74, 74, 76], [75, 70, 77, 74], [80, 67, 80, 74], [85, 70, 83, 74], [89, 74, 86, 76]] {
+  line p[0], p[1], p[2], p[3]
+}
+shape([[74, 75], [86, 75], [86, 101], [74, 101]], brown)
+color black
+for x in [76, 78, 80, 82, 84] { line x, 77, x, 99 }
+color yellow
+line 74, 77, 86, 77
+line 74, 99, 86, 99
+plot 76, 91, 77, 90, 78, 91, 77, 92
+
+# ---- columns -----------------------------------------------------------------------------------
+column(29, 33, 24, 108, lightcyan, cyan, white, brown)
+column(63, 67, 37, 104, lightcyan, cyan, white, brown)
+column(96, 100, 39, 106, lightcyan, cyan, white, brown)
+column(130, 134, 26, 117, lightcyan, cyan, white, brown)
+# gold rings where each column meets the cornice
+for c in [[28, 34, 23], [62, 68, 36], [95, 101, 38], [129, 135, 25]] {
+  shape([[c[0], c[2] - 2], [c[1], c[2] - 2], [c[1], c[2]], [c[0], c[2]]], yellow)
+}
+
+# ---- wall sconces ------------------------------------------------------------------------------
+fn sconce(x, top, bottom) {
+  # flame
+  shape([[x - 2, top], [x, top - 7], [x + 2, top]], yellow, null)
+  color white
+  line x, top - 4, x, top - 1
+  # cup with a gold rim, a tapering blue stem and a gold finial
+  shape([[x - 3, top], [x + 3, top], [x + 2, top + 4], [x - 2, top + 4]], blue)
+  color yellow
+  line x - 3, top, x + 3, top
+  line x - 2, top + 3, x + 2, top + 3
+  shape([[x - 2, top + 4], [x + 2, top + 4], [x + 1, bottom - 3], [x - 1, bottom - 3]], lightblue)
+  shape([[x - 1, bottom - 3], [x + 1, bottom - 3], [x, bottom]], yellow)
+}
+sconce 48, 64, 88
+sconce 114, 66, 89
+
+# ---- spiral staircase --------------------------------------------------------------------------
+# right edge of the visible steps, as [y, x] so interp can read x at a given row
+let step_edge = [[20, 0], [26, 9], [40, 6], [52, 5], [64, 8], [76, 12], [88, 13], [100, 17],
+  [113, 24], [126, 34], [138, 44], [150, 54], [168, 60]]
+let steps_poly = [[0, 20]]
+for p in step_edge { push(steps_poly, [p[1], p[0]]) }
+push(steps_poly, [0, 167])
+shape(steps_poly, darkgrey, null)
+# treads: lit slabs, deeper towards the viewer
+let ys = [25, 29, 34, 39, 44, 49, 54, 59, 64, 69, 74, 79, 84, 89, 94, 100, 106, 112, 119, 126,
+  134, 142, 151, 160]
+for i in 0..len(ys) - 1 {
+  let y = ys[i]
+  let h = max(1, floor((ys[i + 1] - y) * 0.55))
+  let xr = interp(step_edge, y) - 1
+  color lightgrey
+  for yy in range(y, y + h) {
+    line 0, yy, max(0, interp(step_edge, yy) - 1), yy
+  }
+  color black
+  line 0, y - 1, xr, y - 1
+}
+
+# balustrade panel: the handrail on top, the stringer below (the two edges swap over as the
+# stair turns up the wall)
+let rail = [[54, 120], [40, 106], [28, 94], [20, 86], [13, 76], [8, 64], [6, 52], [7, 40],
+  [11, 30], [18, 21], [28, 14], [38, 10], [48, 12]]
+let under = [[54, 150], [44, 138], [34, 126], [24, 113], [17, 100], [13, 88], [11, 75],
+  [11, 62], [13, 50], [17, 40], [22, 31], [30, 25], [38, 22], [48, 15]]
+shape(rail + reverse(under), darkgrey)
+shape(band(under, 4, 2), red, null)
+color black
+stroke under
+# gold handrail with a brown shadow line
+color brown
+stroke shift(rail, 0, 2)
+color yellow
+stroke rail
+stroke shift(rail, 0, 1)
+
+# newel posts
+fn post(x, top, bottom) {
+  shape([[x - 1, top + 2], [x + 2, top + 2], [x + 2, bottom], [x - 1, bottom]], yellow)
+  color brown
+  line x + 1, top + 4, x + 1, bottom - 1
+  shape([[x - 1, top + 2], [x, top - 1], [x + 1, top - 1], [x + 2, top + 2]], yellow)
+}
+post 53, 118, 156
+post 20, 85, 114
+post 17, 20, 36
+
+# ---- foreground ledges -------------------------------------------------------------------------
+shape([[0, 138], [14, 145], [30, 156], [38, 167], [0, 167]], yellow)
+shape([[0, 152], [16, 158], [24, 167], [0, 167]], brown, null)
+shape([[121, 152], [142, 146], [161, 150], [161, 158], [136, 161]], yellow)
+shape([[121, 152], [136, 161], [161, 158], [161, 169], [124, 169]], brown)
+
+frame()
