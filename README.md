@@ -2,7 +2,7 @@
 
 A series of LLM skills for producing early Sierra AGI-style adventure game scenes from a custom LOGO-inspired **drawing instruction set** instead of bitmaps.
 
-**Live site: https://kq-styles.specr.net** (deployed from the `prod` branch; see [Deploying](#deploying)).
+**Live site: https://kq-styles.specr.net**
 
 - **PicScript**: a small Logo-flavoured language that compiles to AGI picture operations
   (colour, lines, white-only flood fill, brush plots).
