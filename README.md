@@ -6,9 +6,6 @@ A series of LLM skills for producing early Sierra AGI-style adventure game scene
 
 - **PicScript**: a small Logo-flavoured language that compiles to AGI picture operations
   (colour, lines, white-only flood fill, brush plots).
-- **48 King's Quest VI (VGA) backgrounds** from `reference/kq6/`, translated by eye into
-  KQ1-style EGA scenes by fresh agents using the from-image skill.
-- **11 Myst screens** from `reference/myst/`, translated the same way with one shared palette.
 - **A browser viewer** (Vite + TypeScript + p5.js) that repaints each scene stroke by stroke.
 - **Two skills.** `old-adventure-game-draw` composes new scenes from a description.
   `old-adventure-game-from-image` translates a picture you give it (screenshot, painting,
