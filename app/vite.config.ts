@@ -42,6 +42,14 @@ export default defineConfig({
   server: { port: 5250, strictPort: true },
   plugins: [
     {
+      // scenes/ and reference/ sit outside the Vite root (app/), so the dev server doesn't watch them
+      // and never sees a scene added or removed; watch them so the scenes' glob picks up the change
+      name: 'watch-scenes',
+      configureServer(server) {
+        server.watcher.add([`${root}../scenes`, `${root}../reference`]);
+      },
+    },
+    {
       // index.html writes the name, address, description, repository and X account as %APP_NAME%,
       // %SITE_URL%, %APP_DESCRIPTION%, %REPO_URL% and %X_HANDLE% (all set in app/src/app/config.ts), %OG_IMAGE% and %X_IMAGE% for the
       // preview images' URLs, and %JSON_LD% for the structured data
