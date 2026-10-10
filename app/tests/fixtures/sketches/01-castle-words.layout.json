@@ -1,0 +1,162 @@
+{
+  "id": "01-castle-words",
+  "source": "app/tests/fixtures/sketches/01-castle-words.png",
+  "brief": "A grey stone castle with two round towers and red flags. Late afternoon. The path is dirt and winds down toward the viewer.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "FLAG",
+      "kind": "attached",
+      "at": [
+        330,
+        50
+      ],
+      "is": "red flag(s) on the castle towers",
+      "support": "castle towers",
+      "labelBox": [
+        298,
+        41,
+        361,
+        60
+      ],
+      "pic": [
+        82.5,
+        17.5
+      ]
+    },
+    {
+      "label": "CASTLE ON A HILL",
+      "kind": "grounded",
+      "at": [
+        330,
+        130
+      ],
+      "is": "grey stone castle, two round towers, on a hill",
+      "support": "the hill",
+      "labelBox": [
+        201,
+        117,
+        460,
+        142
+      ],
+      "pic": [
+        82.5,
+        45.5
+      ]
+    },
+    {
+      "label": "DRAWBRIDGE",
+      "kind": "grounded",
+      "at": [
+        330,
+        235
+      ],
+      "is": "drawbridge across the moat at the gate",
+      "support": "over the moat",
+      "labelBox": [
+        247,
+        225,
+        412,
+        249
+      ],
+      "pic": [
+        82.5,
+        82.3
+      ]
+    },
+    {
+      "label": "MOAT",
+      "kind": "region",
+      "at": [
+        480,
+        248
+      ],
+      "is": "water moat around the castle",
+      "labelBox": [
+        444,
+        239,
+        516,
+        255
+      ],
+      "pic": [
+        120,
+        86.8
+      ]
+    },
+    {
+      "label": "PATH",
+      "kind": "region",
+      "at": [
+        300,
+        345
+      ],
+      "is": "dirt path winding from the drawbridge toward the viewer (no line drawn: an area through the label)",
+      "labelBox": [
+        265,
+        335,
+        332,
+        354
+      ],
+      "pic": [
+        75,
+        120.8
+      ]
+    },
+    {
+      "label": "ROCKS",
+      "kind": "grounded",
+      "at": [
+        90,
+        405
+      ],
+      "is": "rock cluster (left)",
+      "support": "ground",
+      "labelBox": [
+        47,
+        396,
+        132,
+        413
+      ],
+      "pic": [
+        22.5,
+        141.8
+      ]
+    },
+    {
+      "label": "ROCKS",
+      "kind": "grounded",
+      "at": [
+        565,
+        415
+      ],
+      "is": "rock cluster (right)",
+      "support": "ground",
+      "labelBox": [
+        521,
+        405,
+        607,
+        423
+      ],
+      "pic": [
+        141.3,
+        145.3
+      ]
+    }
+  ],
+  "requirements": [
+    "grey stone castle",
+    "the castle stands on a hill",
+    "two round towers",
+    "red flags",
+    "late-afternoon light",
+    "dirt path winding toward the viewer"
+  ],
+  "ambiguities": [
+    {
+      "what": "ROCKS appears twice",
+      "acceptable": [
+        "two separate rock clusters"
+      ]
+    }
+  ]
+}

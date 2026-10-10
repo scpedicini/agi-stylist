@@ -1,0 +1,561 @@
+{
+  "id": "13-cove",
+  "source": "app/tests/fixtures/sketches/13-cove.png",
+  "brief": "A sunny cove. The boat is a small sailing boat heading right. Gulls overhead.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "(horizon line)",
+      "kind": "boundary",
+      "at": [
+        512,
+        260
+      ],
+      "is": "the horizon",
+      "lines": [
+        [
+          [
+            0,
+            260
+          ],
+          [
+            1024,
+            260
+          ]
+        ]
+      ],
+      "pic": [
+        80,
+        56.9
+      ]
+    },
+    {
+      "label": "Sea",
+      "kind": "area",
+      "at": [
+        200,
+        380
+      ],
+      "is": "the sea, from the horizon down to the sand, filling the blue scribble",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              23,
+              260
+            ],
+            [
+              1012,
+              260
+            ],
+            [
+              1020,
+              323
+            ],
+            [
+              999,
+              407
+            ],
+            [
+              1018,
+              440
+            ],
+            [
+              1005,
+              450
+            ],
+            [
+              882,
+              458
+            ],
+            [
+              459,
+              471
+            ],
+            [
+              428,
+              425
+            ],
+            [
+              21,
+              413
+            ],
+            [
+              10,
+              396
+            ],
+            [
+              28,
+              324
+            ],
+            [
+              15,
+              260
+            ]
+          ],
+          "snapped": [
+            "top: on draws[0], the line it runs up to"
+          ]
+        }
+      ],
+      "snapTop": 0,
+      "labelBox": [
+        173,
+        369,
+        226,
+        391
+      ],
+      "pic": [
+        31.3,
+        83.1
+      ]
+    },
+    {
+      "label": "Sand",
+      "kind": "area",
+      "at": [
+        300,
+        690
+      ],
+      "is": "a sandy beach filling the yellow scribble",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              15,
+              463
+            ],
+            [
+              753,
+              479
+            ],
+            [
+              1002,
+              494
+            ],
+            [
+              1011,
+              508
+            ],
+            [
+              999,
+              541
+            ],
+            [
+              1016,
+              566
+            ],
+            [
+              1007,
+              601
+            ],
+            [
+              1018,
+              628
+            ],
+            [
+              1002,
+              652
+            ],
+            [
+              1015,
+              751
+            ],
+            [
+              1008,
+              758
+            ],
+            [
+              683,
+              751
+            ],
+            [
+              21,
+              727
+            ],
+            [
+              9,
+              654
+            ],
+            [
+              25,
+              629
+            ],
+            [
+              13,
+              596
+            ],
+            [
+              22,
+              560
+            ],
+            [
+              6,
+              537
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        263,
+        679,
+        336,
+        701
+      ],
+      "pic": [
+        46.9,
+        150.9
+      ]
+    },
+    {
+      "label": "Rocks",
+      "kind": "area",
+      "at": [
+        840,
+        370
+      ],
+      "is": "rocks in the sea filling the grey loop",
+      "strokes": [
+        {
+          "class": "loop",
+          "pts": [
+            [
+              760,
+              330
+            ],
+            [
+              774,
+              322
+            ],
+            [
+              797,
+              317
+            ],
+            [
+              824,
+              314
+            ],
+            [
+              852,
+              315
+            ],
+            [
+              874,
+              318
+            ],
+            [
+              894,
+              329
+            ],
+            [
+              913,
+              351
+            ],
+            [
+              923,
+              376
+            ],
+            [
+              920,
+              395
+            ],
+            [
+              906,
+              404
+            ],
+            [
+              883,
+              411
+            ],
+            [
+              856,
+              416
+            ],
+            [
+              828,
+              419
+            ],
+            [
+              806,
+              417
+            ],
+            [
+              787,
+              406
+            ],
+            [
+              770,
+              383
+            ],
+            [
+              759,
+              357
+            ],
+            [
+              757,
+              335
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        802,
+        359,
+        878,
+        379
+      ],
+      "pic": [
+        131.3,
+        80.9
+      ]
+    },
+    {
+      "label": "Rocks",
+      "kind": "area",
+      "at": [
+        140,
+        600
+      ],
+      "is": "rocks on the sand filling the grey loop",
+      "strokes": [
+        {
+          "class": "loop",
+          "pts": [
+            [
+              60,
+              560
+            ],
+            [
+              75,
+              553
+            ],
+            [
+              99,
+              547
+            ],
+            [
+              128,
+              544
+            ],
+            [
+              156,
+              543
+            ],
+            [
+              182,
+              545
+            ],
+            [
+              200,
+              550
+            ],
+            [
+              217,
+              567
+            ],
+            [
+              228,
+              594
+            ],
+            [
+              229,
+              621
+            ],
+            [
+              220,
+              640
+            ],
+            [
+              205,
+              647
+            ],
+            [
+              181,
+              653
+            ],
+            [
+              153,
+              656
+            ],
+            [
+              124,
+              657
+            ],
+            [
+              98,
+              655
+            ],
+            [
+              80,
+              650
+            ],
+            [
+              63,
+              633
+            ],
+            [
+              53,
+              606
+            ],
+            [
+              51,
+              579
+            ],
+            [
+              60,
+              560
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        102,
+        589,
+        178,
+        609
+      ],
+      "pic": [
+        21.9,
+        131.3
+      ]
+    },
+    {
+      "label": "BOAT",
+      "kind": "grounded",
+      "at": [
+        360,
+        340
+      ],
+      "is": "a small sailing boat heading right (motion arrow)",
+      "support": "the sea",
+      "labelBox": [
+        318,
+        329,
+        401,
+        351
+      ],
+      "pic": [
+        56.3,
+        74.4
+      ]
+    },
+    {
+      "label": "Dune grass",
+      "kind": "linear",
+      "at": [
+        660,
+        580
+      ],
+      "is": "tufts of dune grass along both green strokes, the faint one too",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              480,
+              640
+            ],
+            [
+              496,
+              633
+            ],
+            [
+              519,
+              622
+            ],
+            [
+              544,
+              613
+            ],
+            [
+              568,
+              610
+            ],
+            [
+              592,
+              614
+            ],
+            [
+              617,
+              622
+            ],
+            [
+              636,
+              629
+            ],
+            [
+              640,
+              630
+            ]
+          ]
+        },
+        {
+          "class": "line",
+          "pts": [
+            [
+              690,
+              650
+            ],
+            [
+              706,
+              642
+            ],
+            [
+              728,
+              630
+            ],
+            [
+              752,
+              621
+            ],
+            [
+              775,
+              621
+            ],
+            [
+              800,
+              627
+            ],
+            [
+              824,
+              635
+            ],
+            [
+              840,
+              640
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        589,
+        569,
+        731,
+        595
+      ],
+      "pic": [
+        103.1,
+        126.9
+      ]
+    }
+  ],
+  "requirements": [
+    "sunny",
+    "a small sailing boat heading right",
+    "gulls overhead",
+    "a sandy beach",
+    "rocks in the sea",
+    "rocks on the sand",
+    "dune grass along both green strokes"
+  ],
+  "ambiguities": [
+    {
+      "what": "the second green stroke is faint (translucent paint)",
+      "acceptable": [
+        "more dune grass, like the first"
+      ]
+    }
+  ]
+}

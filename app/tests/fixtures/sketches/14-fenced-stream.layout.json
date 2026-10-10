@@ -1,0 +1,565 @@
+{
+  "id": "14-fenced-stream",
+  "source": "app/tests/fixtures/sketches/14-fenced-stream.png",
+  "brief": "A stream runs down from the hills, and a hedge of round bushes grows along the top of the meadow. The pond is clear blue water with lily pads. A spring morning.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "Hills",
+      "kind": "region",
+      "at": [
+        500,
+        160
+      ],
+      "is": "hills at the top of the scene",
+      "labelBox": [
+        469,
+        147,
+        530,
+        171
+      ],
+      "pic": [
+        78.1,
+        35
+      ]
+    },
+    {
+      "label": "(blue ribbon)",
+      "kind": "path",
+      "at": [
+        400,
+        500
+      ],
+      "is": "the stream (named by the brief) along the unlabelled blue stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              520,
+              290
+            ],
+            [
+              514,
+              304
+            ],
+            [
+              507,
+              323
+            ],
+            [
+              497,
+              345
+            ],
+            [
+              486,
+              369
+            ],
+            [
+              474,
+              393
+            ],
+            [
+              462,
+              412
+            ],
+            [
+              449,
+              431
+            ],
+            [
+              434,
+              450
+            ],
+            [
+              419,
+              469
+            ],
+            [
+              404,
+              488
+            ],
+            [
+              389,
+              507
+            ],
+            [
+              376,
+              526
+            ],
+            [
+              363,
+              545
+            ],
+            [
+              350,
+              564
+            ],
+            [
+              337,
+              583
+            ],
+            [
+              325,
+              602
+            ],
+            [
+              313,
+              621
+            ],
+            [
+              300,
+              640
+            ],
+            [
+              287,
+              661
+            ],
+            [
+              272,
+              684
+            ],
+            [
+              257,
+              708
+            ],
+            [
+              244,
+              730
+            ],
+            [
+              232,
+              749
+            ],
+            [
+              222,
+              764
+            ],
+            [
+              220,
+              768
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "pic": [
+        62.5,
+        109.4
+      ]
+    },
+    {
+      "label": "(green dabs)",
+      "kind": "grounded",
+      "at": [
+        760,
+        320
+      ],
+      "is": "a hedge of round bushes (named by the brief), one at each green dab",
+      "support": "the meadow",
+      "count": 5,
+      "strokes": [
+        {
+          "class": "dab",
+          "pts": [
+            [
+              600,
+              320
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              680,
+              315
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              760,
+              322
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              840,
+              318
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              920,
+              325
+            ]
+          ]
+        }
+      ],
+      "pic": [
+        118.8,
+        70
+      ]
+    },
+    {
+      "label": "Fence",
+      "kind": "linear",
+      "at": [
+        150,
+        506
+      ],
+      "is": "a fence along the brown stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              0,
+              530
+            ],
+            [
+              13,
+              530
+            ],
+            [
+              27,
+              529
+            ],
+            [
+              43,
+              529
+            ],
+            [
+              60,
+              529
+            ],
+            [
+              79,
+              528
+            ],
+            [
+              99,
+              528
+            ],
+            [
+              120,
+              527
+            ],
+            [
+              142,
+              527
+            ],
+            [
+              165,
+              526
+            ],
+            [
+              189,
+              525
+            ],
+            [
+              214,
+              525
+            ],
+            [
+              240,
+              524
+            ],
+            [
+              267,
+              523
+            ],
+            [
+              294,
+              523
+            ],
+            [
+              322,
+              522
+            ],
+            [
+              350,
+              521
+            ],
+            [
+              379,
+              521
+            ],
+            [
+              408,
+              520
+            ],
+            [
+              438,
+              519
+            ],
+            [
+              467,
+              519
+            ],
+            [
+              497,
+              518
+            ],
+            [
+              527,
+              517
+            ],
+            [
+              557,
+              516
+            ],
+            [
+              586,
+              516
+            ],
+            [
+              616,
+              515
+            ],
+            [
+              645,
+              514
+            ],
+            [
+              674,
+              514
+            ],
+            [
+              702,
+              513
+            ],
+            [
+              730,
+              512
+            ],
+            [
+              757,
+              512
+            ],
+            [
+              784,
+              511
+            ],
+            [
+              810,
+              510
+            ],
+            [
+              835,
+              510
+            ],
+            [
+              859,
+              509
+            ],
+            [
+              882,
+              508
+            ],
+            [
+              904,
+              508
+            ],
+            [
+              925,
+              507
+            ],
+            [
+              945,
+              507
+            ],
+            [
+              964,
+              506
+            ],
+            [
+              981,
+              506
+            ],
+            [
+              997,
+              506
+            ],
+            [
+              1011,
+              505
+            ],
+            [
+              1024,
+              505
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        105,
+        495,
+        194,
+        517
+      ],
+      "pic": [
+        23.4,
+        110.7
+      ]
+    },
+    {
+      "label": "Pond",
+      "kind": "area",
+      "at": [
+        785,
+        620
+      ],
+      "is": "a clear blue pond with lily pads filling the loop (painted red)",
+      "strokes": [
+        {
+          "class": "loop",
+          "pts": [
+            [
+              700,
+              560
+            ],
+            [
+              717,
+              555
+            ],
+            [
+              740,
+              552
+            ],
+            [
+              767,
+              551
+            ],
+            [
+              796,
+              552
+            ],
+            [
+              825,
+              555
+            ],
+            [
+              850,
+              559
+            ],
+            [
+              871,
+              565
+            ],
+            [
+              886,
+              575
+            ],
+            [
+              896,
+              598
+            ],
+            [
+              898,
+              627
+            ],
+            [
+              891,
+              655
+            ],
+            [
+              876,
+              676
+            ],
+            [
+              860,
+              683
+            ],
+            [
+              839,
+              686
+            ],
+            [
+              812,
+              686
+            ],
+            [
+              784,
+              684
+            ],
+            [
+              755,
+              680
+            ],
+            [
+              728,
+              674
+            ],
+            [
+              705,
+              668
+            ],
+            [
+              690,
+              660
+            ],
+            [
+              676,
+              640
+            ],
+            [
+              672,
+              613
+            ],
+            [
+              678,
+              585
+            ],
+            [
+              693,
+              564
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        748,
+        609,
+        821,
+        631
+      ],
+      "pic": [
+        122.7,
+        135.6
+      ]
+    }
+  ],
+  "requirements": [
+    "the stream follows the blue stroke and narrows as it goes up into the hills",
+    "round bushes along the row of green dabs",
+    "a fence along the brown stroke",
+    "the pond is blue, not red",
+    "lily pads on the pond",
+    "spring morning",
+    "hills at the top"
+  ],
+  "ambiguities": [
+    {
+      "what": "the pond is painted red but the brief says clear blue water",
+      "acceptable": [
+        "a blue pond, the conflict recorded in Interpreted"
+      ]
+    },
+    {
+      "what": "\"Fence\" is lettered in the stroke's colour and touches it",
+      "acceptable": [
+        "a fence along the brown stroke"
+      ]
+    }
+  ]
+}

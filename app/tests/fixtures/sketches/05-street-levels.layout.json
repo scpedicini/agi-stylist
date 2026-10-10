@@ -1,0 +1,357 @@
+{
+  "id": "05-street-levels",
+  "source": "app/tests/fixtures/sketches/05-street-levels.png",
+  "brief": "A medieval town street at dusk with warm lit windows. The bakery has a pretzel sign. Cobbled street.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "BAKERY",
+      "kind": "grounded",
+      "at": [
+        220,
+        300
+      ],
+      "is": "bakery with a pretzel sign",
+      "support": "street (y=420)",
+      "supportLine": [
+        [
+          0,
+          420
+        ],
+        [
+          700,
+          420
+        ]
+      ],
+      "labelBox": [
+        162,
+        289,
+        280,
+        311
+      ],
+      "pic": [
+        22,
+        100.8
+      ]
+    },
+    {
+      "label": "LAMP_POST",
+      "kind": "grounded",
+      "at": [
+        520,
+        330
+      ],
+      "is": "lamp post",
+      "support": "street (y=420)",
+      "supportLine": [
+        [
+          0,
+          420
+        ],
+        [
+          700,
+          420
+        ]
+      ],
+      "labelBox": [
+        449,
+        322,
+        591,
+        341
+      ],
+      "pic": [
+        52,
+        110.9
+      ]
+    },
+    {
+      "label": "STEPS",
+      "kind": "path",
+      "at": [
+        750,
+        450
+      ],
+      "is": "the drawn steps up to the terrace",
+      "lines": [
+        [
+          [
+            700,
+            420
+          ],
+          [
+            720,
+            420
+          ],
+          [
+            720,
+            400
+          ],
+          [
+            750,
+            400
+          ],
+          [
+            750,
+            380
+          ],
+          [
+            780,
+            380
+          ],
+          [
+            780,
+            360
+          ],
+          [
+            1100,
+            360
+          ],
+          [
+            1100,
+            420
+          ],
+          [
+            1600,
+            420
+          ]
+        ]
+      ],
+      "labelBox": [
+        716,
+        442,
+        784,
+        458
+      ],
+      "pic": [
+        75,
+        151.2
+      ]
+    },
+    {
+      "label": "INN",
+      "kind": "grounded",
+      "at": [
+        950,
+        260
+      ],
+      "is": "inn",
+      "support": "raised terrace (y=360)",
+      "supportLine": [
+        [
+          700,
+          420
+        ],
+        [
+          720,
+          420
+        ],
+        [
+          720,
+          400
+        ],
+        [
+          750,
+          400
+        ],
+        [
+          750,
+          380
+        ],
+        [
+          780,
+          380
+        ],
+        [
+          780,
+          360
+        ],
+        [
+          1100,
+          360
+        ],
+        [
+          1100,
+          420
+        ],
+        [
+          1600,
+          420
+        ]
+      ],
+      "labelBox": [
+        925,
+        249,
+        975,
+        271
+      ],
+      "pic": [
+        95,
+        87.4
+      ]
+    },
+    {
+      "label": "SINGER ON BALCONY",
+      "kind": "grounded",
+      "at": [
+        1250,
+        165
+      ],
+      "is": "a singer standing on the balcony",
+      "support": "balcony (y=200)",
+      "supportLine": [
+        [
+          1150,
+          200
+        ],
+        [
+          1350,
+          200
+        ]
+      ],
+      "labelBox": [
+        1123,
+        157,
+        1377,
+        174
+      ],
+      "pic": [
+        125,
+        55.4
+      ]
+    },
+    {
+      "label": "SHOP",
+      "kind": "grounded",
+      "at": [
+        1250,
+        320
+      ],
+      "is": "shop building carrying the balcony",
+      "support": "street (y=420)",
+      "supportLine": [
+        [
+          700,
+          420
+        ],
+        [
+          720,
+          420
+        ],
+        [
+          720,
+          400
+        ],
+        [
+          750,
+          400
+        ],
+        [
+          750,
+          380
+        ],
+        [
+          780,
+          380
+        ],
+        [
+          780,
+          360
+        ],
+        [
+          1100,
+          360
+        ],
+        [
+          1100,
+          420
+        ],
+        [
+          1600,
+          420
+        ]
+      ],
+      "labelBox": [
+        1209,
+        309,
+        1290,
+        331
+      ],
+      "pic": [
+        125,
+        107.5
+      ]
+    },
+    {
+      "label": "CAT",
+      "kind": "grounded",
+      "at": [
+        1480,
+        400
+      ],
+      "is": "a cat",
+      "support": "street (y=420)",
+      "supportLine": [
+        [
+          700,
+          420
+        ],
+        [
+          720,
+          420
+        ],
+        [
+          720,
+          400
+        ],
+        [
+          750,
+          400
+        ],
+        [
+          750,
+          380
+        ],
+        [
+          780,
+          380
+        ],
+        [
+          780,
+          360
+        ],
+        [
+          1100,
+          360
+        ],
+        [
+          1100,
+          420
+        ],
+        [
+          1600,
+          420
+        ]
+      ],
+      "labelBox": [
+        1458,
+        392,
+        1503,
+        408
+      ],
+      "pic": [
+        148,
+        134.4
+      ]
+    }
+  ],
+  "requirements": [
+    "medieval town",
+    "dusk",
+    "warm lit windows",
+    "pretzel sign on the bakery",
+    "cobbled street",
+    "inn stands on the raised terrace",
+    "singer stands on the balcony"
+  ],
+  "ambiguities": []
+}

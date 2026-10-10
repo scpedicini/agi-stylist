@@ -1,0 +1,213 @@
+{
+  "id": "03-cottage-kitchen",
+  "source": "app/tests/fixtures/sketches/03-cottage-kitchen.png",
+  "brief": "A cosy cottage kitchen at night, lit by the fire. The moon is visible through the window. A wooden table with a loaf of bread on it. The rug is red.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "CHANDELIER",
+      "kind": "attached",
+      "at": [
+        400,
+        70
+      ],
+      "is": "chandelier hanging from the ceiling",
+      "support": "ceiling",
+      "labelBox": [
+        306,
+        59,
+        495,
+        81
+      ],
+      "pic": [
+        80,
+        19.6
+      ]
+    },
+    {
+      "label": "WINDOW",
+      "kind": "attached",
+      "at": [
+        320,
+        240
+      ],
+      "is": "window on the back wall, moon visible",
+      "support": "back wall",
+      "labelBox": [
+        252,
+        229,
+        388,
+        251
+      ],
+      "pic": [
+        64,
+        67.2
+      ]
+    },
+    {
+      "label": "FIREPLACE",
+      "kind": "grounded",
+      "at": [
+        490,
+        345
+      ],
+      "is": "lit fireplace against the back wall",
+      "support": "floor at the back wall (y≈400)",
+      "labelBox": [
+        426,
+        337,
+        553,
+        354
+      ],
+      "pic": [
+        98,
+        96.6
+      ]
+    },
+    {
+      "label": "DOOR",
+      "kind": "attached",
+      "at": [
+        115,
+        330
+      ],
+      "is": "door in the left side wall, in perspective",
+      "support": "left wall",
+      "labelBox": [
+        73,
+        319,
+        158,
+        341
+      ],
+      "pic": [
+        23,
+        92.4
+      ]
+    },
+    {
+      "label": "TABLE",
+      "kind": "grounded",
+      "at": [
+        400,
+        470
+      ],
+      "is": "wooden table with a loaf of bread",
+      "support": "floor",
+      "labelBox": [
+        353,
+        459,
+        447,
+        481
+      ],
+      "pic": [
+        80,
+        131.6
+      ]
+    },
+    {
+      "label": "RUG",
+      "kind": "grounded",
+      "at": [
+        400,
+        550
+      ],
+      "is": "red rug lying on the floor",
+      "support": "floor",
+      "labelBox": [
+        370,
+        539,
+        430,
+        561
+      ],
+      "pic": [
+        80,
+        154
+      ]
+    },
+    {
+      "label": "(back wall)",
+      "kind": "extent",
+      "at": [
+        400,
+        275
+      ],
+      "is": "the back wall of the room",
+      "box": [
+        220,
+        150,
+        580,
+        400
+      ],
+      "pic": [
+        80,
+        77
+      ]
+    },
+    {
+      "label": "(room edges)",
+      "kind": "path",
+      "at": [
+        400,
+        300
+      ],
+      "is": "wall/floor/ceiling edges running from the back wall's corners to the picture's corners",
+      "lines": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            220,
+            150
+          ]
+        ],
+        [
+          [
+            800,
+            0
+          ],
+          [
+            580,
+            150
+          ]
+        ],
+        [
+          [
+            0,
+            600
+          ],
+          [
+            220,
+            400
+          ]
+        ],
+        [
+          [
+            800,
+            600
+          ],
+          [
+            580,
+            400
+          ]
+        ]
+      ],
+      "pic": [
+        80,
+        84
+      ]
+    }
+  ],
+  "requirements": [
+    "cosy cottage kitchen",
+    "night",
+    "firelight is the main light",
+    "moon visible through the window",
+    "wooden table",
+    "a loaf of bread on the table",
+    "red rug",
+    "room in one-point perspective matching the drawn back wall"
+  ],
+  "ambiguities": []
+}

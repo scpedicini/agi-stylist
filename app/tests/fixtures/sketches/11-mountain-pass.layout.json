@@ -1,0 +1,373 @@
+{
+  "id": "11-mountain-pass",
+  "source": "app/tests/fixtures/sketches/11-mountain-pass.png",
+  "brief": "A winter mountain pass under an overcast sky. The cave is dark, with icicles hanging over its mouth.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "Mountains",
+      "kind": "region",
+      "at": [
+        560,
+        230
+      ],
+      "is": "mountains whose skyline follows the grey ridge stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              0,
+              200
+            ],
+            [
+              11,
+              187
+            ],
+            [
+              27,
+              168
+            ],
+            [
+              45,
+              146
+            ],
+            [
+              63,
+              129
+            ],
+            [
+              80,
+              120
+            ],
+            [
+              99,
+              128
+            ],
+            [
+              117,
+              150
+            ],
+            [
+              136,
+              168
+            ],
+            [
+              155,
+              168
+            ],
+            [
+              170,
+              153
+            ],
+            [
+              186,
+              130
+            ],
+            [
+              202,
+              105
+            ],
+            [
+              218,
+              84
+            ],
+            [
+              235,
+              71
+            ],
+            [
+              251,
+              73
+            ],
+            [
+              268,
+              89
+            ],
+            [
+              285,
+              113
+            ],
+            [
+              302,
+              137
+            ],
+            [
+              319,
+              155
+            ],
+            [
+              336,
+              160
+            ],
+            [
+              355,
+              149
+            ],
+            [
+              374,
+              128
+            ],
+            [
+              394,
+              108
+            ],
+            [
+              413,
+              96
+            ],
+            [
+              432,
+              98
+            ],
+            [
+              450,
+              112
+            ],
+            [
+              468,
+              131
+            ],
+            [
+              487,
+              150
+            ],
+            [
+              506,
+              165
+            ],
+            [
+              527,
+              171
+            ],
+            [
+              551,
+              167
+            ],
+            [
+              578,
+              158
+            ],
+            [
+              603,
+              147
+            ],
+            [
+              625,
+              137
+            ],
+            [
+              640,
+              130
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        503,
+        221,
+        618,
+        238
+      ],
+      "pic": [
+        140,
+        80.5
+      ]
+    },
+    {
+      "label": "Snow",
+      "kind": "area",
+      "at": [
+        318,
+        112
+      ],
+      "is": "snow on the highest peak, filling the pale-blue scribble",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              238,
+              67
+            ],
+            [
+              258,
+              78
+            ],
+            [
+              265,
+              97
+            ],
+            [
+              290,
+              104
+            ],
+            [
+              270,
+              133
+            ],
+            [
+              214,
+              125
+            ],
+            [
+              202,
+              117
+            ],
+            [
+              207,
+              92
+            ],
+            [
+              230,
+              84
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        291,
+        105,
+        345,
+        119
+      ],
+      "pic": [
+        79.5,
+        39.2
+      ]
+    },
+    {
+      "label": "Path",
+      "kind": "path",
+      "at": [
+        440,
+        430
+      ],
+      "is": "a path zig-zagging up and away along the brown stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              330,
+              480
+            ],
+            [
+              345,
+              467
+            ],
+            [
+              368,
+              449
+            ],
+            [
+              387,
+              428
+            ],
+            [
+              390,
+              410
+            ],
+            [
+              377,
+              399
+            ],
+            [
+              352,
+              389
+            ],
+            [
+              322,
+              379
+            ],
+            [
+              293,
+              370
+            ],
+            [
+              270,
+              360
+            ],
+            [
+              260,
+              350
+            ],
+            [
+              268,
+              339
+            ],
+            [
+              290,
+              327
+            ],
+            [
+              319,
+              316
+            ],
+            [
+              347,
+              304
+            ],
+            [
+              367,
+              293
+            ],
+            [
+              372,
+              276
+            ],
+            [
+              355,
+              255
+            ],
+            [
+              340,
+              240
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        416,
+        422,
+        463,
+        438
+      ],
+      "pic": [
+        110,
+        150.5
+      ]
+    },
+    {
+      "label": "Cave",
+      "kind": "grounded",
+      "at": [
+        160,
+        300
+      ],
+      "is": "a dark cave mouth with icicles",
+      "support": "the mountainside",
+      "labelBox": [
+        133,
+        292,
+        187,
+        308
+      ],
+      "pic": [
+        40,
+        105
+      ]
+    }
+  ],
+  "requirements": [
+    "winter",
+    "overcast sky",
+    "snow on the highest peak",
+    "a dark cave mouth",
+    "icicles over the cave mouth",
+    "the path zig-zags up and away",
+    "the path is narrower where it is further away"
+  ],
+  "ambiguities": []
+}

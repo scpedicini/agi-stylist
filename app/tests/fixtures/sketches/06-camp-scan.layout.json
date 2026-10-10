@@ -1,0 +1,123 @@
+{
+  "id": "06-camp-scan",
+  "source": "app/tests/fixtures/sketches/06-camp-scan.jpg",
+  "brief": "A night camp scene. The tent is orange. The campfire is lit. Some stars in the sky.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "stars",
+      "kind": "region",
+      "at": [
+        597,
+        205
+      ],
+      "is": "stars scattered in the sky (the drawn asterisks)",
+      "labelBox": [
+        565,
+        196,
+        628,
+        214
+      ]
+    },
+    {
+      "label": "big oak tree",
+      "kind": "grounded",
+      "at": [
+        295,
+        429
+      ],
+      "is": "a big oak tree",
+      "support": "ground below the horizon line",
+      "labelBox": [
+        199,
+        409,
+        391,
+        455
+      ]
+    },
+    {
+      "label": "Tent",
+      "kind": "grounded",
+      "at": [
+        558,
+        515
+      ],
+      "is": "orange tent",
+      "support": "ground",
+      "labelBox": [
+        514,
+        500,
+        601,
+        527
+      ]
+    },
+    {
+      "label": "campfire",
+      "kind": "grounded",
+      "at": [
+        695,
+        607
+      ],
+      "is": "lit campfire",
+      "support": "ground",
+      "labelBox": [
+        647,
+        596,
+        743,
+        622
+      ]
+    },
+    {
+      "label": "lake",
+      "kind": "region",
+      "at": [
+        870,
+        465
+      ],
+      "is": "a lake right of the camp",
+      "labelBox": [
+        840,
+        450,
+        901,
+        474
+      ]
+    },
+    {
+      "label": "(horizon line)",
+      "kind": "path",
+      "at": [
+        573,
+        389
+      ],
+      "is": "hand-drawn horizon",
+      "lines": [
+        [
+          [
+            159,
+            401
+          ],
+          [
+            988,
+            377
+          ]
+        ]
+      ]
+    }
+  ],
+  "requirements": [
+    "night",
+    "orange tent",
+    "lit campfire",
+    "stars",
+    "big oak tree",
+    "the blank left margin of the page is part of the scene (sky/ground), not cropped as a border"
+  ],
+  "ambiguities": [
+    {
+      "what": "the left 150 px of the page are blank",
+      "acceptable": [
+        "keep it as empty landscape"
+      ]
+    }
+  ]
+}

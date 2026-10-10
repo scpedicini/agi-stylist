@@ -1,6 +1,6 @@
 # PicScript standard library
 
-Generated from `src/lang/stdlib.pic` by `pnpm skill:docs` - do not edit by hand.
+Generated from `app/src/lang/stdlib.pic` by `pnpm skill:docs` - do not edit by hand.
 Every function is available in every scene. Thumbnails show each one on a sky/grass backdrop;
 open them with the Read tool to see what a function draws before using it.
 

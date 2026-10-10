@@ -1,0 +1,565 @@
+{
+  "id": "15-swamp",
+  "source": "app/tests/fixtures/sketches/holdout/15-swamp.png",
+  "brief": "A misty swamp at dusk. The hut stands on stilts and has a lit lantern. Dead trees here and there.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "Swamp",
+      "kind": "area",
+      "at": [
+        880,
+        420
+      ],
+      "is": "swampy ground filling the dark-green scribble (the lower part of the picture)",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              263,
+              359
+            ],
+            [
+              1008,
+              392
+            ],
+            [
+              1020,
+              403
+            ],
+            [
+              1008,
+              445
+            ],
+            [
+              1022,
+              534
+            ],
+            [
+              1006,
+              562
+            ],
+            [
+              1018,
+              603
+            ],
+            [
+              999,
+              693
+            ],
+            [
+              1012,
+              731
+            ],
+            [
+              925,
+              746
+            ],
+            [
+              13,
+              768
+            ],
+            [
+              4,
+              753
+            ],
+            [
+              20,
+              717
+            ],
+            [
+              3,
+              626
+            ],
+            [
+              19,
+              601
+            ],
+            [
+              26,
+              532
+            ],
+            [
+              12,
+              506
+            ],
+            [
+              23,
+              467
+            ],
+            [
+              10,
+              428
+            ],
+            [
+              48,
+              417
+            ],
+            [
+              212,
+              415
+            ],
+            [
+              232,
+              399
+            ],
+            [
+              237,
+              366
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        826,
+        409,
+        933,
+        437
+      ],
+      "pic": [
+        137.5,
+        91.9
+      ]
+    },
+    {
+      "label": "Boardwalk",
+      "kind": "path",
+      "at": [
+        370,
+        640
+      ],
+      "is": "a boardwalk along the brown stroke, winding away",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              180,
+              768
+            ],
+            [
+              187,
+              754
+            ],
+            [
+              197,
+              735
+            ],
+            [
+              208,
+              713
+            ],
+            [
+              221,
+              689
+            ],
+            [
+              237,
+              666
+            ],
+            [
+              254,
+              646
+            ],
+            [
+              271,
+              631
+            ],
+            [
+              291,
+              620
+            ],
+            [
+              312,
+              609
+            ],
+            [
+              335,
+              599
+            ],
+            [
+              358,
+              590
+            ],
+            [
+              381,
+              580
+            ],
+            [
+              401,
+              571
+            ],
+            [
+              420,
+              560
+            ],
+            [
+              443,
+              544
+            ],
+            [
+              466,
+              528
+            ],
+            [
+              486,
+              512
+            ],
+            [
+              503,
+              495
+            ],
+            [
+              515,
+              480
+            ],
+            [
+              521,
+              463
+            ],
+            [
+              511,
+              440
+            ],
+            [
+              491,
+              419
+            ],
+            [
+              473,
+              404
+            ],
+            [
+              470,
+              400
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        293,
+        629,
+        447,
+        651
+      ],
+      "pic": [
+        57.8,
+        140
+      ]
+    },
+    {
+      "label": "Water",
+      "kind": "area",
+      "at": [
+        730,
+        560
+      ],
+      "is": "a pool of water filling the blue scribble (right)",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              720,
+              503
+            ],
+            [
+              817,
+              523
+            ],
+            [
+              837,
+              569
+            ],
+            [
+              825,
+              584
+            ],
+            [
+              764,
+              592
+            ],
+            [
+              747,
+              620
+            ],
+            [
+              645,
+              602
+            ],
+            [
+              625,
+              555
+            ],
+            [
+              634,
+              541
+            ],
+            [
+              702,
+              534
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        685,
+        549,
+        774,
+        571
+      ],
+      "pic": [
+        114.1,
+        122.5
+      ]
+    },
+    {
+      "label": "Water",
+      "kind": "area",
+      "at": [
+        145,
+        505
+      ],
+      "is": "a pool of water filling the blue scribble (left)",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              77,
+              460
+            ],
+            [
+              211,
+              486
+            ],
+            [
+              203,
+              519
+            ],
+            [
+              215,
+              549
+            ],
+            [
+              78,
+              528
+            ],
+            [
+              91,
+              492
+            ],
+            [
+              71,
+              473
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        100,
+        494,
+        189,
+        516
+      ],
+      "pic": [
+        22.7,
+        110.5
+      ]
+    },
+    {
+      "label": "Hut on stilts",
+      "kind": "extent",
+      "at": [
+        590,
+        310
+      ],
+      "is": "a hut on stilts with a lit lantern, filling the grey loop",
+      "box": [
+        520,
+        240,
+        660,
+        375
+      ],
+      "strokes": [
+        {
+          "class": "loop",
+          "pts": [
+            [
+              520,
+              250
+            ],
+            [
+              537,
+              240
+            ],
+            [
+              561,
+              232
+            ],
+            [
+              589,
+              229
+            ],
+            [
+              617,
+              229
+            ],
+            [
+              639,
+              234
+            ],
+            [
+              654,
+              244
+            ],
+            [
+              664,
+              264
+            ],
+            [
+              670,
+              290
+            ],
+            [
+              673,
+              318
+            ],
+            [
+              671,
+              345
+            ],
+            [
+              664,
+              365
+            ],
+            [
+              650,
+              377
+            ],
+            [
+              628,
+              384
+            ],
+            [
+              600,
+              388
+            ],
+            [
+              571,
+              388
+            ],
+            [
+              545,
+              385
+            ],
+            [
+              525,
+              378
+            ],
+            [
+              512,
+              365
+            ],
+            [
+              505,
+              342
+            ],
+            [
+              503,
+              313
+            ],
+            [
+              506,
+              285
+            ],
+            [
+              513,
+              261
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        520,
+        301,
+        661,
+        319
+      ],
+      "pic": [
+        92.2,
+        67.8
+      ]
+    },
+    {
+      "label": "Stumps x4",
+      "kind": "grounded",
+      "at": [
+        880,
+        660
+      ],
+      "is": "four dead tree stumps, one at each olive dab",
+      "support": "the swamp",
+      "count": 4,
+      "strokes": [
+        {
+          "class": "dab",
+          "pts": [
+            [
+              330,
+              470
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              760,
+              430
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              880,
+              700
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              120,
+              650
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        812,
+        649,
+        947,
+        675
+      ],
+      "pic": [
+        137.5,
+        144.4
+      ]
+    }
+  ],
+  "requirements": [
+    "dusk",
+    "mist",
+    "a hut on stilts",
+    "a lit lantern at the hut",
+    "four dead tree stumps, one at each olive dab",
+    "the boardwalk narrows with distance"
+  ],
+  "ambiguities": []
+}
