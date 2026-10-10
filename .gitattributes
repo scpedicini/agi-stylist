@@ -1,0 +1,2 @@
+# PicScript scenes are not Roff (GitHub guesses Roff from the .pic extension); leave them out of the language bar
+*.pic linguist-detectable=false
