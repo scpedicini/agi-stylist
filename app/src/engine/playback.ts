@@ -1,5 +1,6 @@
 import { Painter } from './execute.ts';
 import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from './framebuffer.ts';
+import type { Hiding } from './objects.ts';
 import type { Op } from './ops.ts';
 
 const SIZE = PIC_WIDTH * PIC_HEIGHT;
@@ -27,11 +28,11 @@ export function record(ops: readonly Op[], limit = MAX_WRITES): Recording | null
   let n = 0;
   let over = false;
   const push = (i: number, c: number) => {
+    if (n >= limit) {
+      over = true;
+      return;
+    }
     if (n === pixel.length) {
-      if (n >= limit) {
-        over = true;
-        return;
-      }
       const size = Math.min(n * 2, limit);
       const p = new Int32Array(size);
       p.set(pixel);
@@ -113,6 +114,13 @@ export function instructionMarks(ops: readonly Op[], order: Int32Array): Int32Ar
  * A list without delays plays straight through a `Painter`, exactly as `execute` paints it. One with
  * delays is recorded first (see `record`); if that would be too big, the delays are ignored
  * (`delaysIgnored`) and it plays in script order.
+ *
+ * With `hiding` (see ObjectModel.hiding) some objects are hidden: their painting ops play but paint
+ * nothing, and every other op paints exactly the pixels it painted in the full picture. A remap
+ * recolours, when it plays, every pixel shown by an op before it in the script (or still bare
+ * canvas), as it does without hiding: each pixel shows its op's colour put through the remaps
+ * played so far that come after that op in the script. Played through, it is exactly
+ * ObjectModel.compose for the same hidden objects.
  */
 export class Playback {
   readonly ops: readonly Op[];
@@ -129,15 +137,28 @@ export class Playback {
   /** With delays: what each op wrote, and per pixel the script index of the op it shows (-1: none). */
   private readonly rec: Recording | null;
   private readonly owner: Int32Array | null;
+  /** Set while objects are hidden: per op 1 if it is hidden. */
+  private readonly suppressed: Uint8Array | null;
+  /** While hiding: per pixel the colour its op painted, before remaps; the remaps (script order) and which have played. */
+  private readonly raw: Uint8Array | null;
+  private readonly remaps: number[] = [];
+  private readonly remapPlayed: Uint8Array;
   /** Without: the painter, painting into `fb`. */
   private painter!: Painter;
   private pos = 0;
 
   /** `recorded` plays from a recording even without delays (for tests). */
-  constructor(ops: readonly Op[], opts: { recorded?: boolean } = {}) {
+  constructor(ops: readonly Op[], opts: { recorded?: boolean; hiding?: Hiding } = {}) {
     this.ops = ops;
     const delayed = ops.some((op) => op.delay);
-    this.rec = delayed || opts.recorded ? record(ops) : null;
+    const hiding = opts.hiding?.suppressed.includes(1) ? opts.hiding : undefined;
+    this.suppressed = hiding?.suppressed ?? null;
+    this.raw = hiding ? new Uint8Array(SIZE) : null;
+    ops.forEach((op, k) => {
+      if (op.kind === 'remap') this.remaps.push(k);
+    });
+    this.remapPlayed = new Uint8Array(this.remaps.length);
+    this.rec = hiding?.recording ?? (delayed || opts.recorded ? (opts.hiding?.recording ?? record(ops)) : null);
     this.delaysIgnored = delayed && !this.rec;
     this.owner = this.rec ? new Int32Array(SIZE) : null;
     this.order = this.rec ? playOrder(ops) : Int32Array.from(ops.keys());
@@ -165,6 +186,8 @@ export class Playback {
   /** Back to before the first op: a blank (all white, untouched) picture. */
   reset(): void {
     this.fb.clear();
+    this.raw?.fill(15);
+    this.remapPlayed.fill(0);
     this.touched.fill(0);
     this.owner?.fill(-1);
     this.painter = new Painter(this.fb);
@@ -180,6 +203,7 @@ export class Playback {
       this.painter.apply(this.ops[k]);
       return;
     }
+    if (this.raw) return this.stepHiding(k);
     const { start, pixel, color } = this.rec;
     const paints = this.ops[k].kind !== 'remap';
     const px = this.fb.pixels;
@@ -190,6 +214,50 @@ export class Playback {
       if (k >= owner[p]) {
         owner[p] = k;
         px[p] = color[w];
+      }
+    }
+  }
+
+  /** The colour table for something painted by op `k` (-1: bare canvas): the remaps played so far that come after it. */
+  private after(k: number): number[] | null {
+    let table: number[] | null = null;
+    this.remaps.forEach((r, i) => {
+      if (r <= k || !this.remapPlayed[i]) return;
+      const map = (this.ops[r] as Extract<Op, { kind: 'remap' }>).map;
+      table = table ? table.map((c) => map[c]) : map.slice();
+    });
+    return table;
+  }
+
+  /** Play op `k` with objects hidden (see the class comment). */
+  private stepHiding(k: number): void {
+    const op = this.ops[k];
+    const px = this.fb.pixels;
+    const owner = this.owner!;
+    const raw = this.raw!;
+    if (op.kind === 'remap') {
+      this.remapPlayed[this.remaps.indexOf(k)] = 1;
+      // recolour what it would have recoloured: everything shown by an op before it
+      const tables = new Map<number, number[] | null>();
+      for (let p = 0; p < SIZE; p++) {
+        const o = owner[p];
+        if (o >= k) continue;
+        if (!tables.has(o)) tables.set(o, this.after(o));
+        const t = tables.get(o)!;
+        px[p] = t ? t[raw[p]] : raw[p];
+      }
+      return;
+    }
+    if (this.suppressed![k]) return;
+    const { start, pixel, color } = this.rec!;
+    const t = this.after(k);
+    for (let w = start[k]; w < start[k + 1]; w++) {
+      const p = pixel[w];
+      this.touched[p] = 1;
+      if (k >= owner[p]) {
+        owner[p] = k;
+        raw[p] = color[w];
+        px[p] = t ? t[color[w]] : color[w];
       }
     }
   }

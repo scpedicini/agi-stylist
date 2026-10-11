@@ -1,0 +1,272 @@
+# Cottage Kitchen with a Blue Vase
+# Source: layout sketch app/tests/fixtures/sketches/03-cottage-kitchen.png; reframed with: pnpm grid app/tests/fixtures/sketches/03-cottage-kitchen.png --crop 0,0,800,600 --fit --name cottage-kitchen-vase
+# Brief: draw a scene resembling the sketch; additionally place a small blue vase on the table.
+# Method: composed from a layout sketch. Labels: CHANDELIER → iron candle hoop on a chain,
+#   hoop centred (80,20) under the ceiling; WINDOW → leaded casement on the back wall, centred
+#   (64,67); FIREPLACE → grey stone fireplace with a mantel, opening and fire, centred (98,97),
+#   standing on the back wall's floor line y 112; DOOR → plank door on the left wall, a slanted
+#   quad x 14-32 centred near (23,93), foot on the wall's floor edge; TABLE → kitchen table x 59-101,
+#   top y 117-125, a deep apron with two drawers to y 132 (label (80,131) on it), legs to y 140; RUG → red rug lying flat on the
+#   floor around (80,154), y 146-165. Geometry: back-wall box (44,42)-(116,112) passed to room();
+#   the four corner diagonals are the room edges (to the picture corners).
+# Stage: horizon y 76 (chosen: the eye level where the ceiling diagonals meet, x 80)
+# Interpreted: daylight (no brief lighting; the window gives the light), variant "day". Room type
+#   chosen as a cottage kitchen (the slug), so I invented three kitchen props: a cauldron hanging
+#   in the fireplace, crockery on the mantel, a plate shelf on the right wall. Materials (defaults
+#   + my choice): yellow plaster walls, brown plank ceiling, lightgrey flagstone floor, grey stone
+#   fireplace, brown wood. Ceiling plank lines left out of the middle so they don't cross the
+#   chandelier. A white patch of window light on the floor under the window (part of the window
+#   object). Small blue vase (brief) on the table's top, right of centre, base (86,121), blue with
+#   a lightblue glint.
+#   Candles unlit (daytime).
+# Objects: backdrop: room (walls, ceiling, floor); chandelier, window (with its light on the floor),
+#   fireplace/fire, pot, crockery, shelf, plates, door/latch, rug, table, vase
+scene "Cottage Kitchen with a Blue Vase"
+variants day
+
+let BX1 = 44
+let BY1 = 42
+let BX2 = 116
+let BY2 = 112
+
+# ---------------------------------------------------------------- backdrop: the room
+let r = room(BX1, BY1, BX2, BY2)
+shape(r[3], brown)          # ceiling: planks
+shape(r[1], yellow)         # left wall
+shape(r[2], yellow)         # right wall
+shape(r[4], lightgrey)      # floor: flagstones
+shape(r[0], yellow)         # back wall
+
+# ceiling planks running away from us, kept clear of the chandelier in the middle
+fn ceiling_x(xb, y) {
+  # column of the plank line that leaves the back wall's top at xb, on row y (towards the VP)
+  return 80 + (xb - 80) * (76 - y) / (76 - BY1)
+}
+color black
+for xb in [50, 57, 103, 110] {
+  stroke xb, BY1, ceiling_x(xb, 0), 0
+}
+
+# flagstones: rows spreading out towards us, joints converging on the back wall
+color darkgrey
+for i in 1..=5 {
+  let s = i / 6
+  let d = depth(BX1, BY1, BX2, BY2, s * sqrt(s))
+  stroke d[0], d[3], d[2], d[3]
+}
+for xb in [56, 68, 80, 92, 104] {
+  stroke xb, BY2, (xb - BX1) / (BX2 - BX1) * 160, 168
+}
+
+# daylight from the window lying on the floor in front of the back wall
+let patch = [[55, 113], [73, 113], [78, 121], [51, 121]]
+# (the window throws it, so it is the window's: hiding the window takes it)
+object "window" {
+  shape(patch, white, null)
+  color lightgrey
+  for i in 1..=5 {
+    let s = i / 6
+    let d = depth(BX1, BY1, BX2, BY2, s * sqrt(s))
+    let sp = spanx(patch, d[3])
+    if sp != null { stroke sp[0], d[3], sp[1], d[3] }
+  }
+  for xb in [56, 68] {
+    let x2 = (xb - BX1) / (BX2 - BX1) * 160
+    # the part of each joint that crosses the patch
+    stroke xb, 113, xb + (x2 - xb) * 8 / 56, 121
+  }
+}
+
+# ---------------------------------------------------------------- chandelier (ceiling)
+object "chandelier" {
+  color black
+  line 80, 1, 80, 15
+  line 80, 15, 70, 20
+  line 80, 15, 90, 20
+  line 80, 15, 80, 20
+  # the iron hoop
+  line arc(80, 21, 11, 2)
+  # unlit candles standing on it
+  for cx in [69, 74, 80, 86, 91] {
+    color white
+    rect cx, 16, cx, 19
+    color black
+    line cx, 15
+  }
+}
+
+# ---------------------------------------------------------------- window (back wall)
+object "window" {
+  # frame
+  shape([[53, 52], [75, 52], [75, 81], [53, 81]], brown)
+  # what shows through: sky and a green hill
+  color lightcyan
+  rect 55, 54, 73, 79
+  shape([[55, 72], [61, 69], [67, 70], [73, 67], [73, 79], [55, 79]], lightgreen, null)
+  color green
+  line 55, 72, 61, 69, 67, 70, 73, 67
+  # mullion and transom
+  color brown
+  rect 63, 54, 65, 79
+  rect 55, 65, 73, 66
+  color black
+  line 55, 54, 73, 54
+  line 55, 54, 55, 79
+  # sill
+  shape([[51, 81], [77, 81], [77, 83], [51, 83]], lightgrey)
+}
+
+# ---------------------------------------------------------------- fireplace (back wall)
+object "fireplace" {
+  # stone surround
+  shape([[86, 84], [110, 84], [110, 112], [86, 112]], lightgrey)
+  stones(87, 85, 109, 111, 5, 6)
+  # the opening
+  shape(archway(98, 91, 7, 5, 112), black)
+  # mantel shelf
+  shape([[83, 81], [113, 81], [113, 84], [83, 84]], brown)
+  # hearth slab on the floor in front
+  shape([[84, 112], [112, 112], [114, 116], [82, 116]], darkgrey)
+  object "fire" {
+    # logs and flames at the bottom of the opening
+    shape([[93, 109], [103, 109], [103, 111], [93, 111]], brown)
+    shape([[94, 109], [95, 104], [97, 106], [98, 101], [100, 106], [101, 103], [103, 109]], lightred, null)
+    shape([[96, 109], [97, 106], [98, 104], [99, 106], [100, 109]], yellow, null)
+  }
+}
+
+# a cauldron hanging over the fire (its own thing: it could be taken)
+object "pot" {
+  color darkgrey
+  line 99, 92, 99, 99
+  shape([[94, 100], [103, 100], [104, 102], [102, 106], [95, 106], [93, 102]], darkgrey)
+  color lightgrey
+  line 95, 101, 96, 101
+}
+
+# crockery standing on the mantel
+object "crockery" {
+  # a jug
+  shape([[86, 75], [89, 75], [90, 77], [90, 80], [85, 80], [85, 77]], white)
+  color black
+  line 91, 76, 91, 78
+  # a plate leaning on the wall
+  shape([[105, 74], [108, 74], [109, 77], [108, 80], [105, 80], [104, 77]], white)
+  color lightblue
+  line 105, 77, 108, 77
+  # a small crock
+  shape([[95, 77], [99, 77], [99, 80], [95, 80]], brown)
+}
+
+# ---------------------------------------------------------------- shelf of plates (right wall)
+fn wall_y(t, frac) {
+  # row on the right/left wall at depth t, frac of the way up from the floor edge
+  let d = depth(BX1, BY1, BX2, BY2, t)
+  return d[3] - frac * (d[3] - d[1])
+}
+let s1 = 0.12
+let s2 = 0.5
+let sx1 = depth(BX1, BY1, BX2, BY2, s1)[2]
+let sx2 = depth(BX1, BY1, BX2, BY2, s2)[2]
+let sy1 = wall_y(s1, 0.5)
+let sy2 = wall_y(s2, 0.5)
+
+object "shelf" {
+  # the board sticks out of the wall towards the room (to the left)
+  shape([[sx1, sy1], [sx2, sy2], [sx2 - 4, sy2 + 1], [sx1 - 3, sy1 + 1]], brown)
+  shape([[sx1, sy1 + 2], [sx2, sy2 + 2], [sx2 - 4, sy2 + 3], [sx1 - 3, sy1 + 3]], brown)
+  # a bracket under each end
+  color black
+  line sx1 - 1, sy1 + 3, sx1, sy1 + 7
+  line sx2 - 2, sy2 + 3, sx2, sy2 + 8
+}
+
+object "plates" {
+  for i in 0..3 {
+    let t = s1 + 0.06 + i * 0.11
+    let x = depth(BX1, BY1, BX2, BY2, t)[2] - 2
+    let yb = wall_y(t, 0.5)
+    shape([[x - 1, yb - 1], [x - 2, yb - 4], [x - 1, yb - 7], [x + 1, yb - 7], [x + 2, yb - 4], [x + 1, yb - 1]], i == 1 ? lightblue : white)
+  }
+}
+
+# ---------------------------------------------------------------- door (left wall)
+let dt_far = 0.27
+let dt_near = 0.68
+let dfar = depth(BX1, BY1, BX2, BY2, dt_far)
+let dnear = depth(BX1, BY1, BX2, BY2, dt_near)
+let dtop_far = dfar[3] - 0.72 * (dfar[3] - dfar[1])
+let dtop_near = dnear[3] - 0.72 * (dnear[3] - dnear[1])
+let door_pts = [[dfar[0], dtop_far], [dnear[0], dtop_near], [dnear[0], dnear[3]], [dfar[0], dfar[3]]]
+
+let inner = [[dfar[0] - 1, dtop_far + 2], [dnear[0] + 2, dtop_near + 2], [dnear[0] + 2, dnear[3]], [dfar[0] - 1, dfar[3]]]
+
+object "door" {
+  # dark stone jamb, then the planks
+  shape(door_pts, darkgrey)
+  shape(inner, brown)
+  # plank seams: verticals at in-between depths
+  color black
+  for k in 1..=3 {
+    let t = dt_far + (dt_near - dt_far) * k / 4
+    let d = depth(BX1, BY1, BX2, BY2, t)
+    let yt = d[3] - 0.72 * (d[3] - d[1]) + 2
+    line d[0], yt, d[0], d[3] - 1
+  }
+  # iron straps, following the wall's perspective
+  for frac in [0.15, 0.55] {
+    line dnear[0] + 2, dnear[3] - frac * (dnear[3] - dtop_near), dfar[0] - 1, dfar[3] - frac * (dfar[3] - dtop_far)
+  }
+  object "latch" {
+    color black
+    rect 29, 92, 30, 94
+    color lightgrey
+    line 29, 93, 30, 93
+  }
+}
+
+# ---------------------------------------------------------------- rug (on the floor)
+object "rug" {
+  shape([[58, 146], [102, 146], [111, 165], [49, 165]], red)
+  color yellow
+  outline [[61, 148], [99, 148], [106, 163], [54, 163]]
+  shape([[80, 150], [92, 155.5], [80, 161], [68, 155.5]], lightred, null)
+  color yellow
+  outline [[80, 152], [87, 155.5], [80, 159], [73, 155.5]]
+}
+
+# ---------------------------------------------------------------- table (on the floor)
+object "table" {
+  # shadow on the floor under it
+  shape([[60, 138], [100, 138], [103, 142], [57, 142]], darkgrey, null)
+  # back legs, seen under the apron
+  shape([[64, 131], [66, 131], [66, 137], [64, 137]], brown)
+  shape([[94, 131], [96, 131], [96, 137], [94, 137]], brown)
+  # top, seen from above: two boards
+  shape([[62, 117], [98, 117], [101, 125], [59, 125]], brown)
+  color black
+  line 61, 121, 99, 121
+  color yellow
+  line 60, 124, 100, 124
+  # deep apron with two drawers
+  shape([[59, 125], [101, 125], [101, 132], [59, 132]], brown)
+  color black
+  outline [[66, 127], [76, 127], [76, 130], [66, 130]]
+  outline [[84, 127], [94, 127], [94, 130], [84, 130]]
+  color yellow
+  line 71, 128, 71, 129
+  line 89, 128, 89, 129
+  # front legs
+  shape([[60, 132], [63, 132], [63, 140], [60, 140]], brown)
+  shape([[97, 132], [100, 132], [100, 140], [97, 140]], brown)
+}
+
+# ---------------------------------------------------------------- the small blue vase (brief)
+object "vase" {
+  shape([[84, 110], [88, 110], [87, 112], [87, 113], [89, 115], [89, 119], [88, 121], [84, 121], [83, 119], [83, 115], [85, 113], [85, 112]], blue)
+  color lightblue
+  line 85, 115, 85, 118
+  line 85, 111, 87, 111
+}
+
+frame()

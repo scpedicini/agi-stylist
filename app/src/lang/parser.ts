@@ -2,7 +2,7 @@ import type { Arg, Expr, Param, Program, Stmt } from './ast.ts';
 import { PicError } from './errors.ts';
 import { lex, type Token } from './lexer.ts';
 
-const KEYWORDS = new Set(['let', 'fn', 'repeat', 'for', 'in', 'while', 'if', 'else', 'return', 'break', 'continue', 'scene', 'variants', 'remap', 'delay', 'true', 'false']);
+const KEYWORDS = new Set(['let', 'fn', 'repeat', 'for', 'in', 'while', 'if', 'else', 'return', 'break', 'continue', 'scene', 'variants', 'remap', 'delay', 'object', 'true', 'false']);
 const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=']);
 const BINARY_PRECEDENCE: Record<string, number> = {
   '||': 1, '&&': 2, '==': 3, '!=': 3, '<': 4, '<=': 4, '>': 4, '>=': 4, '+': 5, '-': 5, '*': 6, '/': 6, '%': 6,
@@ -191,6 +191,12 @@ class Parser {
           this.next();
           const level = this.isOp('{') ? undefined : this.expr();
           return { type: 'delay', level, body: this.block(), loc };
+        }
+        case 'object': {
+          this.next();
+          if (this.isOp('{')) this.fail("expected the object's name (a string like \"vase\") before '{'");
+          const id = this.expr();
+          return { type: 'object', id, body: this.block(), loc };
         }
         case 'else':
           this.fail("'else' without a matching 'if'");

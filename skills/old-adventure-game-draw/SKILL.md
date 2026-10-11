@@ -44,11 +44,14 @@ Worked examples: `examples/*.pic` in this skill are small and focused:
    - Size things by depth: `groundscale(base_y, horizon)`; paths, roads and rivers on the ground
      with `trail(...)`, stands of trees with `forest(...)`.
    - List the variants the user asked for (e.g. `variants day, night`).
+   - List the **things** in it (a door, a well, the golden apple, a signpost) and give each a
+     kebab-case object id. The backdrop (sky, hills, ground, walls, floor) gets none.
 2. **Write `scenes/custom/<slug>.pic`** (kebab-case slug). Start with
    `scene "<Title>"` and `variants …`. Use stdlib functions for standard motifs. Write your own
    `fn`s for anything specific to the request (a golden apple, a signpost, a well). Use
    `polygon` / `rect` / `ellipse` / `shape()` for shapes painted over other things. Use `line`
-   for thin details in a contrasting partner colour.
+   for thin details in a contrasting partner colour. Wrap each thing in `object "<id>" { … }`
+   (see "Objects" in `references/picscript.md`), after the backdrop it stands in front of.
 3. **Render every variant and look at them**:
    ```bash
    pnpm render scenes/custom/<slug>.pic --variant all --scale 3
@@ -66,12 +69,13 @@ Worked examples: `examples/*.pic` in this skill are small and focused:
    ```bash
    pnpm lint:pic scenes/custom/<slug>.pic
    ```
-   Fix every error and warning. A fill that floods more than 40% of the picture is flagged as a
+   Fix every error and warning. An object that later drawing depends on, or whose hiding can
+   uncover bare canvas, needs its backdrop painted first. A fill that floods more than 40% of the picture is flagged as a
    possible leak. If a big background fill is intended, end its line with `# lint: ok`. Notes
    about never-painted canvas usually mean a gap: extend a band or add a backdrop `rect`.
 5. **Iterate** on steps 2-4 until it looks right. Usually 2-4 rounds. Small details (fruit,
    windows, flowers) are only a pixel or two, so make important ones at least 2×2.
-6. **Report**: the file path, the variants, the PNGs in `out/`, and the viewer link. Any `.pic`
+6. **Report**: the file path, the variants, the PNGs in `out/`, the object ids, and the viewer link. Any `.pic`
    under `scenes/` appears in the viewer automatically, at
    `http://localhost:5250/#/scene/custom/<slug>?variant=<name>`. The link only works while
    `pnpm dev` is running; say so instead of starting a server if you were asked not to.
@@ -79,6 +83,9 @@ Worked examples: `examples/*.pic` in this skill are small and focused:
 
 ## Rules of thumb
 
+- Every thing is an object: a game can hide it (the player took it) or click it. A thing
+  standing on another is its own object drawn after it; a part that goes with its whole is
+  nested inside it. Hiding one shows what was painted behind it, so paint the backdrop first.
 - Paint back to front. Solid shapes (`rect`, `polygon`, `ellipse`, stdlib) cover anything below
   them. `fill` only works on a white canvas, so use it for big areas painted first or in
   outline-then-fill sections.

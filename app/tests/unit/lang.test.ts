@@ -482,6 +482,81 @@ describe('delay', () => {
   });
 });
 
+describe('object', () => {
+  const tags = (src: string, opts = {}) => {
+    const r = compile(src, { file: 't.pic', ...opts });
+    return r.ops.map((o) => `${o.kind}${o.obj === undefined ? '' : `:${r.objects[o.obj].id}`}`);
+  };
+
+  it('tags the ops painted inside it with its innermost object, and lists the objects', () => {
+    const src = 'color 1\nobject "table" { line 0, 0\nobject "leg" { line 1, 1 }\nline 2, 2 }\nobject "vase" { color 2\nline 3, 3 }\nline 4, 4';
+    expect(tags(src)).toEqual(['color', 'line:table', 'line:leg', 'line:table', 'color:vase', 'line:vase', 'line']);
+    const r = compile(src, { file: 't.pic' });
+    expect(r.objects.map((o) => [o.id, o.parent, o.src.line])).toEqual([
+      ['table', -1, 2],
+      ['leg', 0, 3],
+      ['vase', -1, 5],
+    ]);
+  });
+
+  it('also tags what functions and the stdlib paint inside it, and takes a computed name', () => {
+    expect(tags('fn f() { color 2\nline 0, 0 }\nobject "a" { f() }\nf()')).toEqual(['color:a', 'line:a', 'color', 'line']);
+    const r = compile('for i in 0..2 { object "candle-" + i { rect i, 0, i, 1 } }', { file: 't.pic' });
+    expect(r.objects.map((o) => o.id)).toEqual(['candle-0', 'candle-1']);
+    expect(r.ops.every((o) => o.obj !== undefined)).toBe(true);
+    const lib = compile('object "a" { paint() }', { file: 't.pic', prelude: 'fn paint() { color 3\nline 0, 0 }' });
+    expect(lib.ops.map((o) => o.obj)).toEqual([0, 0]);
+  });
+
+  it('can be reopened with the same parent, adding to the same object', () => {
+    const r = compile('object "table" { line 0, 0 }\nline 1, 1\nobject "table" { line 2, 2 }', { file: 't.pic' });
+    expect(r.objects.length).toBe(1);
+    expect(r.ops.map((o) => o.obj)).toEqual([0, undefined, 0]);
+    expect(err('object "a" { object "b" { } }\nobject "b" { }')).toMatch(/t\.pic:2:1: object 'b' was first opened inside 'a' \(line 1\), so it must be reopened there too, not outside any object/);
+    expect(err('object "a" { object "a" { } }')).toMatch(/object 'a' is already open here/);
+    expect(err('object "a" { object "b" { object "a" { } } }')).toMatch(/object 'a' is already open here/);
+  });
+
+  it('is see-through: no scope, functions hoisted, and never changes the picture', () => {
+    expect(ops('object "a" { let h = 7 }\nline 0, h')).toEqual([{ kind: 'line', points: [0, 7] }]);
+    expect(ops('f()\nobject "a" { fn f() { line 1, 1 } }')).toEqual([{ kind: 'line', points: [1, 1] }]);
+    const plain = 'color 3\nrect 0, 0, 159, 80\ncolor 2\nfill 5, 100\ncolor 4\nrect 40, 40, 60, 120';
+    const held = 'object "sky" {\ncolor 3\nrect 0, 0, 159, 80\n}\ndelay { object "sea" { color 2\nfill 5, 100 } }\nobject "rock" { color 4\nrect 40, 40, 60, 120 }';
+    const a = compile(plain, { file: 't.pic' }).ops;
+    const b = compile(held, { file: 't.pic' }).ops;
+    expect(b.map(({ src: _s, delay: _d, obj: _o, ...rest }) => rest)).toEqual(a.map(({ src: _s, ...rest }) => rest));
+    expect(execute(b).hash()).toBe(execute(a).hash());
+    expect(b.find((o) => o.kind === 'fill')).toMatchObject({ delay: 1, obj: 1 });
+    const c = compile('object "a" { variants day, night\ndelay 2 { line 0, 0 } }', { file: 't.pic', variant: 'night' });
+    expect(c.variants).toEqual(['day', 'night']);
+    expect(c.ops[0]).toMatchObject({ delay: 2, obj: 0 });
+  });
+
+  it("doesn't merge a turtle path across an object's edge", () => {
+    const r = compile('color 1\nforward 5; object "a" { forward 5 }; forward 5', { file: 't.pic' });
+    expect(r.ops.filter((o) => o.kind === 'line').map((o) => o.obj)).toEqual([undefined, 0, undefined]);
+  });
+
+  it("can't hold a remap, and needs a kebab-case string name", () => {
+    expect(err('variants day, night\nobject "sky" { remap night { 1: 2 } }', { variant: 'night' })).toMatch(/t\.pic:2:16: remap can't be inside an object block .*'sky', opened at line 2/);
+    // a remap for another variant doesn't run, so it isn't an error there
+    expect(() => compile('variants day, night\nobject "sky" { remap night { 1: 2 } }', { file: 't.pic', variant: 'day' })).not.toThrow();
+    expect(err('variants day\nobject "a" { remap dusk { 1: 2 } }')).toMatch(/remap for unknown variant 'dusk'/);
+    expect(err('object 3 { }')).toMatch(/t\.pic:1:8: an object's name must be a string like "vase", got number/);
+    expect(err('object "Blue Vase" { }')).toMatch(/object name 'Blue Vase' must be kebab-case/);
+    expect(err('object "vase-" { }')).toMatch(/must be kebab-case/);
+    expect(err('object { }')).toMatch(/expected the object's name/);
+    expect(err('object "a"\nline 0, 0')).toMatch(/expected '\{'/);
+    expect(err('let object = 1')).toMatch(/expected a variable name/);
+  });
+
+  it('lists only the objects the variant ran', () => {
+    const src = 'variants day, night\nobject "sun" { line 0, 0 }\nif variant == "night" { object "moon" { line 1, 1 } }';
+    expect(compile(src, { file: 't.pic', variant: 'day' }).objects.map((o) => o.id)).toEqual(['sun']);
+    expect(compile(src, { file: 't.pic', variant: 'night' }).objects.map((o) => o.id)).toEqual(['sun', 'moon']);
+  });
+});
+
 describe('instructions (src.instr)', () => {
   const instr = (src: string) => compile(src, { file: 't.pic' }).ops.map((o) => o.src?.instr);
 

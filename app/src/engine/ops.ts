@@ -41,7 +41,23 @@ export type Op = (
    * stays in script order (see engine/playback.ts).
    */
   delay?: number;
+  /**
+   * Set inside a PicScript `object "id" { … }` block: the index, in CompileResult.objects, of the
+   * innermost object the op was painted in. Hiding an object drops its painting ops (and its
+   * descendants'); see engine/objects.ts.
+   */
+  obj?: number;
 };
+
+/** A named thing in a scene (`object "vase" { … }`): what a game can hide or use as a hotspot. */
+export interface SceneObject {
+  /** Kebab-case, unique in the scene. */
+  id: string;
+  /** Index of the object it was opened inside (it's part of that one), or -1. */
+  parent: number;
+  /** Where it was first opened. */
+  src: SourceRef;
+}
 
 export type OpKind = Op['kind'];
 

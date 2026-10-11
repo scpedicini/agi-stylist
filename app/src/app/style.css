@@ -28,6 +28,8 @@
   --pad: 20px;
 }
 @supports (height: 1svh) { :root { --fit: calc((100svh - var(--chrome)) * 320 / 168 + 2 * var(--stage-frame)); } }
+/* a scene with objects has their bar under the status line: one more row to leave room for */
+:root:has(#objects:not([hidden])) { --chrome: calc(156px + var(--ctl) + 8px); }
 @media (pointer: coarse) { :root { --ctl: 44px; } }
 @media (max-width: 600px) { :root { --pad: 12px; } }
 * { box-sizing: border-box; }
@@ -66,10 +68,10 @@ main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding:
   .toolbar { width: 100cqi; margin-left: calc((100% - 100cqi) / 2); }
 }
 @media (min-width: 1200px) {
-  /* Side by side, the viewer and the source share rows (toolbar | stage | status | compare), so the
+  /* Side by side, the viewer and the source share rows (toolbar | stage | status | objects | compare), so the
      script window starts and ends level with the picture's frame, however many rows the toolbar
      wraps to, with its header just above it as the toolbar's last row is above the picture. */
-  main { grid-template-columns: minmax(0, var(--fit)) minmax(var(--source-min), 1fr); grid-template-rows: repeat(4, auto); row-gap: 0; }
+  main { grid-template-columns: minmax(0, var(--fit)) minmax(var(--source-min), 1fr); grid-template-rows: repeat(5, auto); row-gap: 0; }
   .viewer { grid-row: 1 / -1; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); }
   main .source { grid-row: 1 / 3; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); height: auto; }
   main .source-head { align-self: end; margin-bottom: 8px; }
@@ -103,6 +105,18 @@ canvas { touch-action: auto !important; }
 @media (max-width: 400px) { #rasterize { padding: 12px 16px; } }
 #rasterize:hover, #rasterize:focus-visible { background: var(--black); color: var(--white); box-shadow: inset 0 0 0 4px var(--black), inset 0 0 0 6px var(--red); outline: none; }
 #rasterize:disabled { color: var(--dark-grey); cursor: progress; }
+/* The object under the pointer, named in an AGI message window like #rasterize's, beside the pointer
+   (main.ts places it). It never takes the pointer itself. */
+#object-tip {
+  position: absolute; z-index: 2; pointer-events: none; max-width: 60%;
+  padding: 10px 14px; background: var(--white); color: var(--black);
+  box-shadow: inset 0 0 0 3px var(--white), inset 0 0 0 5px var(--red);
+  white-space: nowrap;
+}
+#object-tip .name { display: block; font-family: 'IBM BIOS', monospace; }
+#object-tip .note { display: block; margin-top: 4px; color: var(--dark-grey); }
+/* over an object in a finished picture: it can be clicked */
+#stage.picking { cursor: pointer; }
 /* "Click to paint it" with a mouse, "Tap to paint it" on a touch screen */
 .touch-word { display: none; }
 @media (pointer: coarse) { .pointer-word { display: none; } .touch-word { display: inline; } }
@@ -198,6 +212,17 @@ button.icon { width: var(--ctl); padding: 0; flex: none; }
   #status-compare { display: inline-flex; box-sizing: content-box; height: 16px; padding: 14px 0; margin: -14px 0; justify-self: end; }
   #progress { min-width: 0; text-align: left; }
 }
+/* The objects bar: a key per object, pressed (inverted) while it shows; a hidden one goes dark grey
+   and struck through, and the one the pointer is on is yellow. Parts of an object follow it, marked
+   with a corner. */
+/* always one row, scrolled sideways when the keys don't fit, so the layout's height never depends on them */
+#objects { display: flex; gap: 6px; align-items: center; margin-top: 8px; overflow-x: auto; scrollbar-width: thin; }
+#objects .label { color: var(--fg); margin-right: 4px; flex: none; }
+#objects button { height: var(--ctl); padding: 0 8px; line-height: 16px; flex: none; white-space: pre; }
+#objects button[aria-pressed='false'] { border-style: dashed; color: var(--dark-grey); text-decoration: line-through; }
+#objects button.lit { border-color: var(--yellow); }
+#objects button.lit[aria-pressed='true'] { background: var(--yellow); }
+#objects button.all { color: var(--fg); border-color: var(--dark-grey); text-decoration: none; }
 /* three panels sized to fit exactly under the stage */
 #compare { display: flex; gap: 8px; margin-top: 10px; }
 #compare figure { margin: 0; flex: 1; min-width: 0; }

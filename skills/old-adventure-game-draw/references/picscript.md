@@ -181,6 +181,52 @@ names are checked before the scene runs. A remap also recolours never-painted wh
 first, then remap. Everything is deterministic: the same scene and variant
 always paint the same picture.
 
+## Objects
+
+A scene is a background for an adventure game, so it says which instructions paint which
+*thing*. Wrap each thing in an `object` block. Then a game can hide it (the player took the
+vase) or use it as a hotspot (the door). The viewer names each object when you hover over the
+finished picture, and hides it when you click.
+
+```js
+# the room itself: walls, floor, ceiling - no object, it's the backdrop
+shape(r[0], yellow)
+...
+object "table" {
+  shape([[64, 120], [96, 120], [99, 126], [61, 126]], brown)
+  ...
+}
+object "vase" {                  # stands on the table: drawn after it, as its own object
+  color blue
+  ellipse 80, 116, 2, 4
+}
+object "fireplace" {
+  ...
+  object "fire" { ... }          # part of the fireplace: hiding the fireplace hides it too
+}
+object "fireplace" { ... }       # opening it again adds to it (needed to draw something in between)
+```
+
+- The name is a kebab-case string (`"vase"`, `"blue-vase"`, `"candle-" + i`): lowercase
+  letters, digits and dashes. One name is one object in the whole scene; opening it again adds
+  to the same object and must happen at the same nesting (a part again inside the same whole).
+- An object block has no scope of its own and never changes the picture: wrapping lines in one
+  only says what they paint. Functions and stdlib calls inside it paint into it.
+- **Hiding an object shows what was painted behind it** before it. So paint the backdrop first,
+  then each thing over it, back to front. Something standing *on* another thing (a vase on a
+  table, a jug on a mantel, a pot hanging in a fireplace) is its own object drawn after it, not
+  inside it. Nest an object only for a *part* that goes when its whole does (the fire of a
+  fireplace, a door's latch). A thing's shadow and the light it throws belong to its object.
+- Set `color` inside each object: the pen colour carries over from whatever ran before.
+- Never let an object be the border of a later `fill`. Without the object the fill would spill
+  through the gap. Fill the backdrop before drawing the objects, or use solid shapes.
+- `remap` can't be inside an object (it recolours the whole picture). Night variants work as
+  usual, with their remaps outside objects.
+- `pnpm lint:pic` checks that every object can be hidden cleanly: no later drawing depends on
+  it, and something was painted behind it. `pnpm objects <scene.pic>` exports the picture, the
+  backdrop with every object hidden, a sprite of each object that shows, and a manifest for a
+  game engine.
+
 ## Errors
 
 Errors read `file:line:col: message` and often include a hint, e.g.

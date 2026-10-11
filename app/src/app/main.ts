@@ -1,5 +1,6 @@
 import { estimateAgiBytes, execute } from '../engine/execute.ts';
 import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
+import { ObjectModel, type Composition } from '../engine/objects.ts';
 import type { Op } from '../engine/ops.ts';
 import { rgbToIndex } from '../engine/palette.ts';
 import { compileProgram, declaredVariants, formatDiagnostic, parse, PicError, type CompileResult } from '../lang/index.ts';
@@ -31,6 +32,19 @@ const state = {
   ops: [] as Op[],
   finalHash: '',
   overrides: new Map<string, string>(),
+  /** The scene's objects, if it has any (and they could be recorded). */
+  model: null as ObjectModel | null,
+  /** The finished picture with the hidden objects hidden, and what shows at each pixel. */
+  composed: null as Composition | null,
+  /**
+   * Ids of the objects hidden; kept across variants and edits of a scene (an id the variant or the
+   * edited script doesn't have is kept too, for when it's back), cleared for another scene.
+   */
+  hidden: new Set<string>(),
+  /** The scene the hidden objects belong to. */
+  hiddenScene: '',
+  /** The object lit up (under the pointer, or its key in the objects bar), or -1. */
+  lit: -1,
 };
 
 // drawn at the screen's own 320×168 and scaled up by CSS to whatever size the stage is
@@ -41,6 +55,8 @@ const stage = new Stage($('stage'), {
     $('progress').textContent = n ? `${i}/${n} ops` : '';
     highlight(last);
     renderTransport();
+    // picking objects is for the finished picture: replaying puts the lit one out
+    if (i < n && state.lit >= 0) leaveStage();
   },
 });
 
@@ -280,7 +296,7 @@ function loadScene() {
   $('stats').textContent = r && SHOW_AGI_BYTES ? `~${estimateAgiBytes(r.ops)} AGI bytes` : '';
   showMessages(errors, r?.warnings.map(formatDiagnostic) ?? [], r?.logs ?? []);
   renderVariants(r?.variants ?? []);
-  state.finalHash = execute(state.ops).hash();
+  loadObjects(scene.id, r);
   document.body.dataset.scene = scene.id;
   document.body.dataset.variant = r?.variant ?? '';
   document.body.dataset.error = String(errors.length > 0);
@@ -294,13 +310,202 @@ function loadScene() {
   showOriginal(scene.originalUrl);
   $('rasterize').hidden = !state.awaitingRasterize;
   setPaused(false);
-  stage.load(state.ops);
+  stage.load(state.ops, state.model?.hiding(state.hidden));
   if (stage.delaysIgnored) {
     $('messages').insertAdjacentHTML('beforeend', `<div class="warning">⚠ too much to hold back for delay blocks: this scene plays in script order</div>`);
     $('messages').tabIndex = 0;
   }
   document.querySelectorAll('#gallery a').forEach((a) => a.classList.toggle('active', (a as HTMLElement).dataset.id === scene.id));
   void renderCompare();
+}
+
+// ---------------------------------------------------------------------------
+// objects: hover a finished picture to see what's what, click a thing to hide it (or use the bar)
+
+function loadObjects(sceneId: string, r: CompileResult | undefined) {
+  if (state.hiddenScene !== sceneId) state.hidden.clear();
+  state.hiddenScene = sceneId;
+  state.model = r?.objects.length ? ObjectModel.create(r.ops, r.objects) : null;
+  if (r?.objects.length && !state.model) {
+    $('messages').insertAdjacentHTML('beforeend', `<div class="warning">⚠ too much painting to record this scene's objects: they can't be hidden here</div>`);
+    $('messages').tabIndex = 0;
+  }
+  leaveStage();
+  composeObjects();
+}
+
+/** The hidden ids the scene has (the others wait for a variant or an edit that has them again). */
+const hiddenHere = () => [...state.hidden].filter((id) => (state.model?.indexOf(id) ?? -1) >= 0);
+
+/** Compose the picture with the hidden objects hidden: what clicks pick, and what playback ends on. */
+function composeObjects() {
+  const m = state.model;
+  state.composed = m?.compose(state.hidden) ?? null;
+  state.finalHash = state.composed ? new Framebuffer(state.composed.pixels).hash() : execute(state.ops).hash();
+  renderObjects();
+}
+
+/** Can the pointer pick objects? Only once the picture is finished (and shown, not waiting). */
+const picking = () => !!state.composed && stage.done && !state.awaitingRasterize;
+
+/** The object at a pointer position over the stage, or -1. */
+function objectAtPointer(e: PointerEvent | MouseEvent): number {
+  const canvas = stage.canvas;
+  if (!canvas || !state.model || !state.composed) return -1;
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor(((e.clientX - r.left) / r.width) * PIC_WIDTH);
+  const y = Math.floor(((e.clientY - r.top) / r.height) * PIC_HEIGHT);
+  if (x < 0 || y < 0 || x >= PIC_WIDTH || y >= PIC_HEIGHT) return -1;
+  return state.model.objectAt(state.composed, y * PIC_WIDTH + x);
+}
+
+/** An object's name as the tooltip says it: "blue-vase" → "blue vase". */
+const spoken = (id: string) => id.replace(/-/g, ' ');
+
+/**
+ * Light object `o` up on the stage (thatched) and in the bar; -1 for none. A hidden
+ * object (its key can have the focus), or one nothing of shows, lights up only in the bar.
+ */
+function setLit(o: number) {
+  state.lit = o;
+  const m = state.model;
+  const mask = o >= 0 && m && state.composed && !m.hiddenObjects(state.hidden)[o] ? m.visible(state.composed, o) : null;
+  // an object covered all over by things in front of it has nothing to light either
+  stage.highlight = mask?.includes(1) ? mask : null;
+  for (const b of $('objects').querySelectorAll<HTMLButtonElement>('button[data-id]')) b.classList.toggle('lit', state.model?.indexOf(b.dataset.id!) === o && o >= 0);
+}
+
+/** Show the tooltip for object `o` beside the pointer (or hide it, for -1). */
+function showTip(o: number, e?: MouseEvent) {
+  const tip = $('object-tip');
+  const m = state.model;
+  if (o < 0 || !m || !e) {
+    tip.hidden = true;
+    return;
+  }
+  const obj = m.objects[o];
+  const parent = obj.parent >= 0 ? `<span class="note">part of the ${escapeHtml(spoken(m.objects[obj.parent].id))}</span>` : '';
+  const html = `<span class="name">${escapeHtml(spoken(obj.id))}</span>${parent}<span class="note">click to hide</span>`;
+  if (tip.innerHTML !== html) tip.innerHTML = html;
+  tip.hidden = false;
+  // beside the pointer, flipped to the other side near the stage's right or bottom edge
+  const box = $('stage').getBoundingClientRect();
+  const x = e.clientX - box.left;
+  const y = e.clientY - box.top;
+  const w = tip.offsetWidth;
+  const h = tip.offsetHeight;
+  tip.style.left = `${Math.max(0, x + 16 + w > box.width ? x - 12 - w : x + 16)}px`;
+  tip.style.top = `${Math.max(0, y + 20 + h > box.height ? y - 8 - h : y + 20)}px`;
+}
+
+function onStagePointer(e: MouseEvent) {
+  // a finger has no hover: it only taps (and a tooltip would sit under it)
+  if ((e as PointerEvent).pointerType === 'touch') return leaveStage();
+  const o = picking() ? objectAtPointer(e) : -1;
+  $('stage').classList.toggle('picking', o >= 0);
+  if (o !== state.lit) setLit(o);
+  showTip(o, e);
+}
+
+function leaveStage() {
+  $('stage').classList.remove('picking');
+  showTip(-1);
+  setLit(-1);
+}
+
+/** Hide or show object `o` (showing one inside a hidden object shows that object too). */
+function toggleObject(o: number) {
+  const m = state.model;
+  if (!m) return;
+  const id = m.objects[o].id;
+  if (m.hiddenObjects(state.hidden)[o]) {
+    for (let p = o; p >= 0; p = m.objects[p].parent) state.hidden.delete(m.objects[p].id);
+  } else state.hidden.add(id);
+  applyHidden();
+}
+
+function applyHidden() {
+  composeObjects();
+  if (state.model) stage.rehide(state.model.hiding(state.hidden));
+  setLit(state.lit); // what shows of it has changed
+}
+
+/**
+ * The objects bar: a key per object, parts after the object they belong to, and "show all" while
+ * any is hidden. The keys are rebuilt only when the objects change, so a key keeps the keyboard
+ * focus when it is pressed.
+ */
+function renderObjects() {
+  const bar = $('objects');
+  const m = state.model;
+  bar.hidden = !m;
+  if (!m) {
+    bar.replaceChildren();
+    bar.dataset.ids = '';
+    return;
+  }
+  const ids = m.objects.map((o) => `${o.id}<${o.parent}`).join(' ');
+  if (bar.dataset.ids !== ids) {
+    bar.dataset.ids = ids;
+    const keys: string[] = ['<span class="label">objects</span>'];
+    const add = (o: number, depth: number) => {
+      const id = escapeHtml(m.objects[o].id);
+      keys.push(`<button data-id="${id}" aria-pressed="true">${depth ? '└'.padStart(depth, ' ') + ' ' : ''}${id}</button>`);
+      m.objects.forEach((c, i) => {
+        if (c.parent === o) add(i, depth + 1);
+      });
+    };
+    m.objects.forEach((c, i) => {
+      if (c.parent < 0) add(i, 0);
+    });
+    // "show all" first, so it's in view however far the keys run off to the right
+    keys.splice(1, 0, '<button class="all" hidden>show all</button>');
+    bar.innerHTML = keys.join('');
+  }
+  const hidden = m.hiddenObjects(state.hidden);
+  for (const b of bar.querySelectorAll<HTMLButtonElement>('button[data-id]')) {
+    const o = m.indexOf(b.dataset.id!);
+    b.setAttribute('aria-pressed', String(!hidden[o]));
+    b.classList.toggle('lit', o === state.lit && o >= 0);
+  }
+  const all = bar.querySelector<HTMLButtonElement>('button.all')!;
+  const hide = hiddenHere().length === 0;
+  // "show all" pressed (or focused) goes away: the keyboard moves on to the first key
+  if (hide && document.activeElement === all) bar.querySelector<HTMLButtonElement>('button[data-id]')!.focus();
+  all.hidden = hide;
+}
+
+$('stage').addEventListener('pointermove', onStagePointer);
+$('stage').addEventListener('pointerleave', leaveStage);
+$('stage').addEventListener('click', (e) => {
+  if (!picking() || (e.target as HTMLElement).closest('button')) return;
+  const o = objectAtPointer(e);
+  if (o < 0) return;
+  toggleObject(o);
+  // the pointer is now over whatever was behind it
+  onStagePointer(e);
+});
+$('objects').addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest('button');
+  if (!b || !state.model) return;
+  if (b.classList.contains('all')) {
+    for (const id of hiddenHere()) state.hidden.delete(id);
+    applyHidden();
+    return;
+  }
+  toggleObject(state.model.indexOf(b.dataset.id!));
+});
+// a key lights its object up while the mouse (or the keyboard focus) is on it; a finger only presses it
+let touchedKey = false;
+$('objects').addEventListener('pointerdown', (e) => (touchedKey = e.pointerType === 'touch'));
+window.addEventListener('keydown', () => (touchedKey = false));
+for (const [type, on] of [['pointerover', true], ['focusin', true], ['pointerout', false], ['focusout', false]] as const) {
+  $('objects').addEventListener(type, (e) => {
+    const id = (e.target as HTMLElement).closest<HTMLElement>('button[data-id]')?.dataset.id;
+    if (!state.model || !id) return;
+    if (on && ((e as PointerEvent).pointerType === 'touch' || (type === 'focusin' && touchedKey))) return;
+    setLit(on && stage.done ? state.model.indexOf(id) : -1);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -658,7 +863,21 @@ declare global {
   interface Window {
     __kq: {
       scenes: string[];
-      current(): { id: string; variant: string; done: boolean; paused: boolean; awaitingRasterize: boolean; position: number; opCount: number; hash: string; finalHash: string };
+      current(): {
+        id: string;
+        variant: string;
+        done: boolean;
+        paused: boolean;
+        awaitingRasterize: boolean;
+        position: number;
+        opCount: number;
+        hash: string;
+        finalHash: string;
+        objects: string[];
+        hidden: string[];
+        lit: string | null;
+        highlighted: number | null;
+      };
     };
   }
 }
@@ -674,6 +893,10 @@ window.__kq = {
     opCount: state.ops.length,
     hash: stage.framebuffer.hash(),
     finalHash: state.finalHash,
+    objects: state.model?.objects.map((o) => o.id) ?? [],
+    hidden: [...state.hidden],
+    lit: state.lit >= 0 && state.model ? state.model.objects[state.lit].id : null,
+    highlighted: stage.highlighted,
   }),
 };
 

@@ -110,6 +110,8 @@
           <p id="boot-status" role="status">Loading scenes…</p>
           <img id="original" alt="The original picture" hidden />
           <button id="rasterize" hidden><span class="pointer-word">Click</span><span class="touch-word">Tap</span> to paint it</button>
+          <!-- what the pointer is over in a finished scene with objects: an AGI message window -->
+          <div id="object-tip" role="tooltip" hidden></div>
           <noscript><p id="noscript">This viewer needs JavaScript to paint its scenes.</p></noscript>
         </div>
         <div class="status">
@@ -119,6 +121,8 @@
           <span id="progress"></span>
           <span id="stats"></span>
         </div>
+        <!-- a scene's objects (object "id" { … } blocks): each one shown or hidden -->
+        <div id="objects" role="group" aria-label="Objects" hidden></div>
         <div id="compare" hidden>
           <figure><canvas id="cmp-original" width="320" height="168"></canvas><figcaption>original</figcaption></figure>
           <figure><canvas id="cmp-rendered" width="320" height="168"></canvas><figcaption>rendered</figcaption></figure>

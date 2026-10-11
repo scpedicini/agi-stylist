@@ -1,8 +1,8 @@
 // The render and lint CLIs are part of the skill's workflow; keep their behaviour pinned.
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readPng } from '../../scripts/lib/png.ts';
 
@@ -89,6 +89,119 @@ describe('lint CLI', () => {
       readdirSync(dir, { withFileTypes: true }).reduce((n, e) => n + (e.isDirectory() ? count(join(dir, e.name)) : e.name.endsWith('.pic') ? 1 : 0), 0);
     expect(all.stdout).toContain(`${count('scenes')} scene(s): 0 error(s), 0 warning(s)`);
     expect(all.stdout).toContain(`${count('scenes/kq1')} generated scenes in scenes/kq1/ (compile check only)`);
+  });
+});
+
+describe('objects: lint and export', () => {
+  const ROOM = 'color darkgrey\nrect 0, 0, 159, 167\nobject "table" {\ncolor brown\nrect 40, 80, 120, 90\nobject "leg" { rect 44, 91, 46, 120 }\n}\nobject "vase" {\ncolor blue\nrect 78, 70, 82, 85\n}\ncolor red\nrect 0, 160, 159, 167\n';
+
+  it('lints objects that later drawing depends on, that uncover bare canvas, or that paint nothing', () => {
+    const ok = scene('obj-ok', ROOM);
+    const depends = scene('obj-depends', 'color green\nrect 0, 0, 159, 167\ncolor white\nrect 0, 0, 159, 100\nobject "wall" {\ncolor black\nline 0, 50, 159, 50\n}\ncolor blue\nfill 10, 10\ncolor yellow\nrect 0, 50, 159, 50');
+    // the sun is on the sky; nothing was painted behind the moon; the ghost paints nothing
+    const bare = scene('obj-bare', 'color blue\nrect 0, 0, 159, 50\nobject "sun" { color yellow\nrect 30, 10, 40, 20 }\nobject "moon" { color white\nrect 10, 60, 20, 70 }\nobject "ghost" { color red }\ncolor green\nrect 0, 71, 159, 167');
+    const r = tsx('app/scripts/lint-pic.ts', ok, depends, bare);
+    expect(r.stdout).toMatch(/✔ .*obj-ok\.pic/);
+    expect(r.stdout).toMatch(/later drawing depends on object 'wall' \(line 5\): without it, 8160 px paint differently \(in 0,50-159,100\)/);
+    expect(r.stdout).toMatch(/hiding object 'moon' \(line 5\) can uncover 121 px of bare canvas \(in 10,60-20,70\)/);
+    expect(r.stdout).not.toMatch(/'sun'/);
+    expect(r.stdout).not.toMatch(/depends on object '(sun|moon)'/);
+    expect(r.stdout).toMatch(/object 'ghost' \(line 7\) paints nothing/);
+    expect(r.stdout).toMatch(/3 scene\(s\): 0 error\(s\), 3 warning\(s\)/);
+  });
+
+  it('sees through other objects: a dependence they cover, a fill bordered by two, objects stacked on bare canvas', () => {
+    // the fill stops at the wall; the rug, drawn later, covers where it would spill
+    const covered = scene('obj-covered', 'color green\nrect 0, 101, 159, 167\nobject "wall" { color black\nline 0, 50, 159, 50 }\ncolor blue\nfill 10, 10\nobject "rug" { color red\nrect 0, 51, 159, 100 }');
+    // either fence alone keeps the fill out of the field (the white line behind them doesn't)
+    const both = scene('obj-both', 'color green\nrect 0, 101, 159, 167\ncolor white\nline 0, 50, 159, 50\nobject "fence" { color black\nline 0, 50, 159, 50 }\nobject "hedge" { color brown\nline 0, 50, 159, 50 }\ncolor blue\nfill 10, 10\ncolor yellow\nrect 0, 51, 159, 100');
+    // two boxes on the same bare patch: the lower one never shows, but hiding both uncovers the canvas
+    const stacked = scene('obj-stacked', 'color blue\nrect 0, 30, 159, 167\nobject "under" { color red\nrect 10, 10, 20, 20 }\nobject "over" { color yellow\nrect 10, 10, 20, 20 }');
+    // the same, with the fill in an object of its own
+    const owned = scene('obj-owned', 'color green\nrect 0, 101, 159, 167\ncolor white\nline 0, 50, 159, 50\nobject "fence" { color black\nline 0, 50, 159, 50 }\nobject "hedge" { color brown\nline 0, 50, 159, 50 }\nobject "sky" { color blue\nfill 10, 10 }\ncolor yellow\nrect 0, 51, 159, 100');
+    const r = tsx('app/scripts/lint-pic.ts', covered, both, stacked, owned);
+    expect(r.stdout).toMatch(/later drawing depends on the objects together: with every object hidden but 'sky' \(and what it's in\), 8160 px paint differently/);
+    expect(r.stdout).toMatch(/later drawing depends on object 'wall' \(line 3\): without it, 8160 px paint differently/);
+    expect(r.stdout).not.toMatch(/depends on object '(fence|hedge)'/);
+    expect(r.stdout).toMatch(/later drawing depends on the objects together: with every object hidden, 8160 px paint differently/);
+    expect(r.stdout).not.toMatch(/(fence|hedge).*bare canvas/);
+    expect(r.stdout).toMatch(/hiding object 'under' \(line 3\) can uncover 121 px of bare canvas/);
+    expect(r.stdout).toMatch(/hiding object 'over' \(line 5\) can uncover 121 px of bare canvas/);
+  });
+
+  it('exports the full picture, the base plate, sprites, layers and a manifest that composes exactly', () => {
+    const f = scene('room', ROOM);
+    const out = join(tmp, 'objects');
+    const r = tsx('app/scripts/objects.ts', f, '--out', out);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/room\/ {2}"room" \[default\] {2}3 object\(s\), 5 layer\(s\)/);
+    expect(r.stdout).toContain('table/leg  44,91-46,120  90 px');
+    const dir = join(out, 'room');
+    const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'));
+    expect(manifest).toMatchObject({ width: 160, height: 168, pixelAspect: 2, canvas: '#ffffff' });
+    expect(manifest.objects).toEqual([
+      { id: 'table', parent: null, line: 3, box: [40, 80, 120, 120], pixels: 81 * 11 - 5 * 6 + 90, sprite: 'sprites/table.png' },
+      { id: 'leg', parent: 'table', line: 6, box: [44, 91, 46, 120], pixels: 90, sprite: 'sprites/leg.png' },
+      { id: 'vase', parent: null, line: 8, box: [78, 70, 82, 85], pixels: 80, sprite: 'sprites/vase.png' },
+    ]);
+    expect(manifest.layers.map((l: { object: string | null }) => l.object)).toEqual([null, 'table', 'leg', 'vase', null]);
+    const sprite = readPng(join(dir, 'sprites/vase.png'));
+    expect([sprite.width, sprite.height]).toEqual([5, 16]);
+    // compose the layers with the table hidden (and so its leg): the floor shows under the vase-less table
+    const rgba = (p: string) => readPng(join(dir, p)).data;
+    const canvas = [255, 255, 255, 255];
+    const composed = Buffer.alloc(160 * 168 * 4);
+    for (let i = 0; i < 160 * 168; i++) composed.set(canvas, i * 4);
+    for (const l of manifest.layers) {
+      if (l.object === 'table' || l.object === 'leg') continue;
+      const d = rgba(l.file);
+      for (let i = 0; i < 160 * 168; i++) if (d[i * 4 + 3]) composed.set(d.subarray(i * 4, i * 4 + 4), i * 4);
+    }
+    const at = (img: Buffer, x: number, y: number) => [...img.subarray((y * 160 + x) * 4, (y * 160 + x) * 4 + 3)];
+    expect(at(composed, 60, 85)).toEqual([0x55, 0x55, 0x55]); // floor where the table was
+    expect(at(composed, 80, 85)).toEqual([0, 0, 0xaa]); // the vase stays
+    expect(at(rgba('base.png'), 80, 85)).toEqual([0x55, 0x55, 0x55]);
+    expect(at(rgba('full.png'), 60, 85)).toEqual([0xaa, 0x55, 0]);
+  });
+
+  it('refuses two exports into one folder, and clears out variants the scene dropped', () => {
+    const out = join(tmp, 'objects3');
+    const a = join(tmp, 'a');
+    const b = join(tmp, 'b');
+    for (const d of [a, b]) mkdirSync(d, { recursive: true });
+    writeFileSync(join(a, 'room.pic'), ROOM);
+    writeFileSync(join(b, 'room.pic'), ROOM);
+    const r = tsx('app/scripts/objects.ts', join(a, 'room.pic'), join(b, 'room.pic'), '--out', out);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/b\/room\.pic \[default\] would overwrite the export of .*a\/room\.pic \[default\]/);
+    const f = scene('vary', 'variants day, night\n' + ROOM);
+    expect(tsx('app/scripts/objects.ts', f, '--variant', 'all', '--out', out).status).toBe(0);
+    expect(readdirSync(out).filter((d) => d.startsWith('vary')).sort()).toEqual(['vary-day', 'vary-night']);
+    writeFileSync(f, 'variants day\n' + ROOM);
+    const again = tsx('app/scripts/objects.ts', f, '--variant', 'all', '--out', out);
+    expect(again.stdout).toMatch(/removed .*vary-night\//);
+    expect(readdirSync(out).filter((d) => d.startsWith('vary')).sort()).toEqual(['vary-day']);
+    // an export made without --variant, by another spelling of the path, goes too once its variant does
+    writeFileSync(f, 'variants dusk, day\n' + ROOM);
+    expect(tsx('app/scripts/objects.ts', f, '--out', out).status).toBe(0);
+    expect(existsSync(join(out, 'vary'))).toBe(true);
+    writeFileSync(f, 'variants day\n' + ROOM);
+    tsx('app/scripts/objects.ts', relative(process.cwd(), f), '--variant', 'all', '--out', out);
+    expect(readdirSync(out).filter((d) => d.startsWith('vary')).sort()).toEqual(['vary-day']);
+  });
+
+  it('fails on a scene without objects, and on bad arguments', () => {
+    const r = tsx('app/scripts/objects.ts', scene('plain', 'sky 20'), '--out', join(tmp, 'objects2'));
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/has no objects/);
+    expect(tsx('app/scripts/objects.ts', '--bogus').status).toBe(2);
+    // a file name that can't name a folder (it would be the folder above --out)
+    const dots = join(tmp, '...pic');
+    writeFileSync(dots, ROOM);
+    const bad = tsx('app/scripts/objects.ts', dots, '--out', join(tmp, 'objects4'));
+    expect(bad.status).toBe(1);
+    expect(bad.stderr).toMatch(/'\.\.' can't name an export folder - use --name/);
+    expect(tsx('app/scripts/objects.ts').status).toBe(2);
   });
 });
 

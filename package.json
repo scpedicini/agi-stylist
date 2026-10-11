@@ -21,6 +21,7 @@
     "style-stats": "tsx app/scripts/style-stats.ts",
     "regions": "tsx app/scripts/regions.ts",
     "lint:pic": "tsx app/scripts/lint-pic.ts",
+    "objects": "tsx app/scripts/objects.ts",
     "skill:docs": "tsx app/scripts/gen-skill-docs.ts",
     "social": "tsx app/scripts/social.ts"
   },

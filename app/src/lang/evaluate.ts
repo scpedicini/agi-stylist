@@ -1,6 +1,6 @@
 import { MAX_TEXTURE, type PenShape } from '../engine/brush.ts';
 import { PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
-import type { Op, SourceRef } from '../engine/ops.ts';
+import type { Op, SceneObject, SourceRef } from '../engine/ops.ts';
 import { COLOR_ALIASES, COLOR_NAMES } from '../engine/palette.ts';
 import type { Arg, Expr, Program, Stmt } from './ast.ts';
 import { PicError, type Diagnostic, type Loc } from './errors.ts';
@@ -85,6 +85,8 @@ export interface CompileResult {
   title?: string;
   variants: string[];
   variant: string;
+  /** The `object` blocks this variant ran, in the order first opened (Op.obj indexes this). */
+  objects: SceneObject[];
   warnings: Diagnostic[];
   logs: string[];
 }
@@ -119,6 +121,7 @@ export function compileProgram(program: Program, opts: CompileOptions = {}): Com
     title: interp.title,
     variants: variants.length ? variants : [DEFAULT_VARIANT],
     variant,
+    objects: interp.objects,
     warnings: interp.warnings,
     logs: interp.logs,
   };
@@ -130,7 +133,7 @@ function checkRemapVariants(body: Stmt[], variants: string[]) {
       const known = variants.length ? `this scene declares: ${variants.join(', ')}` : "add 'variants …' first";
       throw new PicError(`remap for unknown variant '${s.variant}' (${known})`, s.loc);
     }
-    if (s.type === 'fn' || s.type === 'repeat' || s.type === 'for' || s.type === 'while' || s.type === 'delay') checkRemapVariants(s.body, variants);
+    if (s.type === 'fn' || s.type === 'repeat' || s.type === 'for' || s.type === 'while' || s.type === 'delay' || s.type === 'object') checkRemapVariants(s.body, variants);
     if (s.type === 'if') {
       checkRemapVariants(s.then, variants);
       if (s.else) checkRemapVariants(s.else, variants);
@@ -146,12 +149,17 @@ export function declaredVariants(program: Program): string[] {
 }
 
 /**
- * A block's statements with every `delay` block opened up in place: a delay is see-through, so what
- * is declared in it (functions, variants) counts as declared in the block around it.
+ * A block's statements with every `delay` and `object` block opened up in place: they are
+ * see-through, so what is declared in them (functions, variants) counts as declared in the block
+ * around them.
  */
 function transparent(body: Stmt[]): Stmt[] {
-  return body.some((s) => s.type === 'delay') ? body.flatMap((s) => (s.type === 'delay' ? transparent(s.body) : [s])) : body;
+  const open = (s: Stmt) => s.type === 'delay' || s.type === 'object';
+  return body.some(open) ? body.flatMap((s) => (s.type === 'delay' || s.type === 'object' ? transparent(s.body) : [s])) : body;
 }
+
+/** An object's name: kebab-case, so it is safe as a file name and in a game's data. */
+const OBJECT_ID = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 // ---------------------------------------------------------------------------
 // Interpreter
@@ -168,6 +176,7 @@ const MAX_WARNINGS = 50;
 
 class Interpreter {
   readonly ops: Op[] = [];
+  readonly objects: SceneObject[] = [];
   readonly warnings: Diagnostic[] = [];
   readonly logs: string[] = [];
   title?: string;
@@ -182,6 +191,9 @@ class Interpreter {
   private instr = 0;
   /** The level of the innermost `delay` block running, 0 outside one. */
   private delayLevel = 0;
+  /** Index (in `objects`) of the innermost `object` block running, -1 outside one. */
+  private currentObject = -1;
+  private readonly objectIds = new Map<string, number>();
   /** Library errors already given a "called from" note, so outer statements don't add another. */
   private readonly placed = new WeakSet<PicError>();
   private turtle: Turtle = { x: 80, y: 84, heading: 0, down: true };
@@ -230,6 +242,7 @@ class Interpreter {
     const src: SourceRef = { ...this.userLoc, instr: this.instr };
     const out = { ...op, src } as Op;
     if (this.delayLevel) out.delay = this.delayLevel;
+    if (this.currentObject >= 0) out.obj = this.currentObject;
     this.ops.push(out);
     return out;
   }
@@ -262,7 +275,7 @@ class Interpreter {
   }
 
   private execBlock(body: Stmt[], env: Env) {
-    // functions are hoisted, including those inside a delay block (it has no scope of its own)
+    // functions are hoisted, including those inside a delay or object block (no scope of their own)
     for (const s of transparent(body)) if (s.type === 'fn') env.declare(s.name, { kind: 'fn', name: s.name, params: s.params, body: s.body, closure: env });
     for (const s of body) this.exec(s, env);
   }
@@ -360,6 +373,10 @@ class Interpreter {
         return; // resolved before execution
       case 'remap': {
         if (s.variant && s.variant !== this.variant) return;
+        if (this.currentObject >= 0) {
+          const o = this.objects[this.currentObject];
+          throw new PicError(`remap can't be inside an object block (it recolours the whole picture; this one is in '${o.id}', opened at line ${o.src.line})`, s.loc);
+        }
         const map = Array.from({ length: 16 }, (_, i) => i);
         for (const [from, to] of s.pairs) map[this.color(this.eval(from, env), from.loc)] = this.color(this.eval(to, env), to.loc);
         this.emit({ kind: 'remap', map });
@@ -380,6 +397,43 @@ class Interpreter {
         }
         return;
       }
+      case 'object':
+        return this.objectBlock(s, env);
+    }
+  }
+
+  /**
+   * `object "id" { … }`: what the body paints belongs to the object. Like `delay` it has no scope of
+   * its own, so wrapping lines in an object never changes the picture. Opening an id again adds
+   * to the same object, which must then have the same parent.
+   */
+  private objectBlock(s: Extract<Stmt, { type: 'object' }>, env: Env) {
+    const id = this.eval(s.id, env);
+    if (typeof id !== 'string') throw new PicError(`an object's name must be a string like "vase", got ${typeName(id)}`, s.id.loc);
+    if (!OBJECT_ID.test(id)) throw new PicError(`object name '${id}' must be kebab-case: lowercase letters and digits in words joined by '-', starting with a letter (e.g. "blue-vase")`, s.id.loc);
+    const parent = this.currentObject;
+    let index = this.objectIds.get(id);
+    if (index === undefined) {
+      index = this.objects.length;
+      this.objects.push({ id, parent, src: { file: s.loc.file, line: s.loc.line, col: s.loc.col } });
+      this.objectIds.set(id, index);
+    } else {
+      const o = this.objects[index];
+      for (let p = parent; p >= 0; p = this.objects[p].parent) {
+        if (p === index) throw new PicError(`object '${id}' is already open here (an object can't be inside itself)`, s.loc);
+      }
+      if (o.parent !== parent) {
+        const where = (p: number) => (p < 0 ? 'outside any object' : `inside '${this.objects[p].id}'`);
+        throw new PicError(`object '${id}' was first opened ${where(o.parent)} (line ${o.src.line}), so it must be reopened there too, not ${where(parent)}`, s.loc);
+      }
+    }
+    this.currentObject = index;
+    this.turtleOp = undefined; // a turtle path never runs across an object's edge
+    try {
+      for (const st of s.body) this.exec(st, env);
+    } finally {
+      this.currentObject = parent;
+      this.turtleOp = undefined;
     }
   }
 
@@ -1061,7 +1115,7 @@ class Interpreter {
     const last = this.ops[this.ops.length - 1];
     if (this.turtleOp && last === this.turtleOp && last.kind === 'line') {
       const p = last.points;
-      if (p[p.length - 2] === ax && p[p.length - 1] === ay && last.src?.line === this.userLoc.line && (last.delay ?? 0) === this.delayLevel) {
+      if (p[p.length - 2] === ax && p[p.length - 1] === ay && last.src?.line === this.userLoc.line && (last.delay ?? 0) === this.delayLevel && (last.obj ?? -1) === this.currentObject) {
         this.charge();
         p.push(bx, by);
         return;

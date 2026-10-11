@@ -1,6 +1,8 @@
 import p5 from 'p5';
 import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
+import type { Hiding } from '../engine/objects.ts';
 import type { Op } from '../engine/ops.ts';
+import { EGA_PALETTE } from '../engine/palette.ts';
 import { Playback } from '../engine/playback.ts';
 
 // p5's "friendly errors" are a beginner's aid that, in development builds, scans every script on the
@@ -23,7 +25,9 @@ export class Stage {
   private p!: p5;
   private img!: p5.Image;
   private play = new Playback([]);
+  private ops: readonly Op[] = [];
   private dirty = true;
+  private lit: Uint8Array | null = null;
   opsPerFrame = Infinity;
   paused = false;
   /**
@@ -71,9 +75,35 @@ export class Stage {
     return this.play.delaysIgnored;
   }
 
-  load(ops: readonly Op[]): void {
-    this.play = new Playback(ops);
+  /** Play `ops` from the start, with the objects in `hiding` hidden (see ObjectModel.hiding). */
+  load(ops: readonly Op[], hiding?: Hiding): void {
+    this.ops = ops;
+    this.play = new Playback(ops, { hiding });
     this.restart();
+  }
+
+  /** Hide a different set of objects, staying where playback is (a finished picture stays finished). */
+  rehide(hiding: Hiding): void {
+    const at = this.play.position;
+    this.play = new Playback(this.ops, { hiding });
+    this.seek(at);
+  }
+
+  /**
+   * Thatch the pixels set in `mask` (one per picture pixel): every other one of them, in a
+   * checkerboard, shows its opposite EGA colour (black ↔ white, blue ↔ yellow, brown ↔ light
+   * blue…), so it stands out whatever its colour; the rest of the picture stays as it is. Null
+   * shows the picture plain.
+   */
+  /** How many pixels are lit up, or null when nothing is (for tests). */
+  get highlighted(): number | null {
+    return this.lit ? this.lit.reduce((a, b) => a + b, 0) : null;
+  }
+
+  set highlight(mask: Uint8Array | null) {
+    if (mask === this.lit) return;
+    this.lit = mask;
+    this.dirty = true;
   }
 
   /** Back to the start: nothing painted. */
@@ -127,6 +157,18 @@ export class Stage {
     this.play.fb.toRGBA(this.img.pixels);
     const touched = this.play.touched;
     if (this.overlay && !this.done) for (let i = 0; i < touched.length; i++) if (!touched[i]) this.img.pixels[i * 4 + 3] = 0;
+    const lit = this.lit;
+    if (lit) {
+      const px = this.img.pixels;
+      const fb = this.play.fb.pixels;
+      for (let i = 0; i < lit.length; i++) {
+        if (!lit[i] || ((i % PIC_WIDTH) + Math.floor(i / PIC_WIDTH)) % 2) continue;
+        const [r, g, b] = EGA_PALETTE[fb[i] ^ 15];
+        px[i * 4] = r;
+        px[i * 4 + 1] = g;
+        px[i * 4 + 2] = b;
+      }
+    }
     this.img.updatePixels();
     this.p.clear();
     this.p.image(this.img, 0, 0, this.p.width, this.p.height);

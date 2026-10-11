@@ -39,7 +39,9 @@ export type Stmt =
   | { type: 'variants'; names: string[]; loc: Loc }
   | { type: 'remap'; variant?: string; pairs: Array<[Expr, Expr]>; loc: Loc }
   /** Ops painted inside are played later by the viewer (level 1 when omitted); see Op.delay. */
-  | { type: 'delay'; level?: Expr; body: Stmt[]; loc: Loc };
+  | { type: 'delay'; level?: Expr; body: Stmt[]; loc: Loc }
+  /** Ops painted inside belong to the object `id` (a kebab-case string); see Op.obj. */
+  | { type: 'object'; id: Expr; body: Stmt[]; loc: Loc };
 
 export interface Program {
   file: string;

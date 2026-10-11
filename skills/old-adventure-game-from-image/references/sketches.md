@@ -121,8 +121,8 @@ is the line, and things labelled above it stand on it.
 | Kind | Examples | Where it goes |
 |---|---|---|
 | **point** (in the air, in the sky) | `SUN`, `MOON`, `BIRD`, `GHOST`, `KITE` | the object's visual centre is the label's centre |
-| **grounded** (stands on something) | `TREE1`, `HOUSE`, `KNIGHT`, `TABLE` | the label gives its x and its depth; its **base** sits on the support under the label: the nearest drawn surface below it that could carry it (ground, floor, hill, terrace or balcony line; a cliff top, not the sea below it). With no line drawn, put the base a few pixels below the label's centre (for a label in the bottom row, between the label and the bottom edge). The label point must lie inside the object, and the object stays **balanced over it**: a tree's trunk under the label with its crown spread about evenly both ways, a house centred on it. A label far above its support means a tall object (a tower), never a floating one |
-| **attached** (on a wall or ceiling) | `WINDOW`, `CHANDELIER`, `DOOR`, `TORCH`, `SIGN`, a cave mouth | on the wall or ceiling it belongs to, centred on the label |
+| **grounded** (stands on something) | `TREE1`, `HOUSE`, `KNIGHT`, `TABLE` | the label gives its x and its depth; its **base** sits on the support under the label: the nearest drawn surface below it that could carry it (ground, floor, hill, terrace or balcony line; a cliff top, not the sea below it). With no line drawn, put the base a few pixels below the label's centre (for a label in the bottom row, between the label and the bottom edge). The label point must lie inside the object's outline (between a table's legs counts), and the object stays **balanced over it**: a tree's trunk under the label with its crown spread about evenly both ways, a house centred on it. A label far above its support means a tall object (a tower), never a floating one |
+| **attached** (on a wall or ceiling) | `WINDOW`, `CHANDELIER`, `DOOR`, `TORCH`, `SIGN`, a cave mouth | on the wall or ceiling it belongs to, its body centred on the label (not counting a chain or bracket it hangs by) |
 | **extent** | a box, circle or ellipse drawn around a label; a painted loop around one object's word (`Hut on stilts`, `Castle`) | the drawn shape is the object's bounds, eaves, decks and ladders included; fill it (a little over is fine, the shape is rough; for a painted loop, the middle of its ring) |
 | **region** | `SKY`, `LAKE`, `MEADOW`, `RIVER`, `MOAT`, `SKY: orange sunset`, a `RUG` or `PIT` on a floor; a river between two drawn banks | an area named by its word, bounded by thin drawn lines or by nothing (no paint gives its outline). The label is a seed point inside it, not its size: fill up to its drawn lines; with none, out to the canvas edges where it naturally reaches, stopping at neighbouring regions and objects. If two unbounded regions meet (a lake and a meadow), invent the simplest boundary between them that keeps each label inside its own region, and record it. Floor things (rugs, pits, pools) lie flat in the floor's perspective. Text after `:` describes it |
 | **area** (paint) | a painted loop or fill: `Trees`, `Forest`, `Rocks` (many things) or `Lake`, `Meadow`, `Sand`, `Snow` (one mass), named by a word inside it or by the brief (a loop round a single object is an extent, above) | the paint's outer outline is the thing's outline **as seen on screen**: it reaches the outline all round and doesn't spill past it. A plural word means many things whose crowns or tops together fill the outline ("Trees" in a loop is a stand of trees, smaller at the back: `forest(outline, horizon)`); a material is one continuous mass. Scribbles inside are colouring-in |
@@ -259,6 +259,7 @@ twice as wide as tall, so a round thing 10 wide is about 20 tall), then adjust:
 | kite, flag, hanging sign | 6-14 × 10-25 |
 | window on a back wall | 14-24 × 20-36 |
 | door on a back wall | 12-20 × 30-45 (on a side wall: from the wall's floor edge up to about ¾ of its height there) |
+| rug on a floor (mid-ground) | 40-70 × 14-24, flat in the floor's perspective |
 
 What decides size, in order: a drawn extent; then `BIG_` (≈ 1.5×) or `SMALL_` (≈ 0.6×); then
 the brief ("a tall tower", "a tiny cottage"); then depth (lower on the screen = nearer = bigger:
@@ -277,16 +278,37 @@ anything you add.
 A sketch fitted from a very different shape (a portrait page) is stretched sideways: positions
 and heights are right, but take widths from this table, not from the stretched drawing.
 
+**Objects.** The scene is a background for an adventure game, so every *thing* in it gets an
+**object id**: each object, linear object, point and dab, anything the brief adds ("place a
+small blue vase on the table" → `vase`), and the props you invent yourself (a pot, a shelf).
+Ask of each thing: could a game want it on its own (take it, open it, look at it)? Then it is
+its own object, a **sibling** drawn after whatever it stands on, hangs from or sits in (a vase on
+a table, a pot hanging in a fireplace, plates on a shelf). If it only makes sense with its whole
+and goes when the whole goes, it is a **part**, nested in it (a fireplace's fire, a door's latch,
+the moon seen through a window). What shows through a window or doorway belongs to that window
+or doorway. A thing's cast shadow and the light it throws (a window's patch of sunlight on the
+floor) belong to its object too: open the object again where the layer order puts them, so hiding the thing takes them with it. Ids are kebab-case words naming the thing (`lighthouse`,
+`boat`, `gull-1`, `blue-vase`). Things standing on another thing (a vase on a table, a lantern on
+a wall) get their own id; a part that goes with its whole (a fireplace's fire, a ship's sail)
+gets its own id too (`fire`, `sail`) and is nested inside its whole when drawn; in the table, the
+header and the report write it `whole/part` (`fireplace/fire`), but the id itself is just `fire`
+(an id is lowercase letters, digits and dashes only). The backdrop has no id: sky, ground,
+horizon, room walls, floor and ceiling, and big continuous regions and areas of material (sea,
+lake, meadow, snow). Paths and woods are backdrop too, unless the brief or the sketch makes one
+a thing in itself (a bridge, a lone signpost). A region that is a **thing** lying on the floor or
+ground (a rug, a pit, a pool, a well's water) is an object, not backdrop: it has a size of its own
+(the size table), not out to the walls, unless the sketch draws its edges.
+
 Write the table down before drawing. For example, for a harbour sketch (the numbers are only
 an illustration: take yours from your own sketch):
 
 ```
-LIGHTHOUSE        grounded  x 130, base on the cliff line y≈70     white tower, red bands (brief)
-BOAT_LEFT         grounded  x 60, base on the sea y≈120            small rowing boat, bow to the left
-GULLS x3          point     around (95,30)                         three far gulls: bird(…, 0.5)
-SEA               region    below the horizon line (y≈75), left of the cliff
-(horizon line)    boundary  y 75 from x 0 to the cliff
-(moon)            invented  (20,15): the note says "night"; nothing sketched there
+LIGHTHOUSE        grounded  lighthouse   x 130, base on the cliff line y≈70     white tower, red bands (brief)
+BOAT_LEFT         grounded  boat         x 60, base on the sea y≈120            small rowing boat, bow to the left
+GULLS x3          point     gull-1..3    around (95,30)                         three far gulls: bird(…, 0.5)
+SEA               region    -            below the horizon line (y≈75), left of the cliff
+(horizon line)    boundary  -            y 75 from x 0 to the cliff
+(moon)            invented  moon         (20,15): the note says "night"; nothing sketched there
 ```
 
 ## 4. Lay out the scene
@@ -338,6 +360,16 @@ SEA               region    below the horizon line (y≈75), left of the cliff
   `magick montage a.png b.png c.png -tile 3x -geometry +2+2 out/sheet.png`. Draw lines that reach the picture's edge (x 159/160,
   y 167/168, which fitted coordinates often do) with `stroke`, not `line`, so they're clipped
   instead of clamped.
+- **Objects:** wrap everything that paints a thing in `object "<id>" { … }` (see the language
+  reference's "Objects"). Paint the whole backdrop first, outside any object, so that hiding a
+  thing shows what's behind it (the floor under the table, the wall behind the door). A thing on
+  another thing is a sibling, drawn after it (`object "table" { … }` then `object "vase" { … }`),
+  never inside it; a part is nested (`object "fireplace" { … object "fire" { … } }`). An object
+  may be opened again to add a piece that must be drawn later (a hearth in front of a rug, a
+  table's shadow drawn before the rug in front of it), at the same nesting as before (a part
+  again inside its whole); if nothing else comes in between, one block is enough. Set `color`
+  inside each object. Declare the `let`s and `fn`s the rest of the scene uses outside objects (a
+  loop's own variables inside are fine). Never let an object be the border of a later `fill`.
 - Paint back to front as the drawing skill describes: sky, with the sun or moon and any `stars()`
   (they paint over everything, so before anything that rises into the sky) → far scenery →
   regions → paths → grounded and attached things from far (high) to near (low), with any
@@ -409,6 +441,8 @@ objects in front of them; a ragged glow reads as a stain.
 #   around (95,30). Geometry: <the scene lines you followed: horizon y 75, cliff edge, …>
 # Stage: horizon y <N> (<drawn | chosen>)
 # Interpreted: <every assumption, default, invention and resolved conflict, or "none">
+# Objects: <the backdrop, then every object id, parts as whole/part, e.g. "backdrop: room;
+#   window/moon, fireplace/fire, table, vase, door">
 # Notes: <gameplay notes from the sketch, not drawn (where the player can't walk, exits); omit the line if none>
 scene "<Title>"
 variants <day | night | lit | dusk: the brief's lighting>
@@ -465,12 +499,19 @@ Then check, ticking each line of your entity table:
   "red roof", "smoke from the chimney", "lantern").
 - Notes were followed and not drawn; gameplay notes are in `# Notes:` (not `Interpreted:`).
 - Neighbours differ; KQ style (black outlines, flat colours, no speckle).
-- `pnpm lint:pic <scene file>` is clean.
+- Every thing in the entity table is its object, with its id (`pnpm objects <scene file>` lists
+  them, with their boxes; add `--name <slug>` if the file isn't named after the slug), and
+  nothing of the backdrop is in an object.
+- `pnpm lint:pic <scene file>` is clean. It also checks that every object can be hidden: a
+  warning that later drawing depends on an object, or that hiding it can uncover bare canvas,
+  means the backdrop behind it is missing or a fill used it as a border. Fix it by painting the
+  backdrop first.
 
 ## 8. Report
 
 The scene file, variants, the clean render and the overlay render, the viewer link. Then a
-line per label: what you drew and where. Then what you interpreted, invented or defaulted, and
+line per label: what you drew and where, and its object id. (In the viewer, hovering over the
+finished picture names each object, and clicking hides it.) Then what you interpreted, invented or defaulted, and
 any **open question** (a conflict you resolved yourself) at the top.
 
 ## Worked examples
@@ -480,7 +521,7 @@ sketch, the brief and every decision):
 
 | Scene | Sketch | Shows |
 |---|---|---|
-| `scenes/sketches/03-cottage-kitchen.pic` | a room in one-point perspective with six labels | `room()` from the drawn back-wall box; a door on a side wall; ceiling, wall and floor objects; firelit night |
+| `scenes/sketches/03-cottage-kitchen.pic` | a room in one-point perspective with six labels | `room()` from the drawn back-wall box; a door on a side wall; ceiling, wall and floor surfaces; firelit night; **object blocks**: the room as backdrop, each thing an object, the rug included (the jug and loaf as siblings of what they stand on, the fire a part of the fireplace, the fireplace reopened for its hearth) |
 | `scenes/sketches/05-street-levels.pic` | an ultra-wide street with steps, a terrace and a balcony | several support lines: each building on its own level, a singer on the balcony; dusk with lit windows; a hand-made pixel map for a tiny sign (the stdlib's `pixmap` now does this, with a different signature) |
 | `scenes/sketches/10-lake-cabin.pic` | a hybrid: a blue loop crossed by a brown stroke, a green scribble, a red dab, a pen-only word | an area for the lake, a linear object (the dock) along its stroke, a dab for the campfire, a cabin with a side wall towards the horizon, a two-row treeline backdrop, golden hour |
 | `scenes/sketches/11-mountain-pass.pic` | a hybrid: a grey skyline across the page, a pale-blue fill of "Snow", a brown stroke for a path, a "Cave" label | the grey line read as the mountains' skyline (rock below it, sky above), not the horizon; a hidden horizon behind the massif; snow on the peak from the fill; `trail` along the stroke; a cave attached to the cliff face; overcast winter day with invented snow detail |

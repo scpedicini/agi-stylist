@@ -10,6 +10,13 @@
 //            into unpainted canvas); fills that flooded more than 40% of the picture (usually a
 //            gap in an outline - end the line with `# lint: ok` if the big fill is intended);
 //            variants that render identically.
+//            Objects (`object "id" { … }`) that aren't separable: hiding any of them must show
+//            exactly what was painted behind. Warned: later drawing that depends on an object
+//            (re-running the script without it, a fill paints other pixels: it stopped at the
+//            object's edge), checked for each object, and for each fill with every object it isn't
+//            in hidden together (a fill can need any one of several objects as its border); an object
+//            that paints where nothing outside it (or outside the objects it is inside) paints, so
+//            hiding it can uncover bare canvas; and an object that paints nothing.
 // Notes    - canvas no instruction ever painted. It shows as white (or as whatever a later remap
 //            turned white into), usually a gap between shapes.
 // --strict makes warnings fail too. Exit codes: 0 ok, 1 errors (or warnings with --strict),
@@ -17,6 +24,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { Painter } from '../src/engine/execute.ts';
+import { maskBox, ObjectModel } from '../src/engine/objects.ts';
 import { PIC_HEIGHT, PIC_WIDTH } from '../src/engine/framebuffer.ts';
 import { compileProgram, declaredVariants, DEFAULT_VARIANT, formatDiagnostic, parse, PicError } from '../src/lang/index.ts';
 import { stdlib } from './lib/stdlib.ts';
@@ -39,6 +47,36 @@ const walk = (dir: string): string[] =>
 const files = argv.filter((a) => !a.startsWith('-'));
 const targets = files.length ? files : walk('scenes');
 const generated = (f: string) => /(^|\/)scenes\/kq1\//.test(f);
+
+const box = (mask: Uint8Array) => maskBox(mask)!.join(',').replace(/^(\d+,\d+),/, '$1-');
+
+/** Can every object be hidden cleanly? See the header. */
+function checkObjects(m: ObjectModel, warn: (msg: string) => void) {
+  const count = (mask: Uint8Array) => mask.reduce((a, b) => a + b, 0);
+  const fix = 'a fill stopped at its edge; give the fill its own border, or draw the object after it';
+  let depends = false;
+  m.objects.forEach((o, i) => {
+    const name = `object '${o.id}' (line ${o.src.line})`;
+    if (!m.footprint(i).includes(1)) return warn(`${name} paints nothing`);
+    const d = m.dependence([i]);
+    if (d.includes(1)) {
+      depends = true;
+      warn(`later drawing depends on ${name}: without it, ${count(d)} px paint differently (in ${box(d)}) - ${fix}`);
+    }
+    const bare = m.bare(i);
+    if (bare.includes(1)) warn(`hiding ${name} can uncover ${count(bare)} px of bare canvas (in ${box(bare)}) - nothing outside it paints there; paint what's behind it first`);
+  });
+  if (depends || m.objects.length < 2) return;
+  // A fill can need any one of several objects as its border: hide every object the fill isn't
+  // in (the ones it is in can't be hidden without hiding the fill too), for each object with fills.
+  const owners = new Set(m.ops.filter((op) => op.kind === 'fill').map((op) => op.obj ?? -1));
+  for (const f of owners) {
+    const hidden = m.objects.map((_, i) => i).filter((i) => f < 0 || !m.within(f, i));
+    const d = m.dependence(hidden);
+    const whose = f < 0 ? 'with every object hidden' : `with every object hidden but '${m.objects[f].id}' (and what it's in)`;
+    if (d.includes(1)) warn(`later drawing depends on the objects together: ${whose}, ${count(d)} px paint differently (in ${box(d)}) - ${fix}`);
+  }
+}
 
 let errors = 0;
 let warnings = 0;
@@ -112,6 +150,11 @@ for (const file of targets) {
           x2 = Math.max(x2, x);
           y2 = Math.max(y2, y);
         }
+      }
+      if (r.objects.length) {
+        const m = ObjectModel.create(r.ops, r.objects);
+        if (!m) say('warning', `[${variant}] too many pixel writes to check its objects can be hidden`);
+        else checkObjects(m, (msg) => say('warning', `[${variant}] ${msg}`));
       }
       if (unpainted) say('note', `[${variant}] ${unpainted} px of canvas were never painted (in ${x1},${y1}-${x2},${y2}) - they show as white, or as white's colour after a remap; a gap between shapes?`);
       hashes.set(variant, painter.fb.hash());

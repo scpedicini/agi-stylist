@@ -72,8 +72,9 @@ the end of the stdlib reference.
 ## Sketch mode workflow
 
 Follow `references/sketches.md` from §1 to §8. It's complete on its own: `pnpm grid <sketch>
---fit --name <slug>` (or an ASCII layout saved as a `.txt`), an entity table, layout, look, the
-header, then `pnpm render … --overlay out/source/<slug>/ink.png` to check every label sits on
+--fit --name <slug>` (or an ASCII layout saved as a `.txt`), an entity table with an object id
+for every thing, layout (each thing in its `object` block over a backdrop painted first), look,
+the header, then `pnpm render … --overlay out/source/<slug>/ink.png` to check every label sits on
 its object, lint, and the report. "Names and places" above applies; the picture-mode workflow
 below doesn't.
 
@@ -120,10 +121,11 @@ below doesn't.
    - **Inventory:** list everything in the image, then **keep the 8-15 things that make it
      read** and list what you'll drop.
    - **Layers**, back to front. Outdoors: sky → far → middle ground → **cast shadows on the
-     ground** → things standing on it → near → details → lighting → `frame()`. Indoors: back
-     wall and ceiling → openings (doors, windows, arches) and what shows through them → far
-     furniture → floor and rugs → cast shadows → columns, stairs and near furniture →
-     foreground props → `frame()`.
+     ground** → things standing on it → near → details → lighting → `frame()`. Indoors: the
+     room's backdrop (back wall, ceiling and floor) → openings (doors, windows, arches) and what
+     shows through them → far furniture → rugs → cast shadows → columns, stairs and near
+     furniture → foreground props → `frame()`. Each thing from the openings on is an object
+     (see "Every thing is an object" below).
    - **Colour map:** for each kept element, its EGA colour(s), chosen **by role**. Make sure
      things that touch get different colours.
    - **Lighting:** the source's own lighting is the first variant. Make other variants only if
@@ -185,6 +187,13 @@ below doesn't.
 
 ## Rules of thumb
 
+- **Every thing is an object.** The scene is a background for an adventure game: paint the
+  backdrop (sky, ground, walls, floor) first, then wrap each thing in it (a door, a window, a
+  table, the vase on it, a boat, a tree that matters) in `object "<id>" { … }`, so a game can
+  hide it or use it as a hotspot. A thing standing on another is drawn after it as its own
+  object; a part that goes with its whole is nested in it. The language reference's "Objects"
+  section has the rules; `pnpm lint:pic` checks every object can be hidden cleanly. In picture
+  mode, do this for the things the picture is about, not for every rock.
 - **Translate the roles, not the pixels.** A teal sea is `cyan`, pale sand is `yellow`, a
   black locomotive is `darkgrey` with `black` shadows (pure black swallows its own outlines).
   The tables are in `references/translating.md`.
