@@ -1,7 +1,7 @@
 {
   "id": "12-crossroads",
   "source": "app/tests/fixtures/sketches/12-crossroads.png",
-  "brief": "A village crossroads at midday. The house is half-timbered. The market stalls have striped awnings. The road leads away to a distant castle.",
+  "brief": "A village crossroads at midday. The tavern is half-timbered, with a hanging sign. The market stalls have striped awnings. The road leads away into the mountains.",
   "units": "source pixels",
   "entities": [
     {
@@ -11,7 +11,7 @@
         270,
         525
       ],
-      "is": "a road from the bottom edge away to the far distance, along the first brown stroke",
+      "is": "a road from the bottom edge away into the mountains, along the first brown stroke",
       "strokes": [
         {
           "class": "line",
@@ -85,38 +85,54 @@
               330
             ],
             [
-              399,
-              310
+              398,
+              311
             ],
             [
-              418,
-              289
+              415,
+              292
             ],
             [
-              435,
-              269
+              431,
+              274
             ],
             [
-              451,
-              251
+              446,
+              257
             ],
             [
-              464,
-              237
+              461,
+              240
             ],
             [
-              470,
-              230
+              476,
+              223
+            ],
+            [
+              496,
+              202
+            ],
+            [
+              514,
+              183
+            ],
+            [
+              528,
+              167
+            ],
+            [
+              535,
+              160
             ]
           ]
         }
       ],
       "perspective": true,
       "labelBox": [
-        239,
-        514,
-        301,
-        534
+        238,
+        513,
+        300,
+        533
       ],
       "pic": [
         54,
@@ -128,7 +144,7 @@
       "kind": "path",
       "at": [
         650,
-        350
+        345
       ],
       "is": "a lane from the right edge crossing the road and running away left, along the second brown stroke",
       "strokes": [
@@ -260,14 +276,14 @@
       ],
       "perspective": true,
       "labelBox": [
-        620,
-        339,
-        680,
-        359
+        621,
+        336,
+        681,
+        353
       ],
       "pic": [
         130,
-        98
+        96.6
       ]
     },
     {
@@ -283,61 +299,61 @@
           "class": "fill",
           "pts": [
             [
-              486,
+              489,
               454
             ],
             [
-              703,
-              478
+              702,
+              476
             ],
             [
-              711,
-              496
+              713,
+              489
             ],
             [
               693,
-              519
+              516
             ],
             [
               703,
-              547
+              549
             ],
             [
-              601,
-              568
+              678,
+              560
             ],
             [
-              474,
+              481,
               578
             ],
             [
-              466,
-              566
+              475,
+              562
             ],
             [
-              485,
-              542
+              486,
+              536
             ],
             [
-              473,
-              514
+              475,
+              513
             ],
             [
-              490,
-              495
+              492,
+              492
             ],
             [
-              479,
+              482,
               468
             ]
           ]
         }
       ],
       "labelBox": [
-        546,
+        545,
         549,
-        635,
-        569
+        634,
+        568
       ],
       "pic": [
         118,
@@ -349,7 +365,7 @@
       "kind": "grounded",
       "at": [
         600,
-        475
+        470
       ],
       "is": "three market stalls with striped awnings, one at each red dab",
       "support": "the market square",
@@ -384,24 +400,24 @@
         }
       ],
       "labelBox": [
-        550,
-        467,
-        650,
-        484
+        542,
+        458,
+        655,
+        480
       ],
       "pic": [
         120,
-        133
+        131.6
       ]
     },
     {
-      "label": "HOUSE",
+      "label": "Tavern",
       "kind": "extent",
       "at": [
         170,
-        235
+        228
       ],
-      "is": "a half-timbered house",
+      "is": "a half-timbered tavern with a hanging sign",
       "box": [
         80,
         170,
@@ -409,26 +425,154 @@
         290
       ],
       "labelBox": [
-        125,
-        224,
-        214,
-        244
+        126,
+        220,
+        213,
+        236
       ],
       "pic": [
         34,
-        65.8
+        63.8
+      ]
+    },
+    {
+      "label": "Mountains",
+      "kind": "region",
+      "at": [
+        690,
+        200
+      ],
+      "is": "two mountains whose skyline follows the grey ridge stroke, where the road ends",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              370,
+              175
+            ],
+            [
+              380,
+              162
+            ],
+            [
+              395,
+              142
+            ],
+            [
+              412,
+              120
+            ],
+            [
+              431,
+              98
+            ],
+            [
+              449,
+              81
+            ],
+            [
+              465,
+              72
+            ],
+            [
+              483,
+              77
+            ],
+            [
+              501,
+              96
+            ],
+            [
+              518,
+              118
+            ],
+            [
+              536,
+              133
+            ],
+            [
+              553,
+              133
+            ],
+            [
+              568,
+              118
+            ],
+            [
+              583,
+              95
+            ],
+            [
+              599,
+              70
+            ],
+            [
+              616,
+              49
+            ],
+            [
+              634,
+              38
+            ],
+            [
+              650,
+              41
+            ],
+            [
+              668,
+              53
+            ],
+            [
+              688,
+              71
+            ],
+            [
+              707,
+              92
+            ],
+            [
+              727,
+              114
+            ],
+            [
+              744,
+              135
+            ],
+            [
+              759,
+              153
+            ],
+            [
+              770,
+              165
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        621,
+        185,
+        758,
+        208
+      ],
+      "pic": [
+        138,
+        56
       ]
     }
   ],
   "requirements": [
     "midday",
-    "a half-timbered house",
+    "a half-timbered tavern",
+    "a hanging tavern sign",
     "striped awnings on the stalls",
     "three stalls",
     "the two roads cross",
     "the road narrows with distance",
     "the lane narrows with distance",
-    "a distant castle where the road leads"
+    "two mountains following the grey ridge",
+    "the road runs on into the mountains"
   ],
   "ambiguities": [
     {

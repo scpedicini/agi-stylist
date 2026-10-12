@@ -67,7 +67,6 @@ describe('from-image worked examples', () => {
       'scenes/kq6/r07-c01.pic',
       'scenes/kq6/r07-c02.pic',
       'scenes/kq6/r07-c04.pic',
-      'scenes/kq6/r08-c01.pic',
     ]);
   });
 

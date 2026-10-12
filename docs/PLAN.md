@@ -1105,7 +1105,7 @@ Requirements are atomic (one checkable thing each).
 |---|---|---|
 | 10-lake-cabin | 1024×768 | blue loop "Lake" with a short brown "Dock" stroke into it, green scribble "Meadow", a lone red dab "campfire", a pen-only word "Cabin" |
 | 11-mountain-pass | 640×480 | a grey edge-to-edge jagged ridge "Mountains", pale-blue scribble "Snow" on the peaks, a brown zig-zag "Path" climbing away (a hairpin), "Cave" |
-| 12-crossroads | 800×600 | a village crossroads: two brown paths crossing and receding, yellow fill "Market", red dabs "Stalls x3", a pen box HOUSE (extent) |
+| 12-crossroads | 800×600 | a village crossroads: two brown paths crossing and receding (the road on to a grey ridge "Mountains"), yellow fill "Market", red dabs "Stalls x3", a hand-drawn pen box Tavern (extent); hand lettering |
 | 13-cove | 1024×768 | yellow fill "Sand", blue scribble "Sea" under a pen horizon line, grey loops "Rocks", a pen arrow BOAT →, two green "Dune grass" strokes (one translucent) |
 | 14-fenced-stream | 1024×768 | unlabelled strokes (a blue ribbon, a row of green dabs) named by the brief, a "Hills" region, a red-painted "Pond" the brief calls blue, "Fence" lettered in its stroke's colour and touching it |
 | holdout/15-swamp | 1024×768 | **holdout**: a swamp (mixed fills and paths, a hut in a loop) |
