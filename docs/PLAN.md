@@ -92,7 +92,7 @@ behaviours exactly.
 ## 4. Architecture
 
 ```
-   src/lang/                                              src/engine/
+   app/src/lang/                                          app/src/engine/
  ┌───────────────┐ parse ┌─────┐ evaluate ┌──────────────┐
  │ PicScript     │──────▶│ AST │─────────▶│ Op list      │
  │ source (.pic) │       └─────┘          │ (AGI-level   │
@@ -109,10 +109,10 @@ behaviours exactly.
          │              golden tests   PNG via CLI       p5 canvas 320×168
          │               (Vitest)      (pngjs)           (2:1 pixels, CSS-scaled)
          │
- pnpm trace (src/trace/tracer.ts) ◀── reference/kq1/*.png
+ pnpm trace (app/src/trace/tracer.ts) ◀── reference/kq1/*.png
 ```
 
-### 4.1 Layer 0: Ops and rasterizer (`src/engine/`)
+### 4.1 Layer 0: Ops and rasterizer (`app/src/engine/`)
 - `Framebuffer` (`framebuffer.ts`): `Uint8Array(160*168)` that starts as all 15 (white). The
   EGA palette is in `palette.ts`.
 - Ops (`ops.ts`) mirror the AGI opcodes: `color c`, `nocolor`, `line pts[]` (its `style` -
@@ -127,7 +127,7 @@ behaviours exactly.
 - The op model mirrors AGI on purpose, so that AGI byte export and a priority screen can be
   added later without redesign. Both are deferred; see §12.
 
-### 4.2 Layer 1: PicScript (`src/lang/`)
+### 4.2 Layer 1: PicScript (`app/src/lang/`)
 This is a deliberately small language. **Drawing commands** stay simple one-per-line
 statements, like Logo, G-code, or SVG path commands. **Control flow** uses familiar
 JavaScript/Python-style syntax, so nothing about it is obscure:
@@ -192,7 +192,7 @@ most familiar option. A constrained language has three advantages here: it's det
 it's safe to evaluate inside the live browser editor, and it can be linted statically. Its
 syntax is chosen so that anyone who knows JS or Python can read it right away.
 
-### 4.3 Layer 2: Standard library (`src/lang/stdlib.pic`)
+### 4.3 Layer 2: Standard library (`app/src/lang/stdlib.pic`)
 These are functions written in PicScript itself, drawn from recurring motifs in the 82 scenes:
 `sky`, `horizon`, `ground`, `tree` (deciduous: brown trunk with a dark-green canopy blob),
 `pine` (cyan/lightcyan), `bush`, `rock` (grey/darkgrey), `pond`, `river`, `cloud`, `path`,
@@ -200,7 +200,7 @@ These are functions written in PicScript itself, drawn from recurring motifs in 
 parameters, so repeated trees don't look stamped. (All of these exist; the library has since
 grown to 71 functions, see §13-§16. `pnpm skill:docs` writes the catalogue in the skill.)
 
-### 4.4 The web app (`src/app/`, p5 instance mode)
+### 4.4 The web app (`app/src/app/`, p5 instance mode)
 - The canvas is drawn at 320×168 (160×168 at **2:1 pixel aspect**, `noSmooth()`) and scaled
   up by CSS with pixelated rendering to fill the stage, so its size follows the window.
 - Controls: ← → buttons, ←/→ keys, a scene dropdown, a thumbnail gallery, a variant toggle
@@ -238,11 +238,11 @@ grown to 71 functions, see §13-§16. `pnpm skill:docs` writes the catalogue in 
 This uses two complementary tracks.
 
 ### Track A: Automatic tracer → pixel-exact (all 82)
-`scripts/slice.sh` (ImageMagick) cuts `design/kq1bgs.png` into `reference/kq1/rRR-cCC.png`
-and halves the doubled width; `tsx scripts/slice-verify.ts` checks every tile against the
+`app/scripts/slice.sh` (ImageMagick) cuts `design/kq1bgs.png` into `reference/kq1/rRR-cCC.png`
+and halves the doubled width; `tsx app/scripts/slice-verify.ts` checks every tile against the
 sheet. Colours are mapped to palette indices when a PNG is read.
 
-`pnpm trace` (`scripts/trace.ts`, a wrapper round `src/trace/tracer.ts`) turns each 160×168
+`pnpm trace` (`app/scripts/trace.ts`, a wrapper round `app/src/trace/tracer.ts`) turns each 160×168
 index map into PicScript using the same strategy the
 original artists used, outline then fill:
 
@@ -263,7 +263,7 @@ per colour (not per region); a radius-limited greedy search picks lines that sta
 colour (not the fewest lines overall), and each colour's fills follow its own outlines.
 
 The output is `scenes/kq1/rRR-cCC.pic`. The viewer shows op progress (`i/n ops`); the
-estimated AGI byte count is behind the `SHOW_AGI_BYTES` flag in `src/app/config.ts` (off).
+estimated AGI byte count is behind the `SHOW_AGI_BYTES` flag in `app/src/app/config.ts` (off).
 
 ### Track B: Hand-authored idiomatic recreations (curated subset)
 About 6 diverse scenes, written the way an artist would write them, using the stdlib. Proposed set:
@@ -337,28 +337,30 @@ As it is now (the planned tree was smaller and had a scene manifest that turned 
 
 ```
 kq-styles/
-  index.html
   package.json            # p5; dev: vite, typescript, vitest, @playwright/test, pngjs, tsx,
-                          #      @types/node, @types/pngjs, @fontsource/inter
-  vite.config.ts          # also writes site meta, robots.txt and sitemap (§17)
-  playwright.config.ts    # chromium + mobile-chrome (layout checks) projects
-  src/
-    engine/   framebuffer.ts palette.ts ops.ts line.ts fill.ts brush.ts execute.ts playback.ts
-    lang/     lexer.ts parser.ts ast.ts evaluate.ts errors.ts index.ts stdlib.pic
-    trace/    tracer.ts
-    app/      main.ts (UI)  sketch.ts (p5 stage)  scenes.ts (globs scenes/**/*.pic)
-              config.ts  style.css  welcome/ (title screen, §17)
+                          #      @types/node, @types/pngjs, @fontsource/inter; every script runs here
+  app/
+    index.html
+    vite.config.ts        # Vite root is app/; also writes site meta, robots.txt and sitemap (§17)
+    playwright.config.ts  # chromium + mobile-chrome (layout checks) projects
+    tsconfig.json
+    src/
+      engine/   framebuffer.ts palette.ts ops.ts line.ts fill.ts brush.ts execute.ts playback.ts
+      lang/     lexer.ts parser.ts ast.ts evaluate.ts errors.ts index.ts stdlib.pic
+      trace/    tracer.ts
+      app/      main.ts (UI)  sketch.ts (p5 stage)  scenes.ts (globs scenes/**/*.pic)
+                config.ts  style.css  welcome/ (title screen, §17)
+    scripts/    slice.sh slice-verify.ts trace.ts render.ts lint-pic.ts style-stats.ts regions.ts
+                gen-skill-docs.ts grid.ts make-sketches.ts social.ts screenshot.mjs
+                lib/ (png.ts sketch.ts strokes.ts stdlib.ts)
+    tests/      unit/*.test.ts  golden/{kq1,handmade}.test.ts  e2e/*.spec.ts
+                fixtures/ (agi-oracle.json, sketches/)
+    public/     favicons, fonts, social preview images
   scenes/     kq1/ (75)  kq6/ (48)  myst/ (11)  sketches/ (15)  handmade/ (6)  custom/ (5)
               examples/ (stdlib-tour)
   reference/  kq1/ (75, 160×168)  kq6/ (48)  myst/ (11)
   design/     kq1bgs.png  kq6bgs.png (the source sheets)
-  scripts/    slice.sh slice-verify.ts trace.ts render.ts lint-pic.ts style-stats.ts regions.ts
-              gen-skill-docs.ts grid.ts make-sketches.ts social.ts screenshot.mjs
-              lib/ (png.ts sketch.ts strokes.ts stdlib.ts)
-  tests/      unit/*.test.ts  golden/{kq1,handmade}.test.ts  e2e/*.spec.ts
-              fixtures/ (agi-oracle.json, sketches/)
   skills/     old-adventure-game-draw/  old-adventure-game-from-image/
-  public/     favicons, fonts, social preview images
   docs/       PLAN.md  style-stats.md
   .github/workflows/deploy.yml
 ```
@@ -372,7 +374,7 @@ kq-styles/
 ## 8. Testing strategy
 
 - **Unit tests (Vitest).** Lines and brushes are pinned pixel-for-pixel by 900 fixtures from a
-  C build of the interpreter routines (`tests/fixtures/agi-oracle.json`); 2,000 random
+  C build of the interpreter routines (`app/tests/fixtures/agi-oracle.json`); 2,000 random
   endpoints check line invariants. Fill gets cases for white-only, leak, and edge behaviour. We
   also test the brush shapes and splatter determinism, the parser and evaluator (procedures,
   repeat, turtle, variants, error locations), playback, the tracer, the stdlib, the CLIs, the
@@ -515,11 +517,11 @@ Deviations from the plan, and why:
   - *Engine (§4.1).* Fill is a stack-based scanline fill. It produces the same pixels as a queue
     fill, because the result is exactly the 4-connected white area. `execute(ops, limit)` paints
     onto a fresh framebuffer. The viewer plays through
-    `Playback` (`src/engine/playback.ts`), which steps op by op or by whole instruction and plays
+    `Playback` (`app/src/engine/playback.ts`), which steps op by op or by whole instruction and plays
     `delay`ed ops last without changing the final picture (§17); with no delays it paints with
     `Painter.apply`.
   - *Layout (§7).* Scenes are auto-discovered: the viewer globs `scenes/**/*.pic` in
-    `src/app/scenes.ts`, so there is no manual manifest. The viewer is `src/app/main.ts` (UI),
+    `app/src/app/scenes.ts`, so there is no manual manifest. The viewer is `app/src/app/main.ts` (UI),
     `sketch.ts` (the p5 stage), `scenes.ts` (discovery, which also globs `reference/**/*.png` and
     the sketch fixtures), `config.ts`, `style.css` and `welcome/`. The reference tiles were sliced
     once with ImageMagick; the source sheets are kept in `design/`.
@@ -733,9 +735,9 @@ what makes the scene whole (sky, ground, backdrop), and every invention is recor
   stretch, groups words into lines, maps boxes through `transform.json`, and fails clearly when
   tesseract is missing.
 
-### Fixtures (`tests/fixtures/sketches/`)
+### Fixtures (`app/tests/fixtures/sketches/`)
 
-`scripts/make-sketches.ts` (magick; the images are committed, so font availability only matters
+`app/scripts/make-sketches.ts` (magick; the images are committed, so font availability only matters
 when regenerating) writes `NN-name.png` (`.jpg` for the photographed one; `.txt` plus a
 `.preview.png` the viewer shows for ASCII), the brief `NN-name.md`, and a **gold sidecar**
 `NN-name.layout.json`: entities with kind, label box, picture position (`pic`, omitted for the skewed photo 06) and expected
@@ -757,7 +759,7 @@ plus holdout 07-08 (09 is unused), and §16's hybrids are 10-14 plus holdout 15-
 | holdout/08-dungeon-ascii.txt | 42×5 cells | ASCII dungeon: TORCH, `[IRON DOOR]`, TORCH along the top row; SKELETON, CHEST, `[PIT OF SPIKES]`, RAT below |
 
 Planned but no longer in the set: the `TODO.md` meadow (as an image and as ASCII; its frame
-survives as a test string in `tests/unit/sketch.test.ts`), the arrows/`NOTE:` legend sketch,
+survives as a test string in `app/tests/unit/sketch.test.ts`), the arrows/`NOTE:` legend sketch,
 the 768×1024 portrait, the transparent-background sketch with a contradicting brief, and the
 photographed-beach holdout.
 
@@ -775,7 +777,7 @@ Fixture names as run (see Results for where each one is now).
 - **Freeze, then holdout:** three unseen sketches by fresh agents, no changes in between. This
   is the result reported.
 - **Isolation:** each drawing agent gets a copy of only its sketch and brief in a temp folder
-  (never `tests/fixtures/sketches/`, so it can't see sidecars or other fixtures). Worked examples come
+  (never `app/tests/fixtures/sketches/`, so it can't see sidecars or other fixtures). Worked examples come
   only from pilot and development fixtures.
 - **Scoring** is an independent review: a separate agent gets the sketch, the brief, the gold
   sidecar, this rubric, the clean render and the `--overlay` render (and may zoom), and fills in
@@ -800,9 +802,9 @@ Fixture names as run (see Results for where each one is now).
 
 ### Phases (each done with tests, `lint:pic --strict`, render-identity check, review, commit)
 
-1. **Fixtures:** `scripts/make-sketches.ts` (one data description per sketch → image, brief and
+1. **Fixtures:** `app/scripts/make-sketches.ts` (one data description per sketch → image, brief and
    sidecar; ASCII positions computed from the text, photo positions mapped through the skew),
-   the fixtures and the holdout in `tests/fixtures/sketches/holdout/`.
+   the fixtures and the holdout in `app/tests/fixtures/sketches/holdout/`.
 2. **Tooling:** `--fit`, `transform.json`, ASCII parsing and labels (pure functions with unit
    tests: grammar edge cases, cell maths, frame detection, tokens like `o`/`_`/`[a b]`), the
    ASCII renderer, `ink.png` (extraction tests: dark, pale, coloured, noisy, frame touching the
@@ -894,7 +896,7 @@ also found that the test rules forbade the worked examples the guide tells it to
 
 The draft of this section was reviewed before any code; its findings are folded in.
 
-### Tooling: brushstrokes (`scripts/lib/strokes.ts`, `grid`), advisory
+### Tooling: brushstrokes (`app/scripts/lib/strokes.ts`, `grid`), advisory
 
 Stroke extraction is **advisory**: it reports what it found with a confidence, and `view.png`
 stays the authority (no geometric rule can always tell a bold "O" from a round dab of paint).
@@ -1103,7 +1105,7 @@ Requirements are atomic (one checkable thing each).
 |---|---|---|
 | 10-lake-cabin | 1024×768 | blue loop "Lake" with a short brown "Dock" stroke into it, green scribble "Meadow", a lone red dab "campfire", a pen-only word "Cabin" |
 | 11-mountain-pass | 640×480 | a grey edge-to-edge jagged ridge "Mountains", pale-blue scribble "Snow" on the peaks, a brown zig-zag "Path" climbing away (a hairpin), "Cave" |
-| 12-crossroads | 800×600 | a village crossroads: two brown paths crossing and receding, yellow fill "Market", red dabs "Stalls x3", a pen box HOUSE (extent) |
+| 12-crossroads | 800×600 | a village crossroads: two brown paths crossing and receding (the road on to a grey ridge "Mountains"), yellow fill "Market", red dabs "Stalls x3", a hand-drawn pen box Tavern (extent); hand lettering |
 | 13-cove | 1024×768 | yellow fill "Sand", blue scribble "Sea" under a pen horizon line, grey loops "Rocks", a pen arrow BOAT →, two green "Dune grass" strokes (one translucent) |
 | 14-fenced-stream | 1024×768 | unlabelled strokes (a blue ribbon, a row of green dabs) named by the brief, a "Hills" region, a red-painted "Pond" the brief calls blue, "Fence" lettered in its stroke's colour and touching it |
 | holdout/15-swamp | 1024×768 | **holdout**: a swamp (mixed fills and paths, a hut in a loop) |
@@ -1273,21 +1275,21 @@ These shipped without a plan section of their own:
   final picture.
 - **`# @reference group/id`** in a scene header points compare mode, `render` and the golden
   tests at a reference tile.
-- **Hidden groups.** `HIDDEN_GROUPS` in `src/app/config.ts` (`examples`, `handmade`) keeps
+- **Hidden groups.** `HIDDEN_GROUPS` in `app/src/app/config.ts` (`examples`, `handmade`) keeps
   groups out of the gallery, the picker and ←/→; they still open from a direct link.
   `scenes/examples/stdlib-tour.pic` lives there.
-- **Welcome screen** (`src/app/welcome/`): KQ1's scroll picture (`title.pic`) painted stroke by
+- **Welcome screen** (`app/src/app/welcome/`): KQ1's scroll picture (`title.pic`) painted stroke by
   stroke, credits scrolling in the PC's 8×8 BIOS font, Greensleeves on a three-voice
   square-wave player. It greets first visits (`kq-welcome-seen` in localStorage) and reopens
   from the "Intro" button.
-- **Site and deploy.** The app is "Paint Quest" at `SITE_URL` (`src/app/config.ts`).
+- **Site and deploy.** The app is "Paint Quest" at `SITE_URL` (`app/src/app/config.ts`).
   `vite.config.ts` writes the page meta, JSON-LD, `robots.txt` and `sitemap.xml`;
   `pnpm social` makes the favicons and preview images in `public/`; `.github/workflows/deploy.yml`
   deploys on pushes to `prod`.
 - **Phones, tablets and touch.** A responsive layout (a speed dropdown and a shorter transport
   on phones, compare beside the title), with e2e layout checks on a `mobile-chrome` project.
 - **Dev helpers.** `pnpm screenshot <url> <out.png>` (a Playwright screenshot of a page) and
-  `scripts/slice-verify.ts` (§5).
+  `app/scripts/slice-verify.ts` (§5).
 
 ```
    ┌──────────────────────── PicScript scenes (scenes/**) ────────────────────────┐
@@ -1300,8 +1302,8 @@ These shipped without a plan section of their own:
                               │ open on / paint over     │ compare against
                 ┌─────────────┴─────────────┐    ┌──────┴───────────────────────┐
                 │ kq6, myst: reference/<id> │    │ # @reference group/id, or    │
-                │ sketches: tests/fixtures/ │    │ reference/kq1/<id> for kq1   │
-                │   sketches/<name>         │    └──────────────────────────────┘
+                │ sketches: app/tests/      │    │ reference/kq1/<id> for kq1   │
+                │   fixtures/sketches/<name>│    └──────────────────────────────┘
                 └───────────────────────────┘
 
    viewer ──▶ vite build ──▶ dist/ + robots.txt + sitemap ──▶ deploy.yml (prod branch)

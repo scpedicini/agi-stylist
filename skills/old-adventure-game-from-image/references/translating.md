@@ -300,10 +300,8 @@ and lint (`pnpm lint:pic`).
 | `scenes/kq6/r05-c11.pic` | KQ6 castle hedge maze and fountain | a formal garden: clipped hedges, topiary, a fountain, a castle on a hill |
 | `scenes/kq6/r07-c01.pic` | KQ6 Lord of the Dead on his throne | a figure filling the frame: face, hair, wings, chains, bony hands, a backing polygon against the sky |
 | `scenes/kq6/r07-c02.pic` | KQ6 castle corridor | a corridor through nested arches in one-point perspective, a suit of armour, stained glass |
-| `scenes/kq6/r08-c01.pic` | KQ6 timbered passage | timber framing and braces running to a vanishing point, cobbled floor, torn plaster showing brick |
 
 Pick by source: outdoor coast or cliff → `kq6/r03-c01`; mountains or night → `elk-valley`;
 a cluttered room → `wizard-library`; a grand hall or palace → `kq6/r07-c04`; a cosy wooden room → `kq6/r03-c10`; patterns or stairs →
 `kq6/r05-c07`; a formal garden, park or courtyard → `kq6/r05-c11`; a figure filling the frame →
-`kq6/r07-c01`; a corridor or arcade → `kq6/r07-c02`; a mine shaft or timber-framed passage →
-`kq6/r08-c01`.
+`kq6/r07-c01`; a corridor or arcade → `kq6/r07-c02`.

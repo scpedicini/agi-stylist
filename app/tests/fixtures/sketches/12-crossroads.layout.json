@@ -1,0 +1,585 @@
+{
+  "id": "12-crossroads",
+  "source": "app/tests/fixtures/sketches/12-crossroads.png",
+  "brief": "A village crossroads at midday. The tavern is half-timbered, with a hanging sign. The market stalls have striped awnings. The road leads away into the mountains.",
+  "units": "source pixels",
+  "entities": [
+    {
+      "label": "Road",
+      "kind": "path",
+      "at": [
+        270,
+        525
+      ],
+      "is": "a road from the bottom edge away into the mountains, along the first brown stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              120,
+              600
+            ],
+            [
+              130,
+              589
+            ],
+            [
+              143,
+              575
+            ],
+            [
+              159,
+              558
+            ],
+            [
+              176,
+              539
+            ],
+            [
+              195,
+              519
+            ],
+            [
+              214,
+              499
+            ],
+            [
+              232,
+              479
+            ],
+            [
+              250,
+              461
+            ],
+            [
+              266,
+              444
+            ],
+            [
+              283,
+              426
+            ],
+            [
+              301,
+              409
+            ],
+            [
+              318,
+              392
+            ],
+            [
+              334,
+              376
+            ],
+            [
+              350,
+              360
+            ],
+            [
+              365,
+              345
+            ],
+            [
+              380,
+              330
+            ],
+            [
+              398,
+              311
+            ],
+            [
+              415,
+              292
+            ],
+            [
+              431,
+              274
+            ],
+            [
+              446,
+              257
+            ],
+            [
+              461,
+              240
+            ],
+            [
+              476,
+              223
+            ],
+            [
+              496,
+              202
+            ],
+            [
+              514,
+              183
+            ],
+            [
+              528,
+              167
+            ],
+            [
+              535,
+              160
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        238,
+        513,
+        300,
+        533
+      ],
+      "pic": [
+        54,
+        147
+      ]
+    },
+    {
+      "label": "Lane",
+      "kind": "path",
+      "at": [
+        650,
+        345
+      ],
+      "is": "a lane from the right edge crossing the road and running away left, along the second brown stroke",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              800,
+              430
+            ],
+            [
+              786,
+              427
+            ],
+            [
+              768,
+              423
+            ],
+            [
+              746,
+              419
+            ],
+            [
+              722,
+              414
+            ],
+            [
+              696,
+              408
+            ],
+            [
+              669,
+              403
+            ],
+            [
+              641,
+              397
+            ],
+            [
+              615,
+              392
+            ],
+            [
+              590,
+              386
+            ],
+            [
+              567,
+              381
+            ],
+            [
+              543,
+              376
+            ],
+            [
+              519,
+              371
+            ],
+            [
+              497,
+              366
+            ],
+            [
+              476,
+              361
+            ],
+            [
+              456,
+              356
+            ],
+            [
+              434,
+              351
+            ],
+            [
+              412,
+              347
+            ],
+            [
+              388,
+              342
+            ],
+            [
+              366,
+              337
+            ],
+            [
+              342,
+              333
+            ],
+            [
+              316,
+              328
+            ],
+            [
+              290,
+              324
+            ],
+            [
+              263,
+              319
+            ],
+            [
+              236,
+              315
+            ],
+            [
+              211,
+              310
+            ],
+            [
+              189,
+              307
+            ],
+            [
+              170,
+              303
+            ],
+            [
+              154,
+              301
+            ],
+            [
+              150,
+              300
+            ]
+          ]
+        }
+      ],
+      "perspective": true,
+      "labelBox": [
+        621,
+        336,
+        681,
+        353
+      ],
+      "pic": [
+        130,
+        96.6
+      ]
+    },
+    {
+      "label": "Market",
+      "kind": "area",
+      "at": [
+        590,
+        560
+      ],
+      "is": "a market square filling the yellow scribble",
+      "strokes": [
+        {
+          "class": "fill",
+          "pts": [
+            [
+              489,
+              454
+            ],
+            [
+              702,
+              476
+            ],
+            [
+              713,
+              489
+            ],
+            [
+              693,
+              516
+            ],
+            [
+              703,
+              549
+            ],
+            [
+              678,
+              560
+            ],
+            [
+              481,
+              578
+            ],
+            [
+              475,
+              562
+            ],
+            [
+              486,
+              536
+            ],
+            [
+              475,
+              513
+            ],
+            [
+              492,
+              492
+            ],
+            [
+              482,
+              468
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        545,
+        549,
+        634,
+        568
+      ],
+      "pic": [
+        118,
+        156.8
+      ]
+    },
+    {
+      "label": "Stalls x3",
+      "kind": "grounded",
+      "at": [
+        600,
+        470
+      ],
+      "is": "three market stalls with striped awnings, one at each red dab",
+      "support": "the market square",
+      "count": 3,
+      "strokes": [
+        {
+          "class": "dab",
+          "pts": [
+            [
+              530,
+              500
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              600,
+              515
+            ]
+          ]
+        },
+        {
+          "class": "dab",
+          "pts": [
+            [
+              670,
+              530
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        542,
+        458,
+        655,
+        480
+      ],
+      "pic": [
+        120,
+        131.6
+      ]
+    },
+    {
+      "label": "Tavern",
+      "kind": "extent",
+      "at": [
+        170,
+        228
+      ],
+      "is": "a half-timbered tavern with a hanging sign",
+      "box": [
+        80,
+        170,
+        260,
+        290
+      ],
+      "labelBox": [
+        126,
+        220,
+        213,
+        236
+      ],
+      "pic": [
+        34,
+        63.8
+      ]
+    },
+    {
+      "label": "Mountains",
+      "kind": "region",
+      "at": [
+        690,
+        200
+      ],
+      "is": "two mountains whose skyline follows the grey ridge stroke, where the road ends",
+      "strokes": [
+        {
+          "class": "line",
+          "pts": [
+            [
+              370,
+              175
+            ],
+            [
+              380,
+              162
+            ],
+            [
+              395,
+              142
+            ],
+            [
+              412,
+              120
+            ],
+            [
+              431,
+              98
+            ],
+            [
+              449,
+              81
+            ],
+            [
+              465,
+              72
+            ],
+            [
+              483,
+              77
+            ],
+            [
+              501,
+              96
+            ],
+            [
+              518,
+              118
+            ],
+            [
+              536,
+              133
+            ],
+            [
+              553,
+              133
+            ],
+            [
+              568,
+              118
+            ],
+            [
+              583,
+              95
+            ],
+            [
+              599,
+              70
+            ],
+            [
+              616,
+              49
+            ],
+            [
+              634,
+              38
+            ],
+            [
+              650,
+              41
+            ],
+            [
+              668,
+              53
+            ],
+            [
+              688,
+              71
+            ],
+            [
+              707,
+              92
+            ],
+            [
+              727,
+              114
+            ],
+            [
+              744,
+              135
+            ],
+            [
+              759,
+              153
+            ],
+            [
+              770,
+              165
+            ]
+          ]
+        }
+      ],
+      "labelBox": [
+        621,
+        185,
+        758,
+        208
+      ],
+      "pic": [
+        138,
+        56
+      ]
+    }
+  ],
+  "requirements": [
+    "midday",
+    "a half-timbered tavern",
+    "a hanging tavern sign",
+    "striped awnings on the stalls",
+    "three stalls",
+    "the two roads cross",
+    "the road narrows with distance",
+    "the lane narrows with distance",
+    "two mountains following the grey ridge",
+    "the road runs on into the mountains"
+  ],
+  "ambiguities": [
+    {
+      "what": "the two roads are painted in the same colour and cross",
+      "acceptable": [
+        "two roads crossing"
+      ]
+    }
+  ]
+}

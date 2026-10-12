@@ -1,6 +1,6 @@
 # KQ1 style statistics
 
-Measured by `scripts/style-stats.ts` over the 75 reference scenes in `reference/kq1/`.
+Measured by `app/scripts/style-stats.ts` over the 75 reference scenes in `reference/kq1/`.
 
 ## Frame
 
