@@ -3,7 +3,7 @@
 // fills or dabs in picture coordinates. Advisory: it says what it found and how sure it is, and
 // view.png stays the authority (no rule can always tell a bold "O" from a round dab of paint).
 // Pure functions, used by `pnpm grid` and tested directly.
-import { PIC_HEIGHT, PIC_WIDTH } from '../../src/engine/framebuffer.ts';
+import { PIC } from './geometry.ts';
 import { COLOR_NAMES, EGA_PALETTE } from '../../src/engine/palette.ts';
 import { paperTable, type InkBlob, type PaperField } from './sketch.ts';
 import type { RgbaImage } from './png.ts';
@@ -594,7 +594,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
     for (const p of pix) layer[p] = id;
   }
 
-  const toPic = (x: number, y: number): Pt => [(x * PIC_WIDTH) / w, (y * PIC_HEIGHT) / h];
+  const toPic = (x: number, y: number): Pt => [(x * PIC.width) / w, (y * PIC.height) / h];
   const layerRgb: Rgb[] = live.map((_, i) => {
     const solid: Rgb[] = [];
     if (faint.has(i)) for (let p = 0; p < w * h && solid.length < 20000; p++) if (layer[p] === i) solid.push(colourAt(p));
@@ -748,7 +748,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
     }
     return false;
   };
-  const boxGap = (a: BrushStroke, b: BrushStroke) => Math.max(0, a.box[0] - b.box[2], b.box[0] - a.box[2]) * (w / PIC_WIDTH) + Math.max(0, a.box[1] - b.box[3], b.box[1] - a.box[3]) * (h / PIC_HEIGHT);
+  const boxGap = (a: BrushStroke, b: BrushStroke) => Math.max(0, a.box[0] - b.box[2], b.box[0] - a.box[2]) * (w / PIC.width) + Math.max(0, a.box[1] - b.box[3], b.box[1] - a.box[3]) * (h / PIC.height);
   for (let changed = true; changed; ) {
     changed = false;
     const ids = [...described.keys()];
@@ -878,7 +878,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
       layer: li + 1,
       colour: layers[li].name,
       class: cls,
-      width: cls === 'dab' ? [((x1 - x0 + 1) * PIC_WIDTH) / w, ((y1 - y0 + 1) * PIC_HEIGHT) / h] : [(width * PIC_WIDTH) / w, (width * PIC_HEIGHT) / h],
+      width: cls === 'dab' ? [((x1 - x0 + 1) * PIC.width) / w, ((y1 - y0 + 1) * PIC.height) / h] : [(width * PIC.width) / w, (width * PIC.height) / h],
       box: [...toPic(x0, y0), ...toPic(x1 + 1, y1 + 1)] as BrushStroke['box'],
       centre: toPic(sx / pix.length, sy / pix.length),
       edges: [],
@@ -964,7 +964,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
       let line = simplify(local(chain), 1);
       if (line.length && line[0][1] > line[line.length - 1][1]) line = line.reverse();
       // both ends on the same canvas edge: a loop that runs off the picture, closed by the edge
-      const edgeOf = ([x, y]: Pt) => (x < PIC_WIDTH * 0.04 ? 'left' : x > PIC_WIDTH * 0.96 ? 'right' : y < PIC_HEIGHT * 0.04 ? 'top' : y > PIC_HEIGHT * 0.96 ? 'bottom' : '');
+      const edgeOf = ([x, y]: Pt) => (x < PIC.width * 0.04 ? 'left' : x > PIC.width * 0.96 ? 'right' : y < PIC.height * 0.04 ? 'top' : y > PIC.height * 0.96 ? 'bottom' : '');
       const [ea, eb] = line.length > 1 ? [edgeOf(line[0]), edgeOf(line[line.length - 1])] : ['', ''];
       if (ea && ea === eb && ends <= 2 && chain.length > 1) {
         // close it along that edge, between its two ends only
@@ -997,7 +997,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
         // pulling the skeleton: check it against view.png
         for (let i = 1; i < line.length - 1; i++) {
           const [a, b, c] = [line[i - 1], line[i], line[i + 1]];
-          const [ux, uy, vx, vy] = [(b[0] - a[0]) * 2, b[1] - a[1], (c[0] - b[0]) * 2, c[1] - b[1]];
+          const [ux, uy, vx, vy] = [(b[0] - a[0]) * PIC.aspect, b[1] - a[1], (c[0] - b[0]) * PIC.aspect, c[1] - b[1]];
           const cos = (ux * vx + uy * vy) / (Math.hypot(ux, uy) * Math.hypot(vx, vy) || 1);
           if (cos < -0.87) s.flags.push(`turns sharply back at (${f(b[0])},${f(b[1])}): something pulls the centre line there; check view.png`);
         }
@@ -1026,9 +1026,9 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
       if (s.outline.length < 3) s.outline = local(traceOutline(solid, bw, bh));
     }
     if (layers[li].confidence === 'low') s.flags.push('faint or thin paint: its colour is uncertain');
-    const hugs = (s.edges.includes('top') || s.edges.includes('bottom')) && s.box[3] - s.box[1] < PIC_HEIGHT * 0.03 || (s.edges.includes('left') || s.edges.includes('right')) && s.box[2] - s.box[0] < PIC_WIDTH * 0.03;
+    const hugs = (s.edges.includes('top') || s.edges.includes('bottom')) && s.box[3] - s.box[1] < PIC.height * 0.03 || (s.edges.includes('left') || s.edges.includes('right')) && s.box[2] - s.box[0] < PIC.width * 0.03;
     if (hugs) s.flags.push('a thin strip along the picture edge: a sliver of table or frame? check view.png');
-    if (s.edges.length === 4 && s.box[2] - s.box[0] >= PIC_WIDTH * 0.95 && s.box[3] - s.box[1] >= PIC_HEIGHT * 0.95) {
+    if (s.edges.length === 4 && s.box[2] - s.box[0] >= PIC.width * 0.95 && s.box[3] - s.box[1] >= PIC.height * 0.95) {
       s.flags.push('spans the whole picture on all four edges: the table or a frame round the page? crop to the page (--crop, --trim)');
     }
     // for the word search: some of the paint's pixels, and the inside of a loop or fill
@@ -1037,11 +1037,11 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
     const kind = s.class;
     WHERE.set(s, {
       // how far round the paint pen ink is taken out with it (on screen, a column counting double)
-      rim: ((0.35 * T + 1.5) * 2 * PIC_WIDTH) / w,
+      rim: ((0.35 * T + 1.5) * PIC.aspect * PIC.width) / w,
       pts: pix.filter((_, i) => i % every === 0).map((p) => toPic((p % w) + 0.5, Math.floor(p / w) + 0.5)),
       inside: ([px, py]) => {
-        const x = Math.floor((px * w) / PIC_WIDTH) - x0 + M;
-        const y = Math.floor((py * h) / PIC_HEIGHT) - y0 + M;
+        const x = Math.floor((px * w) / PIC.width) - x0 + M;
+        const y = Math.floor((py * h) / PIC.height) - y0 + M;
         return (kind === 'loop' || kind === 'fill') && x >= 0 && y >= 0 && x < bw && y < bh && area[y * bw + x] === 1;
       },
     });
@@ -1055,7 +1055,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
   // big bold lettering?
   for (const d of strokesOut) {
     const ht = d.box[3] - d.box[1];
-    if (d.class === 'loop' || ht > PIC_HEIGHT * 0.2) continue;
+    if (d.class === 'loop' || ht > PIC.height * 0.2) continue;
     const alike = (e: BrushStroke) => {
       const he = e.box[3] - e.box[1];
       return e.class !== 'loop' && Math.abs(he - ht) <= 0.3 * ht && Math.abs(e.box[1] - d.box[1]) <= 0.25 * ht && Math.abs(e.box[3] - d.box[3]) <= 0.25 * ht;
@@ -1065,7 +1065,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
     const at = row.indexOf(d);
     let [lo, hi] = [at, at];
     // side by side: each starts after the middle of the one before (not overlapping it much)
-    const next = (a: BrushStroke, b: BrushStroke) => b.box[0] >= (a.box[0] + a.box[2]) / 2 && (b.box[0] - a.box[2]) * 2 <= 1.5 * ht;
+    const next = (a: BrushStroke, b: BrushStroke) => b.box[0] >= (a.box[0] + a.box[2]) / 2 && (b.box[0] - a.box[2]) * PIC.aspect <= 1.5 * ht;
     while (lo > 0 && next(row[lo - 1], row[lo])) lo--;
     while (hi < row.length - 1 && next(row[hi], row[hi + 1])) hi++;
     if (hi - lo + 1 >= 3) d.flags.push(`one of ${hi - lo + 1} similar shapes in a row: a row of things, or big lettering? check view.png`);
@@ -1078,7 +1078,7 @@ export function brushStrokes(img: RgbaImage, paper: PaperField): StrokeResult {
 export function attachWords(strokes: BrushStroke[], blobs: InkBlob[]): void {
   for (const s of strokes) {
     const where = WHERE.get(s);
-    const reach = 2 * Math.hypot(s.width[0] * 2, s.width[1]) / Math.SQRT2;
+    const reach = 2 * Math.hypot(s.width[0] * PIC.aspect, s.width[1]) / Math.SQRT2;
     const found: BrushStroke['words'] = [];
     blobs.forEach((b, i) => {
       if (b.shape !== 'mark') return;
@@ -1091,7 +1091,7 @@ export function attachWords(strokes: BrushStroke[], blobs: InkBlob[]): void {
       for (const [x, y] of where?.pts ?? []) {
         const dx = Math.max(0, b.box[0] - x, x - b.box[2]);
         const dy = Math.max(0, b.box[1] - y, y - b.box[3]);
-        best = Math.min(best, Math.hypot(2 * dx, dy));
+        best = Math.min(best, Math.hypot(PIC.aspect * dx, dy));
       }
       if (best <= reach) found.push({ blob: i + 1, inside: false, distance: Math.round(best * 10) / 10 });
     });

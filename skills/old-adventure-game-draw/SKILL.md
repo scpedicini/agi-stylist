@@ -1,6 +1,6 @@
 ---
 name: old-adventure-game-draw
-description: Draw retro Sierra / King's-Quest-style adventure game scenes (AGI, 160×168, 16-colour EGA) as vector drawing instructions in PicScript, render them to PNG, and add them to the kq-styles viewer. Use when asked to draw, paint, design or recreate an old adventure game scene, background, screen or room - including day/night/dusk variants - or to write or debug PicScript (.pic) files. When the user supplies an image to recreate, or a layout sketch, hybrid sketch (words plus coloured brushstrokes) or ASCII layout (words placed where things go), use old-adventure-game-from-image instead.
+description: Draw retro Sierra / King's-Quest-style adventure game scenes (AGI, 160×168, 16-colour EGA) as vector drawing instructions in PicScript, render them to PNG, and add them to the kq-styles viewer. Use when asked to draw, paint, design or recreate an old adventure game scene, background, screen or room - including day/night/dusk variants - or to write or debug PicScript (.pic) files. Also draws VGA scenes (KQ5/KQ6 look, 320×200, 256 colours) when the user asks for VGA. When the user supplies an image to recreate, or a layout sketch, hybrid sketch (words plus coloured brushstrokes) or ASCII layout (words placed where things go), use old-adventure-game-from-image instead.
 ---
 
 # Old Adventure Game draw
@@ -13,6 +13,13 @@ browser, and a CLI renders them to PNG so you can look at your own work.
 Paths starting with `references/` or `examples/` are inside this skill's folder
 (`skills/old-adventure-game-draw/`). All other paths and commands are relative to the
 project root (the directory with `package.json`).
+
+## EGA or VGA?
+
+Scenes are **AGI/EGA by default** (160×168, 16 colours: the KQ1 look). Only when the user asks for
+**VGA** (or "256 colours", "KQ5/KQ6 style", "SCI1", more detail than EGA) add `mode vga` to the scene
+and also read `references/vga.md`: 320×200 square pixels, hex colours, gradients, dithers and light.
+Never switch to VGA on your own; if the request is unclear, draw EGA.
 
 ## Read first (once per task)
 

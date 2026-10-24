@@ -16,10 +16,24 @@ class Parser {
   private pos = 0;
   /** How many loops enclose the current statement (reset inside `fn` bodies). */
   private loopDepth = 0;
+  private blockDepth = 0;
+  /**
+   * `mode vga` is a statement only in a file that doesn't use `mode` as a name of its own (a
+   * function, variable or parameter), so scenes written before it parse exactly as they did.
+   */
+  private readonly modeIsName: boolean;
   constructor(
     private readonly tokens: Token[],
     private readonly file: string,
-  ) {}
+  ) {
+    const hasFn = tokens.some((t) => t.type === 'ident' && t.value === 'fn');
+    this.modeIsName = tokens.some((t, i) => {
+      if (t.type !== 'ident' || t.value !== 'mode' || i === 0) return false;
+      const prev = tokens[i - 1];
+      // declared with fn / let / for, or (conservatively) anything that could be a parameter
+      return (prev.type === 'ident' && ['fn', 'let', 'for'].includes(prev.value)) || (hasFn && (this.isOp('(', prev) || this.isOp(',', prev)));
+    });
+  }
 
   program(): Program {
     const body = this.statements(false);
@@ -87,7 +101,9 @@ class Parser {
 
   private block(): Stmt[] {
     this.expectOp('{');
+    this.blockDepth++;
     const body = this.statements(true);
+    this.blockDepth--;
     if (!this.isOp('}')) this.fail(`expected '}' to close block but found ${describe(this.tok)}`);
     this.next();
     return body;
@@ -97,6 +113,15 @@ class Parser {
     const t = this.tok;
     const loc = t.loc;
     if (t.type === 'ident') {
+      // `mode vga` / `mode agi` (not a keyword: see modeIsName)
+      // (only at the top level: inside a block `mode x` stays an ordinary call, as it always was)
+      if (!this.modeIsName && this.blockDepth === 0 && t.value === 'mode' && this.peek().type === 'ident' && (this.peek().value === 'vga' || this.peek().value === 'agi') && this.atStatementEnd(this.peek(2))) {
+        const m = this.peek();
+        this.next();
+        this.next();
+        this.endStatement();
+        return { type: 'mode', mode: m.value as 'agi' | 'vga', arg: { type: 'ident', name: m.value, loc: m.loc }, loc };
+      }
       switch (t.value) {
         case 'let': {
           this.next();

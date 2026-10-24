@@ -9,11 +9,11 @@ const clip = (v: number, max: number) => (v < 0 ? 0 : v > max ? max : v);
  * stepped with the error-accumulator scheme the original interpreter used (as
  * documented by the AGI specs and reproduced by Sarien/NAGI/ScummVM).
  */
-export function agiLine(x1: number, y1: number, x2: number, y2: number, plot: Plot): void {
-  x1 = clip(x1, PIC_WIDTH - 1);
-  x2 = clip(x2, PIC_WIDTH - 1);
-  y1 = clip(y1, PIC_HEIGHT - 1);
-  y2 = clip(y2, PIC_HEIGHT - 1);
+export function agiLine(x1: number, y1: number, x2: number, y2: number, plot: Plot, width = PIC_WIDTH, height = PIC_HEIGHT): void {
+  x1 = clip(x1, width - 1);
+  x2 = clip(x2, width - 1);
+  y1 = clip(y1, height - 1);
+  y2 = clip(y2, height - 1);
 
   if (x1 === x2) {
     const [a, b] = y1 <= y2 ? [y1, y2] : [y2, y1];

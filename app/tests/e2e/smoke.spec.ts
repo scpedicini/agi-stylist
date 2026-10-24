@@ -14,9 +14,9 @@ test('app boots with a canvas and no console errors', async ({ page }) => {
   // the project's name, from app/src/app/config.ts
   await expect(page).toHaveTitle(new RegExp(`^${APP_NAME}: `));
   await expect(page.locator('header h1')).toHaveText(APP_NAME);
-  // the credit at the bottom, linking out in a new tab
-  await expect(page.locator('footer')).toHaveText('Created by Shaun Pedicini');
-  const credit = page.locator('footer a');
+  // the credit at the bottom, linking out in a new tab (the footer may carry other links too)
+  await expect(page.locator('footer')).toContainText('Created by Shaun Pedicini');
+  const credit = page.locator('footer a', { hasText: 'Shaun Pedicini' });
   await expect(credit).toHaveAttribute('href', 'https://mordenstar.com/projects');
   await expect(credit).toHaveAttribute('target', '_blank');
   await expect(credit).toHaveAttribute('rel', /noopener/);

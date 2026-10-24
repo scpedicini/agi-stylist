@@ -21,6 +21,8 @@ export default defineConfig({
     command: 'pnpm exec vite --config app/vite.config.ts --port 5251 --strictPort',
     url: 'http://localhost:5251',
     reuseExistingServer: false,
+    // the dev server skips the first-visit title screen (DISABLE_SPLASH_IN_DEV); welcome.spec.ts tests it
+    env: { VITE_FORCE_SPLASH: '1' },
     timeout: 60_000,
   },
 });

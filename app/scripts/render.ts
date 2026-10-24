@@ -34,9 +34,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { execute } from '../src/engine/execute.ts';
-import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../src/engine/framebuffer.ts';
+import { Framebuffer, PIC_HEIGHT, PIC_WIDTH, VGA_HEIGHT, VGA_WIDTH } from '../src/engine/framebuffer.ts';
 import { COLOR_NAMES } from '../src/engine/palette.ts';
-import { compileProgram, declaredVariants, DEFAULT_VARIANT, formatDiagnostic, parse, PicError } from '../src/lang/index.ts';
+import { compileProgram, declaredMode, declaredVariants, DEFAULT_VARIANT, formatDiagnostic, parse, PicError } from '../src/lang/index.ts';
 import { readPicturePng, readRgbaPicturePng, readRgbaPng, writePanelsPng, type Crop, type PanelImage, type RgbaImage } from './lib/png.ts';
 import { stdlib } from './lib/stdlib.ts';
 
@@ -56,6 +56,38 @@ interface Args {
 }
 
 class UsageError extends Error {}
+
+/** Scene sources batchPicture has read, so each scene is read once (it may be a pipe). */
+const scanned = new Map<string, string>();
+
+/**
+ * The picture --crop, --beside and --overlay are measured against: VGA's 320×200 when every scene
+ * given is `mode vga`, otherwise AGI's 160×168 (a scene that can't be read yet counts as AGI; its
+ * error comes later, as before). Only worked out when one of those options needs it.
+ */
+function batchPicture(argv: string[]): { mode: 'agi' | 'vga'; width: number; height: number; aspect: number } {
+  const takesValue = new Set(['--variant', '--out', '--scale', '--steps', '--beside', '--overlay', '--name', '--crop']);
+  const files: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const v = argv[i];
+    if (takesValue.has(v)) i++;
+    else if (v === '--compare') {
+      if (argv[i + 1]?.endsWith('.png')) i++;
+    } else if (!v.startsWith('-')) files.push(v);
+  }
+  const vga = files.length > 0 && files.every((f) => {
+    try {
+      if (!existsSync(f)) return false;
+      if (!scanned.has(f)) scanned.set(f, readFileSync(f, 'utf8'));
+      return declaredMode(parse(scanned.get(f)!, f)) === 'vga';
+    } catch {
+      return false;
+    }
+  });
+  return vga ? { mode: 'vga', width: VGA_WIDTH, height: VGA_HEIGHT, aspect: 1 } : { mode: 'agi', width: PIC_WIDTH, height: PIC_HEIGHT, aspect: 2 };
+}
+let picture: ReturnType<typeof batchPicture> | undefined;
+const P = () => (picture ??= batchPicture(process.argv.slice(2)));
 
 function intOption(name: string, raw: string | undefined, min: number, max: number): number {
   if (raw === undefined || !/^\d+$/.test(raw)) throw new UsageError(`${name} needs a whole number (${min}-${max})`);
@@ -89,12 +121,12 @@ function parseArgs(argv: string[]): Args {
     else if (v === '--crop') {
       const raw = value(++i, '--crop');
       const m = /^(\d+),(\d+),(\d+),(\d+)$/.exec(raw);
-      if (!m) throw new UsageError('--crop needs inclusive corners x1,y1,x2,y2 (x 0-159, y 0-167)');
+      if (!m) throw new UsageError(`--crop needs inclusive corners x1,y1,x2,y2 (x 0-${P().width - 1}, y 0-${P().height - 1})`);
       const [x1, y1] = [Number(m[1]), Number(m[2])];
       // a far corner past the edge is pulled back onto the picture (e.g. 160 → 159)
-      const [x2, y2] = [Math.min(Number(m[3]), PIC_WIDTH - 1), Math.min(Number(m[4]), PIC_HEIGHT - 1)];
+      const [x2, y2] = [Math.min(Number(m[3]), P().width - 1), Math.min(Number(m[4]), P().height - 1)];
       if (x2 < x1 || y2 < y1) {
-        throw new UsageError('--crop needs inclusive corners x1,y1,x2,y2 with x1 ≤ x2 and y1 ≤ y2, inside 0-159 × 0-167');
+        throw new UsageError(`--crop needs inclusive corners x1,y1,x2,y2 with x1 ≤ x2 and y1 ≤ y2, inside 0-${P().width - 1} × 0-${P().height - 1}`);
       }
       a.crop = { x: x1, y: y1, w: x2 - x1 + 1, h: y2 - y1 + 1 };
     } else if (v === '--compare') a.compare = argv[i + 1]?.endsWith('.png') ? argv[++i] : true;
@@ -110,9 +142,9 @@ function parseArgs(argv: string[]): Args {
   if (a.beside) {
     if (!existsSync(a.beside)) throw new UsageError(`--beside: ${a.beside}: no such file`);
     try {
-      readRgbaPicturePng(a.beside);
+      readRgbaPicturePng(a.beside, P().width, P().height);
     } catch (e) {
-      throw new UsageError(`--beside: ${(e as Error).message} - make one with 'pnpm grid <image>' (it writes out/source/<name>/picture.png)`);
+      throw new UsageError(`--beside: ${(e as Error).message} - make one with 'pnpm grid <image>${P().mode === 'vga' ? ' --vga' : ''}' (it writes out/source/<name>/picture.png)`);
     }
   }
   if (a.overlay) {
@@ -123,9 +155,9 @@ function parseArgs(argv: string[]): Args {
     } catch (e) {
       throw new UsageError(`--overlay: ${a.overlay}: ${(e as Error).message}`);
     }
-    const aspect = img.width / img.height / ((PIC_WIDTH * 2) / PIC_HEIGHT);
+    const aspect = img.width / img.height / ((P().width * P().aspect) / P().height);
     if (Math.abs(aspect - 1) > 0.03) {
-      throw new UsageError(`--overlay: ${a.overlay} is ${img.width}×${img.height}; it must cover the picture at display aspect (320:168, e.g. 960×504) - use the ink.png from 'pnpm grid --fit'`);
+      throw new UsageError(`--overlay: ${a.overlay} is ${img.width}×${img.height}; it must cover the picture at display aspect (${P().width * P().aspect}:${P().height}, e.g. ${P().width * P().aspect * 3}×${P().height * 3}) - use the ink.png from 'pnpm grid --fit${P().mode === 'vga' ? ' --vga' : ''}'`);
     }
   }
   return a;
@@ -171,7 +203,7 @@ try {
   process.exit(2);
 }
 
-const beside: PanelImage[] = args.beside ? [{ rgba: readRgbaPicturePng(args.beside) }] : [];
+const beside: PanelImage[] = args.beside ? [{ rgba: readRgbaPicturePng(args.beside, P().width, P().height) }] : [];
 const overlay = args.overlay ? readRgbaPng(args.overlay) : undefined;
 let failed = false;
 for (const file of args.files) {
@@ -180,7 +212,7 @@ for (const file of args.files) {
     failed = true;
     continue;
   }
-  const source = readFileSync(file, 'utf8');
+  const source = scanned.get(file) ?? readFileSync(file, 'utf8');
   const name = args.name ?? basename(file, '.pic');
   let program;
   try {
@@ -206,12 +238,25 @@ for (const file of args.files) {
       continue;
     }
     const fb = execute(r.ops);
+    // (VGA) --compare scores exact EGA colours; --beside and --overlay must be made for this scene's picture
+    if (r.mode !== 'agi' && args.compare) {
+      console.error(`${file}: --compare only works with AGI scenes (this one is 'mode ${r.mode}')`);
+      failed = true;
+      continue;
+    }
+    if ((args.beside || overlay) && (r.mode === 'vga') !== (P().mode === 'vga')) {
+      const made = P().mode === 'vga' ? `VGA (${P().width}×${P().height})` : `AGI (${P().width}×${P().height})`;
+      console.error(`${file}: this is a${r.mode === 'vga' ? " 'mode vga'" : 'n AGI'} scene, but --beside/--overlay were checked against the ${made} picture; render it on its own${r.mode === 'vga' ? " with a picture from 'pnpm grid <image> --vga'" : ''}`);
+      failed = true;
+      continue;
+    }
     const suffix = variants.length > 1 || args.variant ? `-${variant}` : '';
     const outPath = join(args.out, `${name}${suffix}.png`);
     const overlayPath = join(args.out, `${name}${suffix}-overlay.png`);
     for (const w of r.warnings) console.log(`warning: ${formatDiagnostic(w)}`);
     for (const l of r.logs) console.log(l);
     let line = `${outPath}  ${r.title ? `"${r.title}" ` : ''}[${variant}]  ${r.ops.length} ops`;
+    if (r.mode === 'vga') line += `  palette ${fb.screen.palette.length}/256`;
     if (args.compare) {
       const ref = args.compare === true ? referenceFor(file, source) : args.compare;
       if (!ref || !existsSync(ref)) {

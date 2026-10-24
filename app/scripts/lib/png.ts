@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { PNG } from 'pngjs';
-import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../../src/engine/framebuffer.ts';
-import { EGA_PALETTE, rgbToIndex } from '../../src/engine/palette.ts';
+import { AGI_SCREEN, Framebuffer, PIC_HEIGHT, PIC_WIDTH, type Screen } from '../../src/engine/framebuffer.ts';
+import { rgbToIndex } from '../../src/engine/palette.ts';
 
 export interface RgbaImage {
   width: number;
@@ -14,12 +14,12 @@ export function readPng(path: string): PNG {
   return PNG.sync.read(readFileSync(path));
 }
 
-/** Read any 160×168 PNG as opaque RGBA (e.g. a source image reframed by `pnpm grid`);
- *  transparency is flattened onto white, like `pnpm grid` does. */
-export function readRgbaPicturePng(path: string): Uint8Array {
+/** Read any 160×168 PNG (or another picture size, e.g. VGA's 320×200) as opaque RGBA (e.g. a source
+ *  image reframed by `pnpm grid`); transparency is flattened onto white, like `pnpm grid` does. */
+export function readRgbaPicturePng(path: string, width = PIC_WIDTH, height = PIC_HEIGHT): Uint8Array {
   const png = readPng(path);
-  if (png.width !== PIC_WIDTH || png.height !== PIC_HEIGHT) {
-    throw new Error(`${path}: expected ${PIC_WIDTH}×${PIC_HEIGHT}, got ${png.width}×${png.height}`);
+  if (png.width !== width || png.height !== height) {
+    throw new Error(`${path}: expected ${width}×${height}, got ${png.width}×${png.height}`);
   }
   const out = new Uint8Array(png.data);
   for (let i = 0; i < out.length; i += 4) {
@@ -61,8 +61,8 @@ export type PanelImage =
 
 /**
  * Write one or more framebuffers side by side as a PNG at display aspect
- * (each logical pixel → 2·scale × scale), separated by a 4px dark gutter.
- * `crop` limits every panel to a region of the picture (for zooming in on details).
+ * (each logical pixel → 2·scale × scale for AGI, scale × scale for VGA), separated by a 4px dark
+ * gutter. `crop` limits every panel to a region of the picture (for zooming in on details).
  */
 export interface Crop {
   x: number;
@@ -83,10 +83,14 @@ export function writePanelsPng(
   path: string,
   panels: PanelImage[],
   scale = 2,
-  crop: Crop = { x: 0, y: 0, w: PIC_WIDTH, h: PIC_HEIGHT },
+  crop?: Crop,
   opts: PanelOptions = {},
 ): void {
-  const pw = crop.w * 2 * scale;
+  // every panel shows the same picture size: the first framebuffer's (AGI's 160×168 without one)
+  const screen = panels.find((p): p is Extract<PanelImage, { fb: Framebuffer }> => 'fb' in p)?.fb.screen ?? AGI_SCREEN;
+  crop ??= { x: 0, y: 0, w: screen.width, h: screen.height };
+  const aspect = screen.aspect;
+  const pw = crop.w * aspect * scale;
   const ph = crop.h * scale;
   const gutter = 4;
   const png = new PNG({ width: panels.length * pw + (panels.length - 1) * gutter, height: ph });
@@ -96,13 +100,13 @@ export function writePanelsPng(
     const ox = k * (pw + gutter);
     for (let y = 0; y < ph; y++) {
       for (let x = 0; x < pw; x++) {
-        const li = (crop.y + Math.floor(y / scale)) * PIC_WIDTH + crop.x + Math.floor(x / (2 * scale));
+        const li = (crop.y + Math.floor(y / scale)) * screen.width + crop.x + Math.floor(x / (aspect * scale));
         const [r, g, b] =
           'rgba' in panel
             ? [panel.rgba[li * 4], panel.rgba[li * 4 + 1], panel.rgba[li * 4 + 2]]
             : panel.mask?.[li]
               ? [255, 0, 255]
-              : EGA_PALETTE[panel.fb.pixels[li]];
+              : panel.fb.palette[panel.fb.pixels[li]];
         const o = (y * png.width + ox + x) * 4;
         png.data[o] = r;
         png.data[o + 1] = g;
@@ -111,9 +115,9 @@ export function writePanelsPng(
     }
   });
   panels.forEach((panel, k) => {
-    if ('fb' in panel && panel.overlay) drawOverlay(png, k * (pw + gutter), pw, ph, scale, crop, panel.overlay);
+    if ('fb' in panel && panel.overlay) drawOverlay(png, k * (pw + gutter), pw, ph, scale, crop, panel.overlay, screen);
   });
-  if (opts.grid) panels.forEach((_, k) => drawGrid(png, k * (pw + gutter), pw, ph, scale, crop));
+  if (opts.grid) panels.forEach((_, k) => drawGrid(png, k * (pw + gutter), pw, ph, scale, crop, aspect));
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, PNG.sync.write(png));
 }
@@ -160,15 +164,15 @@ export function resampleRgba(img: RgbaImage, w: number, h: number): RgbaImage {
 }
 
 /** Composite an RGBA image that covers the whole picture over one panel (area-weighted). */
-function drawOverlay(png: PNG, ox: number, pw: number, ph: number, scale: number, crop: Crop, ov: RgbaImage) {
-  const fx = ov.width / PIC_WIDTH;
-  const fy = ov.height / PIC_HEIGHT;
+function drawOverlay(png: PNG, ox: number, pw: number, ph: number, scale: number, crop: Crop, ov: RgbaImage, screen: Screen = AGI_SCREEN) {
+  const fx = ov.width / screen.width;
+  const fy = ov.height / screen.height;
   for (let y = 0; y < ph; y++) {
     const v0 = (crop.y + y / scale) * fy;
     const v1 = (crop.y + (y + 1) / scale) * fy;
     for (let x = 0; x < pw; x++) {
-      const u0 = (crop.x + x / (2 * scale)) * fx;
-      const u1 = (crop.x + (x + 1) / (2 * scale)) * fx;
+      const u0 = (crop.x + x / (screen.aspect * scale)) * fx;
+      const u1 = (crop.x + (x + 1) / (screen.aspect * scale)) * fx;
       const [r, g, b, a] = areaSample(ov, u0, u1, v0, v1);
       if (!a) continue;
       const o = (y * png.width + ox + x) * 4;
@@ -186,7 +190,7 @@ export function readRgbaPng(path: string): RgbaImage {
 }
 
 /** Magenta grid lines every 10 picture pixels plus white-on-black coordinate labels. */
-function drawGrid(png: PNG, ox: number, pw: number, ph: number, scale: number, crop: Crop) {
+function drawGrid(png: PNG, ox: number, pw: number, ph: number, scale: number, crop: Crop, aspect = 2) {
   const blend = (x: number, y: number, rgb: readonly [number, number, number], a: number) => {
     if (x < 0 || y < 0 || x >= pw || y >= ph) return;
     const o = (y * png.width + ox + x) * 4;
@@ -194,7 +198,7 @@ function drawGrid(png: PNG, ox: number, pw: number, ph: number, scale: number, c
   };
   const MAGENTA = [255, 0, 255] as const;
   for (let gx = Math.ceil(crop.x / 10) * 10; gx < crop.x + crop.w; gx += 10) {
-    const x = (gx - crop.x) * 2 * scale;
+    const x = (gx - crop.x) * aspect * scale;
     for (let y = 0; y < ph; y++) blend(x, y, MAGENTA, 0.6);
   }
   for (let gy = Math.ceil(crop.y / 10) * 10; gy < crop.y + crop.h; gy += 10) {
@@ -216,7 +220,7 @@ function drawGrid(png: PNG, ox: number, pw: number, ph: number, scale: number, c
       }
     });
   };
-  for (let gx = Math.ceil(crop.x / every) * every; gx < crop.x + crop.w; gx += every) label(String(gx), (gx - crop.x) * 2 * scale + 1, 0);
+  for (let gx = Math.ceil(crop.x / every) * every; gx < crop.x + crop.w; gx += every) label(String(gx), (gx - crop.x) * aspect * scale + 1, 0);
   for (let gy = Math.ceil(crop.y / every) * every; gy < crop.y + crop.h; gy += every) {
     const y = (gy - crop.y) * scale + 1;
     if (y < 7 * g + 1) continue; // would overlap the x labels along the top

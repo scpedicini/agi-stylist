@@ -1,0 +1,104 @@
+# VGA mode: 320×200 square pixels and 256 colours. Each material is a ramp (shadow → body → lit
+# edge), big surfaces are gradients, shapes are told apart by tone rather than black outlines, and
+# light is laid over what is already painted: a palette tint for night, then glows where light falls.
+# See references/vga.md.
+scene "Desk lamp (VGA)"
+mode vga
+variants day, night
+
+let wall = ramp("#2b2733", "#a89e8e", 6)
+let wood = ramp("#24130a", "#c58a52", 7)
+let brass = ramp("#3b2a0c", "#fff0b0", 6)
+let enamel = ramp("#0b2418", "#8fd4a8", 6)
+let slate = ramp("#121419", "#4b5260", 4)
+
+# ---- the room: a plaster wall darker towards the ceiling, a slate floor (not the desk's wood) --
+color linear(0, 0, 0, 128, [wall[0], wall[3], wall[4]])
+rect 0, 0, WIDTH - 1, 128
+color dither(wall[3], wall[4], 0.5)
+for k in 0..14 { rect 12 + k * 23, 20 + (k * 37) % 90, 13 + k * 23, 21 + (k * 37) % 90 }
+color linear(0, 129, 0, HEIGHT - 1, [slate[3], slate[0]], steps: 0)
+rect 0, 129, WIDTH - 1, HEIGHT - 1
+
+# ---- the desk: a lit top seen from a little above, a shaded front, legs ------------------------
+color linear(0, 128, 0, 147, [wood[3], wood[5]], steps: 0)
+polygon [[34, 128], [286, 128], [302, 147], [18, 147]]
+color wood[2]
+for k in 0..6 { stroke 40 + k * 41, 131 + k % 3 * 5, 72 + k * 41, 131 + k % 3 * 5 }
+color wood[6]
+stroke 18, 147, 302, 147
+color linear(0, 148, 0, 162, [wood[3], wood[1]], steps: 0)
+rect 18, 148, 302, 162
+for x in [26, 286] {
+  color wood[1]
+  rect x, 163, x + 10, HEIGHT - 1
+  color wood[3]
+  stroke x, 163, x, HEIGHT - 1
+}
+glow 160, 168, 150, 10, black, 0.7, steps: 5, how: "multiply"
+
+# ---- props: a stack of books and a mug, each with a lit top and a shadow side -------------------
+fn book(x1, y1, x2, y2, c) {
+  let r = ramp(shade(c, -0.6), shade(c, 0.35), 4)
+  color r[1]
+  rect x1, y1, x2, y2
+  color r[3]
+  stroke x1, y1, x2, y1
+  color r[0]
+  stroke x2, y1, x2, y2
+  color "#e8dcc0"
+  stroke x1 + 2, y2 - 1, x2 - 2, y2 - 1
+}
+glow 236, 139, 34, 4, black, 0.6, steps: 4, how: "multiply"
+book(206, 126, 262, 137, "#7a2a2a")
+book(210, 117, 256, 125, "#2c4a7a")
+book(204, 109, 252, 116, "#6a6a2a")
+color linear(268, 0, 284, 0, ["#d8d0c0", "#8a8070"])
+rect 268, 120, 284, 137
+color "#f4ecdc"
+ellipse 276, 120, 8, 2
+color "#3a2a20"
+ellipse 276, 120, 6, 1
+color "#8a8070"
+line 285, 124, 288, 126, 288, 131, 285, 133
+
+# ---- the lamp: a brass foot and jointed arm, a green enamel shade tipped towards the desk -----
+glow 118, 139, 22, 3, black, 0.6, steps: 4, how: "multiply"
+color radial(112, 134, 18, [brass[5], brass[3], brass[1]])
+ellipse 116, 136, 16, 4
+shape(band([[116, 134], [104, 100]], 5), brass[2], null)
+shape(band([[104, 100], [140, 70]], 4), brass[3], null)
+color brass[5]
+stroke offset([[116, 134], [104, 100]], -2)
+stroke offset([[104, 100], [140, 70]], -2)
+color radial(103, 99, 4, [brass[5], brass[2]])
+ellipse 104, 100, 3, 3
+# the shade: lit on its upper left, falling into shadow at the back; its mouth faces the desk
+let mouth = [[132, 101], [176, 85]]
+shape([[134, 66], [150, 60], [176, 85], [132, 101]], linear(134, 62, 170, 92, [enamel[4], enamel[2], enamel[0]]), null)
+color enamel[5]
+stroke 135, 67, 149, 62
+let lip = []
+for i in 0..=8 {
+  let t = i / 8
+  let bulge = sin(180 * t) * 6
+  push(lip, [mouth[0][0] + (mouth[1][0] - mouth[0][0]) * t + bulge * 0.35, mouth[0][1] + (mouth[1][1] - mouth[0][1]) * t + bulge])
+}
+let inside = lip + [[176, 85], [132, 101]]
+shape(inside, variant == "night" ? "#fff3c8" : brass[3], null)
+color brass[4]
+stroke lip
+
+if variant == "night" {
+  # the whole room goes dark at once (a palette change: no new colours) ...
+  tint "#262c5c", 0.9, how: "multiply"
+  # ... then light falls where the shade points: a cone, and a pool on the desk (a glow costs a
+  # palette slot per colour under it per step, so keep steps low over busy areas)
+  tint "#ffd890", 0.18, [[134, 98], [176, 84], [262, 142], [96, 146]], how: "screen"
+  glow 176, 136, 92, 16, "#ffcf80", 0.85, steps: 4
+  # the light itself stays bright: redraw it after the darkening
+  shape(inside, "#fff3c8", null)
+  color "#fffbe8"
+  stroke lip
+}
+frame()

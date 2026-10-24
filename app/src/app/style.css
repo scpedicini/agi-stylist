@@ -87,6 +87,8 @@ canvas { touch-action: auto !important; }
    reader's place for the next Tab; it isn't a control, and an outline would ring the red frame */
 #stage:focus { outline: none; }
 #stage canvas { image-rendering: pixelated; display: block; position: relative; width: 100% !important; height: 100% !important; }
+/* a VGA picture (320×200, square pixels) is taller than the AGI stage: pillarbox it */
+body[data-mode="vga"] #stage canvas { width: auto !important; aspect-ratio: 320 / 200; margin: 0 auto; }
 /* an original picture sits under the (then partly transparent) canvas, stretched to the same frame */
 #original { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 #original.smooth { image-rendering: auto; }

@@ -1,6 +1,6 @@
 ---
 name: old-adventure-game-from-image
-description: Turn an image the user provides into a retro Sierra / King's-Quest-style AGI scene in PicScript (160×168, 16-colour EGA). Two modes. Picture mode recreates a photo, painting, illustration, pixel art, screenshot or a tile from a sheet of game backgrounds by looking at it and translating it like a 1984 artist would. Sketch mode composes a scene from a layout sketch, a labelled mock-up or wireframe, a hybrid sketch (words plus rough coloured brushstrokes for areas and paths), or an ASCII layout (words placed where things go, maybe a few lines, plus a text brief). Use when the user gives an image or a layout (pasted, a file path, a sheet + tile, or ASCII art) and asks to draw, recreate, convert, translate, build or "do" it in old adventure game / KQ / AGI / EGA style.
+description: Turn an image the user provides into a retro Sierra / King's-Quest-style AGI scene in PicScript (160×168, 16-colour EGA). Two modes. Picture mode recreates a photo, painting, illustration, pixel art, screenshot or a tile from a sheet of game backgrounds by looking at it and translating it like a 1984 artist would. Sketch mode composes a scene from a layout sketch, a labelled mock-up or wireframe, a hybrid sketch (words plus rough coloured brushstrokes for areas and paths), or an ASCII layout (words placed where things go, maybe a few lines, plus a text brief). Use when the user gives an image or a layout (pasted, a file path, a sheet + tile, or ASCII art) and asks to draw, recreate, convert, translate, build or "do" it in old adventure game / KQ / AGI / EGA style. Also does VGA (KQ5/KQ6 look, 320×200, 256 colours) when the user asks for VGA.
 ---
 
 # Old Adventure Game from an image
@@ -32,6 +32,24 @@ read clearly at 160×168. The tools here only measure positions. Every colour is
 
 Paths starting with `references/` are in this skill's folder. `../old-adventure-game-draw/` is
 the sibling drawing skill. Commands run from the project root (the folder with `package.json`).
+
+## EGA or VGA?
+
+Scenes are **AGI/EGA by default** (160×168, 16 colours), and everything below describes that. Only
+when the user asks for **VGA** ("256 colours", "KQ5/KQ6 style", "SCI1", more detail than EGA) make a
+VGA scene. A source that happens to be a VGA screenshot is not a request for VGA. For VGA:
+
+- also read `../old-adventure-game-draw/references/vga.md`. Its rules (320×200 square pixels, hex
+  colours, gradients, shading, light; few black outlines) replace the EGA palette, the flat-colour
+  and outline guidance, and the EGA lighting recipes here;
+- add `--vga` to every `pnpm grid` command: `picture.png` is then 320×200, `view.png` and the
+  overlays 960×600, and every grid label, blob, stroke and layout position is in VGA picture
+  coordinates (x 0-319, y 0-199). Use them as they are, with no scaling;
+- put `mode vga` in the scene, and `--beside` / `--overlay` take those VGA files as usual (`--compare`
+  is AGI-only). Zooms and crops are in VGA coordinates too: keep a zoom within about 80×80.
+
+The workflow, the inventory and layer planning, the stage, the header and the checks are the same
+in both modes.
 
 ## Read first (once per task)
 

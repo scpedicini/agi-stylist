@@ -34,7 +34,7 @@ A series of LLM skills for producing early Sierra AGI-style adventure game scene
 
 ### Who is this tool for?
 
-That’s a good question. I initially built it for myself to help with the rapid creation of scenes in a traditional point-and-click adventure game I’m working on. Later, I decided to open-source it in case anyone else might find it useful.
+As a huge fan of early Sierra adventure games, like [King's Quest IV: The Perils of Rosella](https://mordenstar.com/blog/kqiv), I initially built it for myself to help with the design of scenes in a traditional point-and-click adventure game I’m working on. Later, I decided to open-source it in case anyone else might find it useful.
 
 ### Why favor a tool-driven procedural graphics approach instead of just using a conventional GenAI model like GPT-Image-2 or Nano Banana?
 

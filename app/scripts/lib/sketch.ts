@@ -1,6 +1,6 @@
 // Layout sketches (docs/PLAN.md §15): ASCII layouts and the ink overlay. Pure functions, used by
 // `pnpm grid` and tested directly.
-import { PIC_HEIGHT, PIC_WIDTH } from '../../src/engine/framebuffer.ts';
+import { PIC } from './geometry.ts';
 import type { RgbaImage } from './png.ts';
 
 // ---- ASCII layouts ---------------------------------------------------------------------------
@@ -105,8 +105,8 @@ export function parseLayout(text: string): Layout {
   const h = rows.length;
   const w = rows[0]?.length ?? 0;
   if (!w || !h) throw new Error('the frame has nothing inside it');
-  const sx = PIC_WIDTH / w;
-  const sy = PIC_HEIGHT / h;
+  const sx = PIC.width / w;
+  const sy = PIC.height / h;
   const token = /\[([^\]\n]*)\]|[A-Za-z][A-Za-z0-9_]+(?:[:,]? (?:[A-Za-z0-9_]+ )*[A-Za-z0-9][A-Za-z0-9_]+)*/g;
   const labels: LayoutLabel[] = [];
   const ink: Layout['ink'] = [];
@@ -191,8 +191,8 @@ export function layoutLabelArgs(layout: Layout): string[] {
 
 /** A printable table of a layout's labels. */
 export function layoutTable(layout: Layout): string {
-  const sx = PIC_WIDTH / layout.w;
-  const sy = PIC_HEIGHT / layout.h;
+  const sx = PIC.width / layout.w;
+  const sy = PIC.height / layout.h;
   const head = `${layout.w}×${layout.h} cells${layout.framed ? ' inside the frame' : ' (no frame found: the whole block is the canvas)'}; one cell is ${sx.toFixed(1)} × ${sy.toFixed(1)} picture pixels`;
   const rows = layout.labels.map((l) => {
     const cells = `cols ${l.cols[0]}-${l.cols[1]}, row ${l.row}`;
@@ -387,8 +387,8 @@ export function inkBlobs(ink: RgbaImage, gap = 7, minPixels = 25): InkBlob[] {
   const label = new Int32Array(w * h).fill(-1);
   const blobs: InkBlob[] = [];
   const stack: number[] = [];
-  const sx = PIC_WIDTH / w;
-  const sy = PIC_HEIGHT / h;
+  const sx = PIC.width / w;
+  const sy = PIC.height / h;
   for (let start = 0; start < w * h; start++) {
     if (!grown[start] || label[start] >= 0) continue;
     const id = blobs.length;
@@ -426,7 +426,7 @@ export function inkBlobs(ink: RgbaImage, gap = 7, minPixels = 25): InkBlob[] {
       }
       if (any) inkRows++;
     }
-    const long = Math.max((box[2] - box[0]) * 2, box[3] - box[1]); // on screen a pixel is 2 wide
+    const long = Math.max((box[2] - box[0]) * PIC.aspect, box[3] - box[1]); // on screen a pixel is ASPECT wide
     const shape = long >= 40 && runs / Math.max(1, inkRows) < 2.5 ? 'strokes' : 'mark';
     blobs.push({ box, centre: [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2], shape, pixels: n });
   }
@@ -436,7 +436,7 @@ export function inkBlobs(ink: RgbaImage, gap = 7, minPixels = 25): InkBlob[] {
 /** A printable table of ink blobs. */
 export function blobTable(blobs: InkBlob[]): string {
   const f = (n: number) => String(Math.round(n * 10) / 10);
-  const whole = (b: InkBlob) => b.box[2] - b.box[0] >= PIC_WIDTH * 0.95 && b.box[3] - b.box[1] >= PIC_HEIGHT * 0.95;
+  const whole = (b: InkBlob) => b.box[2] - b.box[0] >= PIC.width * 0.95 && b.box[3] - b.box[1] >= PIC.height * 0.95;
   return blobs
     .map((b, i) => `    #${String(i + 1).padEnd(3)} ${b.shape.padEnd(7)} centre ${`${f(b.centre[0])},${f(b.centre[1])}`.padEnd(12)} box ${f(b.box[0])},${f(b.box[1])}-${f(b.box[2])},${f(b.box[3])}` +
       (whole(b) ? '  (spans the whole picture: lines merged with each other, a frame or a table edge; read what it holds off grid.png)' : ''))

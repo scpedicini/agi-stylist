@@ -3,6 +3,9 @@
 # Conventions
 #   * The picture is 160 × 168 logical pixels. Logical pixels are TWICE AS WIDE as they are
 #     tall on screen, so a shape that looks round has rx ≈ ry / 2.
+#   * In `mode vga` the picture is WIDTH × HEIGHT (320 × 200) with square pixels (ASPECT = 1).
+#     The geometry and layout helpers use WIDTH, HEIGHT and ASPECT so they work in both modes;
+#     the KQ1 motifs (tree, pine, bush, rock, cloud…) keep their AGI proportions.
 #   * (x, y) for objects is where they meet the ground (trunk base, rock bottom) unless noted.
 #   * Every function paints with solid scanline shapes (polygon / rect / ellipse), so they
 #     can be layered back-to-front in any order. `fill` is still available for big areas
@@ -82,7 +85,7 @@ fn road(pts, w_top, w_bottom) {
   if n < 2 { error "road: needs at least 2 points" }
   let along = [0]
   for i in 1..n {
-    let dx = (pts[i][0] - pts[i - 1][0]) * 2
+    let dx = (pts[i][0] - pts[i - 1][0]) * ASPECT
     let dy = pts[i][1] - pts[i - 1][1]
     push(along, along[-1] + sqrt(dx * dx + dy * dy))
   }
@@ -103,8 +106,8 @@ fn road(pts, w_top, w_bottom) {
 # the horizon (never below 0.05). A tree whose base is halfway from the horizon to the bottom is
 # drawn at about half its near size.
 fn groundscale(y, horizon = 40) {
-  if horizon >= 167 { error "groundscale: the horizon must be above the bottom row (< 167), got " + str(horizon) }
-  return max(0.05, (y - horizon) / (167 - horizon))
+  if horizon >= HEIGHT - 1 { error "groundscale: the horizon must be above the bottom row (< " + str(HEIGHT - 1) + "), got " + str(horizon) }
+  return max(0.05, (y - horizon) / (HEIGHT - 1 - horizon))
 }
 
 # A path, river or road lying on the ground of the stage, along the centre line `pts` (screen
@@ -115,24 +118,24 @@ fn groundscale(y, horizon = 40) {
 # foreshortened (a small square on the bottom row shows flat times as tall as wide; lower looks
 # from higher up). Returns the outline for shape(...).
 fn trail(pts, w_near, horizon = 40, flat = 0.45) {
-  if horizon >= 167 { error "trail: the horizon must be above the bottom row (< 167), got " + str(horizon) }
+  if horizon >= HEIGHT - 1 { error "trail: the horizon must be above the bottom row (< " + str(HEIGHT - 1) + "), got " + str(horizon) }
   if flat <= 0 { error "trail: flat must be more than 0, got " + str(flat) }
   if w_near < 0 { error "trail: w_near must not be negative, got " + str(w_near) }
-  # camera: display x (columns doubled) u = 2x - 160, v = y - horizon; ground X = u·Z/f, Z = f/v
-  let f = (167 - horizon) / flat
-  let near_v = max(1, 0.05 * (167 - horizon))
+  # camera: display x (columns doubled in AGI) u = 2x - 160, v = y - horizon; ground X = u·Z/f, Z = f/v
+  let f = (HEIGHT - 1 - horizon) / flat
+  let near_v = max(1, 0.05 * (HEIGHT - 1 - horizon))
   let g = []
   for i in 0..len(pts) {
     let p = pts[i]
     if p[1] <= horizon { error "trail: point " + str(i) + " (" + str(p[0]) + ", " + str(p[1]) + ") is at or above the horizon (" + str(horizon) + ")" }
     let z = f / max(near_v, p[1] - horizon)
-    let q = [(2 * p[0] - 160) * z / f, z]
+    let q = [(ASPECT * p[0] - ASPECT * WIDTH / 2) * z / f, z]
     if len(g) == 0 || abs(q[0] - g[-1][0]) + abs(q[1] - g[-1][1]) > 0.000001 { push(g, q) }
   }
   let n = len(g)
   if n < 2 { error "trail: needs at least 2 distinct points" }
   # half the width on the ground: w_near columns on the bottom row
-  let hw = 2 * w_near / (167 - horizon)
+  let hw = ASPECT * w_near / (HEIGHT - 1 - horizon)
   let left = []
   let right = []
   for i in 0..n {
@@ -188,17 +191,17 @@ fn trail(pts, w_near, horizon = 40, flat = 0.45) {
       for o in [[-az, ax], [-sz, sx]] {
         let ex = g[i][0] + o[0] * hw * outer
         let ez = max(0.01, g[i][1] + o[1] * hw * outer)
-        let q = [(ex * f / ez + 160) / 2, horizon + f / ez]
+        let q = [(ex * f / ez + ASPECT * WIDTH / 2) / ASPECT, horizon + f / ez]
         if outer == 1 { push(left, q) } else { push(right, q) }
       }
-      let q = [(g[i][0] * f / g[i][1] + 160) / 2, horizon + f / g[i][1]]
+      let q = [(g[i][0] * f / g[i][1] + ASPECT * WIDTH / 2) / ASPECT, horizon + f / g[i][1]]
       if outer == 1 { push(right, q) } else { push(left, q) }
     } else {
       let c = tx * sx + tz * sz
       for side in [1, -1] {
         let ex = g[i][0] - tz / c * hw * side
         let ez = max(0.01, g[i][1] + tx / c * hw * side)
-        let q = [(ex * f / ez + 160) / 2, horizon + f / ez]
+        let q = [(ex * f / ez + ASPECT * WIDTH / 2) / ASPECT, horizon + f / ez]
         if side == 1 { push(left, q) } else { push(right, q) }
       }
     }
@@ -336,11 +339,11 @@ fn band(pts, w, w2 = w) {
   for i in 0..n {
     let a = pts[max(0, i - 1)]
     let b = pts[min(n - 1, i + 1)]
-    let dx = (b[0] - a[0]) * 2
+    let dx = (b[0] - a[0]) * ASPECT
     let dy = b[1] - a[1]
     let l = max(0.001, sqrt(dx * dx + dy * dy))
     let half = (w + (w2 - w) * i / (n - 1)) / 2
-    let nx = -dy / l * half / 2
+    let nx = -dy / l * half / ASPECT
     let ny = dx / l * half
     push(right, [pts[i][0] + nx, pts[i][1] + ny])
     push(left, [pts[i][0] - nx, pts[i][1] - ny])
@@ -364,14 +367,14 @@ fn offset(pts, d) {
     while ib < n - 1 && pts[ib][0] == pts[i][0] && pts[ib][1] == pts[i][1] { ib += 1 }
     let a = pts[ia]
     let b = pts[ib]
-    let dx = (b[0] - a[0]) * 2
+    let dx = (b[0] - a[0]) * ASPECT
     let dy = b[1] - a[1]
     if dx == 0 && dy == 0 {
       push(out, [pts[i][0], pts[i][1]])
       continue
     }
     let l = max(0.001, sqrt(dx * dx + dy * dy))
-    push(out, [pts[i][0] - dy / l * d / 2, pts[i][1] + dx / l * d])
+    push(out, [pts[i][0] - dy / l * d / ASPECT, pts[i][1] + dx / l * d])
   }
   return out
 }
@@ -387,7 +390,7 @@ fn along(pts, step) {
   if len(pts) == 0 { return out }
   let total = 0
   for i in 0..len(pts) - 1 {
-    total += sqrt((pts[i + 1][0] - pts[i][0]) * (pts[i + 1][0] - pts[i][0]) * 4 + (pts[i + 1][1] - pts[i][1]) * (pts[i + 1][1] - pts[i][1]))
+    total += sqrt((pts[i + 1][0] - pts[i][0]) * (pts[i + 1][0] - pts[i][0]) * ASPECT * ASPECT + (pts[i + 1][1] - pts[i][1]) * (pts[i + 1][1] - pts[i][1]))
   }
   let done = 0
   let carry = 0
@@ -396,7 +399,7 @@ fn along(pts, step) {
     let b = pts[i + 1]
     let dx = b[0] - a[0]
     let dy = b[1] - a[1]
-    let l = sqrt(dx * dx * 4 + dy * dy)
+    let l = sqrt(dx * dx * ASPECT * ASPECT + dy * dy)
     let lp = sqrt(dx * dx + dy * dy)
     if l > 0 {
       let t = carry
@@ -419,10 +422,10 @@ fn across(path, step, half) {
   for p in along(path, step) {
     let h = type(half) == "number" ? half : half(p[4])
     # the screen-space normal of the direction (tx, ty), back in picture units
-    let sx = p[2] * 2
+    let sx = p[2] * ASPECT
     let sy = p[3]
     let l = max(0.001, sqrt(sx * sx + sy * sy))
-    let nx = -sy / l * h / 2
+    let nx = -sy / l * h / ASPECT
     let ny = sx / l * h
     push(out, [[p[0] + nx, p[1] + ny], [p[0] - nx, p[1] - ny]])
   }
@@ -468,7 +471,7 @@ fn chain(path, step = 9, c = lightgrey) {
       line p[0], p[1] - 1, p[0], p[1] + 1
     } else {
       # a bar 6 rows long as seen on screen, whatever its direction
-      let l = max(0.001, sqrt(p[2] * p[2] * 4 + p[3] * p[3]))
+      let l = max(0.001, sqrt(p[2] * p[2] * ASPECT * ASPECT + p[3] * p[3]))
       let a = [p[0] - p[2] * 3 / l, p[1] - p[3] * 3 / l]
       let b = [p[0] + p[2] * 3 / l, p[1] + p[3] * 3 / l]
       shape(band([a, b], 4), c)
@@ -500,7 +503,7 @@ fn blobs(list, c, edge = black, jag = 0.25, seed = 1) {
 # that box instead of the whole picture, e.g. plaster broken away to show brick: stones() in the
 # box, then surround(ragged_hole, yellow, black, [x1, y1, x2, y2]) puts the plaster back.
 fn surround(hole, c, edge = black, box = null) {
-  let b = box == null ? [0, 0, 159, 167] : box
+  let b = box == null ? [0, 0, WIDTH - 1, HEIGHT - 1] : box
   if box != null {
     for p in hole {
       if p[0] < b[0] || p[0] > b[2] || p[1] < b[1] || p[1] > b[3] { error "surround: with a box, the hole must lie inside it" }
@@ -528,10 +531,10 @@ fn surround(hole, c, edge = black, box = null) {
 fn room(x1, y1, x2, y2) {
   return [
     [[x1, y1], [x2, y1], [x2, y2], [x1, y2]],
-    [[0, 0], [x1, y1], [x1, y2], [0, 167]],
-    [[159, 0], [159, 167], [x2, y2], [x2, y1]],
-    [[0, 0], [159, 0], [x2, y1], [x1, y1]],
-    [[x1, y2], [x2, y2], [159, 167], [0, 167]]
+    [[0, 0], [x1, y1], [x1, y2], [0, HEIGHT - 1]],
+    [[WIDTH - 1, 0], [WIDTH - 1, HEIGHT - 1], [x2, y2], [x2, y1]],
+    [[0, 0], [WIDTH - 1, 0], [x2, y1], [x1, y1]],
+    [[x1, y2], [x2, y2], [WIDTH - 1, HEIGHT - 1], [0, HEIGHT - 1]]
   ]
 }
 
@@ -540,7 +543,7 @@ fn room(x1, y1, x2, y2) {
 # bottom]; a course on the left wall goes from the back corner out along the same t. Use
 # t = s * sqrt(s) (or similar) for rows that spread out towards the viewer.
 fn depth(x1, y1, x2, y2, t) {
-  return [x1 * (1 - t), y1 * (1 - t), x2 + (159 - x2) * t, y2 + (167 - y2) * t]
+  return [x1 * (1 - t), y1 * (1 - t), x2 + (WIDTH - 1 - x2) * t, y2 + (HEIGHT - 1 - y2) * t]
 }
 
 # Outline points of an arched opening (door, window, arcade): a round top of radius rx × ry whose
@@ -600,13 +603,13 @@ fn squiggle(x, y, len, heading_deg = 90, seed = 1, wobble = 40) {
 # 1-px black border that frames every KQ1 picture. Call it last so nothing paints over it.
 fn frame(c = black) {
   color c
-  line 0,0 159,0 159,167 0,167 0,0
+  line 0,0  WIDTH - 1,0  WIDTH - 1,HEIGHT - 1  0,HEIGHT - 1  0,0
 }
 
 # Sky from the top down to row `bottom`.
 fn sky(bottom = 14, c = blue) {
   color c
-  rect 0,0 159,bottom
+  rect 0,0  WIDTH - 1,bottom
 }
 
 # Jagged distant mountains between rows `top` and `bottom` (KQ1: light blue, sometimes grey).
@@ -615,10 +618,10 @@ fn sky(bottom = 14, c = blue) {
 fn hills(top = 12, bottom = 26, c = lightblue, seed = 3, behind = blue) {
   if behind != null {
     color behind
-    rect 0, top, 159, bottom
+    rect 0, top, WIDTH - 1, bottom
   }
-  let pts = wavy(0, 159, bottom, bottom - top, seed, 14)
-  push(pts, [159, bottom])
+  let pts = wavy(0, WIDTH - 1, bottom, bottom - top, seed, 14)
+  push(pts, [WIDTH - 1, bottom])
   push(pts, [0, bottom])
   color c
   polygon pts
@@ -628,8 +631,8 @@ fn hills(top = 12, bottom = 26, c = lightblue, seed = 3, behind = blue) {
 # `top`, so everything from row `top` down to `bottom` is covered - let `hills` reach down to
 # at least `top` and no canvas shows between them.
 fn treeline(top = 20, bottom = 30, c = green, seed = 5) {
-  let pts = wavy(0, 159, top, 5, seed, 6)
-  push(pts, [159, bottom])
+  let pts = wavy(0, WIDTH - 1, top, 5, seed, 6)
+  push(pts, [WIDTH - 1, bottom])
   push(pts, [0, bottom])
   shape(pts, c, null)
 }
@@ -637,7 +640,7 @@ fn treeline(top = 20, bottom = 30, c = green, seed = 5) {
 # Ground from row `top` to the bottom of the picture.
 fn ground(top = 27, c = lightgreen) {
   color c
-  rect 0,top 159,167
+  rect 0,top  WIDTH - 1,HEIGHT - 1
 }
 
 # The whole standard outdoor backdrop in one call, with the bands overlapping so no canvas
@@ -654,7 +657,7 @@ fn horizon(y = 30, seed = 3, grass = lightgreen, sky_c = blue, hills_c = lightbl
 
 # Thin uneven line where the ground meets the hills (KQ1: brown).
 fn ridge(y, c = brown, seed = 9) {
-  let pts = wavy(0, 159, y, 2, seed, 10)
+  let pts = wavy(0, WIDTH - 1, y, 2, seed, 10)
   color c
   line pts
 }
@@ -889,7 +892,7 @@ fn frond(x, y, len, heading = 60, droop = 50, c = green, rib = lightgreen, edge 
   let py = y
   for i in 1..=n {
     let hh = heading + side * droop * i / n
-    px += 1.5 * sin(hh)
+    px += 3 / ASPECT * sin(hh)
     py -= 3 * cos(hh)
     push(spine, [px, py])
   }
@@ -898,12 +901,12 @@ fn frond(x, y, len, heading = 60, droop = 50, c = green, rib = lightgreen, edge 
   for i in 0..=n {
     let a = spine[max(0, i - 1)]
     let b = spine[min(n, i + 1)]
-    let dx = (b[0] - a[0]) * 2
+    let dx = (b[0] - a[0]) * ASPECT
     let dy = b[1] - a[1]
     let l = max(0.001, sqrt(dx * dx + dy * dy))
     let half = len * width * sin(180 * i / n) * (i % 2 == 1 ? 0.5 : 1)
-    push(right, [spine[i][0] - dy / l * half / 2, spine[i][1] + dx / l * half])
-    push(left, [spine[i][0] + dy / l * half / 2, spine[i][1] - dx / l * half])
+    push(right, [spine[i][0] - dy / l * half / ASPECT, spine[i][1] + dx / l * half])
+    push(left, [spine[i][0] + dy / l * half / ASPECT, spine[i][1] - dx / l * half])
   }
   let poly = right
   for i in 0..=n { push(poly, left[n - i]) }
@@ -1393,10 +1396,10 @@ fn cloud(cx, cy, w = 30, seed = 1) {
 # Moon (full by default; phase > 0 shades the right part).
 fn moon(cx, cy, r = 5, c = white, phase = 0, shadow = black) {
   color c
-  ellipse cx, cy, r / 2, r
+  ellipse cx, cy, r / ASPECT, r
   if phase > 0 {
     color shadow
-    ellipse cx + r * (1 - phase) * 0.5, cy - 1, r / 2, r
+    ellipse cx + r * (1 - phase) / ASPECT, cy - 1, r / ASPECT, r
   }
 }
 
@@ -1405,6 +1408,6 @@ fn moon(cx, cy, r = 5, c = white, phase = 0, shadow = black) {
 fn stars(n = 25, top = 1, bottom = 14, seed = 7, c = white) {
   color c
   for k in 0..n {
-    line 1 + noise(seed, k) * 157, top + noise(seed + 1, k) * (bottom - top)
+    line 1 + noise(seed, k) * (WIDTH - 3), top + noise(seed + 1, k) * (bottom - top)
   }
 }

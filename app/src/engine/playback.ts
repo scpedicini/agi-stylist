@@ -1,8 +1,9 @@
-import { Painter } from './execute.ts';
-import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from './framebuffer.ts';
+import { Painter, screenOf } from './execute.ts';
+import { Framebuffer } from './framebuffer.ts';
 import type { Op } from './ops.ts';
 
-const SIZE = PIC_WIDTH * PIC_HEIGHT;
+/** Ops that recolour pixels already there without painting them. */
+const recolours = (op: Op) => op.kind === 'remap' || op.kind === 'glow';
 
 /** Pixel writes a recording may hold (5 bytes each) before playback gives up on `delay`. */
 export const MAX_WRITES = 8_000_000;
@@ -21,7 +22,8 @@ export interface Recording {
  * and remaps every pixel they recolour. Null if that comes to more than `limit` writes.
  */
 export function record(ops: readonly Op[], limit = MAX_WRITES): Recording | null {
-  const painter = new Painter();
+  const painter = new Painter(new Framebuffer(undefined, screenOf(ops)));
+  const size = painter.fb.pixels.length;
   let pixel = new Int32Array(1 << 14);
   let color = new Uint8Array(1 << 14);
   let n = 0;
@@ -43,19 +45,19 @@ export function record(ops: readonly Op[], limit = MAX_WRITES): Recording | null
     pixel[n] = i;
     color[n++] = c;
   };
-  painter.onWrite = (i) => push(i, painter.color);
+  painter.onWrite = (i, c) => push(i, c);
   const start = new Int32Array(ops.length + 1);
   for (let k = 0; k < ops.length && !over; k++) {
     start[k] = n;
     const op = ops[k];
-    if (op.kind !== 'remap') {
+    if (!recolours(op)) {
       painter.apply(op);
       continue;
     }
     const before = painter.fb.pixels.slice();
     painter.apply(op);
     const after = painter.fb.pixels;
-    for (let i = 0; i < SIZE; i++) if (after[i] !== before[i]) push(i, after[i]);
+    for (let i = 0; i < size; i++) if (after[i] !== before[i]) push(i, after[i]);
   }
   if (over) return null;
   start[ops.length] = n;
@@ -72,7 +74,7 @@ export function playOrder(ops: readonly Op[]): Int32Array {
   return order;
 }
 
-const STATE_ONLY = new Set<Op['kind']>(['color', 'nocolor', 'pen']);
+const STATE_ONLY = new Set<Op['kind']>(['color', 'nocolor', 'pen', 'screen']);
 
 /**
  * Where each instruction starts, as positions in the play order (ascending, from 0, with the op
@@ -121,14 +123,16 @@ export class Playback {
   /** See instructionMarks. */
   readonly marks: Int32Array;
   /** What has been played so far. */
-  readonly fb = new Framebuffer();
+  readonly fb: Framebuffer;
   /** 1 for every pixel a played line, plot or fill has written. */
-  readonly touched = new Uint8Array(SIZE);
+  readonly touched: Uint8Array;
   /** The list has delays, but too many pixel writes to record them, so it plays in script order. */
   readonly delaysIgnored: boolean;
   /** With delays: what each op wrote, and per pixel the script index of the op it shows (-1: none). */
   private readonly rec: Recording | null;
   private readonly owner: Int32Array | null;
+  /** With delays: per palette entry, the script index of the `palette` op it shows (-1: none). */
+  private readonly paletteOwner = new Int32Array(256);
   /** Without: the painter, painting into `fb`. */
   private painter!: Painter;
   private pos = 0;
@@ -136,10 +140,12 @@ export class Playback {
   /** `recorded` plays from a recording even without delays (for tests). */
   constructor(ops: readonly Op[], opts: { recorded?: boolean } = {}) {
     this.ops = ops;
+    this.fb = new Framebuffer(undefined, screenOf(ops));
+    this.touched = new Uint8Array(this.fb.pixels.length);
     const delayed = ops.some((op) => op.delay);
     this.rec = delayed || opts.recorded ? record(ops) : null;
     this.delaysIgnored = delayed && !this.rec;
-    this.owner = this.rec ? new Int32Array(SIZE) : null;
+    this.owner = this.rec ? new Int32Array(this.fb.pixels.length) : null;
     this.order = this.rec ? playOrder(ops) : Int32Array.from(ops.keys());
     this.marks = instructionMarks(ops, this.order);
     this.reset();
@@ -165,8 +171,10 @@ export class Playback {
   /** Back to before the first op: a blank (all white, untouched) picture. */
   reset(): void {
     this.fb.clear();
+    this.fb.resetPalette();
     this.touched.fill(0);
     this.owner?.fill(-1);
+    this.paletteOwner.fill(-1);
     this.painter = new Painter(this.fb);
     this.painter.touched = this.touched;
     this.pos = 0;
@@ -180,8 +188,20 @@ export class Playback {
       this.painter.apply(this.ops[k]);
       return;
     }
+    const op = this.ops[k];
+    if (op.kind === 'palette') {
+      // no pixel changes: the colours they show do; like pixels, an entry shows the latest change in
+      // the script that has played (a delayed one doesn't undo a later one)
+      const e = op.entries;
+      for (let j = 0; j + 3 < e.length; j += 4) {
+        if (k < this.paletteOwner[e[j]]) continue;
+        this.paletteOwner[e[j]] = k;
+        this.fb.palette[e[j]] = [e[j + 1], e[j + 2], e[j + 3]];
+      }
+      return;
+    }
     const { start, pixel, color } = this.rec;
-    const paints = this.ops[k].kind !== 'remap';
+    const paints = !recolours(op);
     const px = this.fb.pixels;
     const owner = this.owner;
     for (let w = start[k]; w < start[k + 1]; w++) {

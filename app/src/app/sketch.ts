@@ -1,5 +1,5 @@
 import p5 from 'p5';
-import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
+import type { Framebuffer } from '../engine/framebuffer.ts';
 import type { Op } from '../engine/ops.ts';
 import { Playback } from '../engine/playback.ts';
 
@@ -9,7 +9,7 @@ import { Playback } from '../engine/playback.ts';
 p5.disableFriendlyErrors = true;
 
 export interface StageOptions {
-  /** Integer zoom; each logical pixel becomes (2·scale)×scale screen pixels. */
+  /** Integer zoom; each logical pixel becomes (2·scale)×scale screen pixels (scale×scale in VGA). */
   scale?: number;
   /** After every change: ops played so far, the op count, and the op played last. */
   onProgress?: (position: number, total: number, last: Op | undefined) => void;
@@ -39,9 +39,10 @@ export class Stage {
       this.p = p;
       p.setup = () => {
         p.pixelDensity(1);
-        p.createCanvas(PIC_WIDTH * 2 * this.scale, PIC_HEIGHT * this.scale).parent(parent);
+        const fb = this.play.fb;
+        p.createCanvas(fb.width * fb.screen.aspect * this.scale, fb.height * this.scale).parent(parent);
         p.noSmooth();
-        this.img = p.createImage(PIC_WIDTH, PIC_HEIGHT);
+        this.img = p.createImage(fb.width, fb.height);
         // once, to create img.pixels: each frame rewrites every pixel of it, so reading the image
         // back from its canvas per frame (what loadPixels does) would be wasted work
         this.img.loadPixels();
@@ -73,7 +74,17 @@ export class Stage {
 
   load(ops: readonly Op[]): void {
     this.play = new Playback(ops);
+    this.fit();
     this.restart();
+  }
+
+  /** Match the canvas and image to the picture's size (AGI 160×168, VGA 320×200). */
+  private fit(): void {
+    const fb = this.play.fb;
+    if (!this.img || (this.img.width === fb.width && this.img.height === fb.height)) return;
+    this.p.resizeCanvas(fb.width * fb.screen.aspect * this.scale, fb.height * this.scale);
+    this.img = this.p.createImage(fb.width, fb.height);
+    this.img.loadPixels();
   }
 
   /** Back to the start: nothing painted. */

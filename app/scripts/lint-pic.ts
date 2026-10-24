@@ -16,8 +16,8 @@
 // 2 bad arguments.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { Painter } from '../src/engine/execute.ts';
-import { PIC_HEIGHT, PIC_WIDTH } from '../src/engine/framebuffer.ts';
+import { Painter, screenOf } from '../src/engine/execute.ts';
+import { Framebuffer } from '../src/engine/framebuffer.ts';
 import { compileProgram, declaredVariants, DEFAULT_VARIANT, formatDiagnostic, parse, PicError } from '../src/lang/index.ts';
 import { stdlib } from './lib/stdlib.ts';
 
@@ -37,13 +37,19 @@ const walk = (dir: string): string[] =>
       return statSync(p).isDirectory() ? walk(p) : p.endsWith('.pic') ? [p] : [];
     });
 const files = argv.filter((a) => !a.startsWith('-'));
+/** FNV-1a over RGBA bytes. */
+function rgbaHash(data: Uint8ClampedArray): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) h = Math.imul(h ^ data[i], 0x01000193) >>> 0;
+  return h.toString(16);
+}
+
 const targets = files.length ? files : walk('scenes');
 const generated = (f: string) => /(^|\/)scenes\/kq1\//.test(f);
 
 let errors = 0;
 let warnings = 0;
 let compileOnly = 0;
-const total = PIC_WIDTH * PIC_HEIGHT;
 
 for (const file of targets) {
   const out: string[] = [];
@@ -81,7 +87,9 @@ for (const file of targets) {
       }
       for (const w of r.warnings) say('warning', `[${variant}] ${formatDiagnostic(w)}`);
       if (generated(file)) continue;
-      const painter = new Painter();
+      const painter = new Painter(new Framebuffer(undefined, screenOf(r.ops)));
+      const { width: W, height: H } = painter.fb;
+      const total = W * H;
       painter.touched = new Uint8Array(total);
       const before = new Uint8Array(total);
       for (const op of r.ops) {
@@ -102,10 +110,10 @@ for (const file of targets) {
         }
       }
       let unpainted = 0;
-      let x1 = PIC_WIDTH, y1 = PIC_HEIGHT, x2 = -1, y2 = -1;
-      for (let y = 0; y < PIC_HEIGHT; y++) {
-        for (let x = 0; x < PIC_WIDTH; x++) {
-          if (painter.touched[y * PIC_WIDTH + x]) continue;
+      let x1 = W, y1 = H, x2 = -1, y2 = -1;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          if (painter.touched[y * W + x]) continue;
           unpainted++;
           x1 = Math.min(x1, x);
           y1 = Math.min(y1, y);
@@ -114,7 +122,8 @@ for (const file of targets) {
         }
       }
       if (unpainted) say('note', `[${variant}] ${unpainted} px of canvas were never painted (in ${x1},${y1}-${x2},${y2}) - they show as white, or as white's colour after a remap; a gap between shapes?`);
-      hashes.set(variant, painter.fb.hash());
+      // VGA variants each have their own palette: compare the colours shown, not the indices
+      hashes.set(variant, painter.fb.screen.mode === 'agi' ? painter.fb.hash() : rgbaHash(painter.fb.toRGBA()));
     }
     const seen = new Map<string, string>();
     for (const [v, h] of hashes) {

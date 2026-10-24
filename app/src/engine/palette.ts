@@ -1,5 +1,7 @@
+export type RGB = readonly [number, number, number];
+
 /** The 16-colour EGA palette used by AGI, as 8-bit RGB triples. */
-export const EGA_PALETTE: ReadonlyArray<readonly [number, number, number]> = [
+export const EGA_PALETTE: ReadonlyArray<RGB> = [
   [0x00, 0x00, 0x00], // 0  black
   [0x00, 0x00, 0xaa], // 1  blue
   [0x00, 0xaa, 0x00], // 2  green
@@ -34,4 +36,10 @@ export const WHITE = 15;
 /** Map an RGB triple to its EGA palette index, or -1 if it is not an exact palette colour. */
 export function rgbToIndex(r: number, g: number, b: number): number {
   return EGA_PALETTE.findIndex(([pr, pg, pb]) => pr === r && pg === g && pb === b);
+}
+
+/** Round an 8-bit channel to the VGA DAC's 6 bits and back (0-255), as real VGA hardware showed it. */
+export function dac6(v: number): number {
+  const q = Math.round((Math.max(0, Math.min(255, v)) * 63) / 255);
+  return Math.round((q * 255) / 63);
 }

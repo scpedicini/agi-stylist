@@ -37,6 +37,8 @@ export type Stmt =
   | { type: 'continue'; loc: Loc }
   | { type: 'scene'; title: Expr; loc: Loc }
   | { type: 'variants'; names: string[]; loc: Loc }
+  /** `mode vga`: the picture this scene paints (AGI 160×168 EGA without one). */
+  | { type: 'mode'; mode: 'agi' | 'vga'; arg: Expr; loc: Loc }
   | { type: 'remap'; variant?: string; pairs: Array<[Expr, Expr]>; loc: Loc }
   /** Ops painted inside are played later by the viewer (level 1 when omitted); see Op.delay. */
   | { type: 'delay'; level?: Expr; body: Stmt[]; loc: Loc };

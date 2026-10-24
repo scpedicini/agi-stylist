@@ -29,3 +29,11 @@ export const HIDDEN_GROUPS: readonly string[] = ['examples', 'handmade'];
 
 /** Show each scene's estimated size as an AGI picture ("~7191 AGI bytes") in the line under it. */
 export const SHOW_AGI_BYTES = false;
+
+/**
+ * Don't show the title screen on a first visit while developing (`pnpm dev`): browser automation
+ * starts with empty storage, so it would meet the title screen on every page load. The Intro button
+ * still opens it, and production builds are unaffected. The e2e tests, which run on the dev server
+ * and test the first visit, turn it back on with VITE_FORCE_SPLASH=1 (see app/playwright.config.ts).
+ */
+export const DISABLE_SPLASH_IN_DEV = true;

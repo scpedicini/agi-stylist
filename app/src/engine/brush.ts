@@ -74,3 +74,27 @@ export function plotPen(pen: Pen, x: number, y: number, texture: number, plot: P
     penX = startX;
   }
 }
+
+/**
+ * The VGA brush (square pixels): a disc of radius `size` (or a square of side 2·size + 1) centred
+ * on (x, y), clipped to the picture. Splatter pens gate each pixel with the same LFSR as AGI.
+ */
+export function plotPenSquare(pen: Pen, x: number, y: number, texture: number, plot: Plot, width: number, height: number): void {
+  const size = pen.size & 7;
+  let t = ((texture & 0x7f) << 1) | 1;
+  const r2 = (size + 0.5) * (size + 0.5);
+  for (let dy = -size; dy <= size; dy++) {
+    for (let dx = -size; dx <= size; dx++) {
+      if (pen.shape !== 'rect' && dx * dx + dy * dy > r2) continue;
+      if (pen.splatter) {
+        const bit = t & 1;
+        t >>= 1;
+        if (bit) t ^= 0xb8;
+        if ((t & 3) !== 2) continue;
+      }
+      const px = x + dx;
+      const py = y + dy;
+      if (px >= 0 && py >= 0 && px < width && py < height) plot(px, py);
+    }
+  }
+}

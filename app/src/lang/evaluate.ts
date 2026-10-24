@@ -1,7 +1,10 @@
 import { MAX_TEXTURE, type PenShape } from '../engine/brush.ts';
-import { PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
-import type { Op, SourceRef } from '../engine/ops.ts';
-import { COLOR_ALIASES, COLOR_NAMES } from '../engine/palette.ts';
+import { Painter } from '../engine/execute.ts';
+import { Framebuffer, PIC_HEIGHT, PIC_WIDTH, VGA_HEIGHT, VGA_WIDTH, type Screen } from '../engine/framebuffer.ts';
+import type { Op, Pattern, SourceRef } from '../engine/ops.ts';
+import { agiLine } from '../engine/line.ts';
+import { glowLevel } from '../engine/pattern.ts';
+import { COLOR_ALIASES, COLOR_NAMES, dac6, EGA_PALETTE, WHITE } from '../engine/palette.ts';
 import type { Arg, Expr, Program, Stmt } from './ast.ts';
 import { PicError, type Diagnostic, type Loc } from './errors.ts';
 import { parse } from './parser.ts';
@@ -82,6 +85,8 @@ export interface CompileOptions {
 
 export interface CompileResult {
   ops: Op[];
+  /** 'agi' (160×168, 16 EGA colours) unless the scene says `mode vga`. */
+  mode: Mode;
   title?: string;
   variants: string[];
   variant: string;
@@ -90,6 +95,8 @@ export interface CompileResult {
 }
 
 export const DEFAULT_VARIANT = 'default';
+
+export type Mode = 'agi' | 'vga';
 
 /** Compile PicScript source to paint ops. Throws PicError on syntax or runtime errors. */
 export function compile(src: string, opts: CompileOptions = {}): CompileResult {
@@ -108,14 +115,16 @@ export function compileProgram(program: Program, opts: CompileOptions = {}): Com
     throw new PicError(`unknown variant '${variant}' (this scene declares no variants)`, { file: program.file, line: 1, col: 1 });
   }
   checkRemapVariants(program.body, variants);
-  const interp = new Interpreter(program.file, variant, opts);
-  if (opts.prelude) {
-    const prelude = typeof opts.prelude === 'string' ? parse(opts.prelude, 'stdlib.pic') : opts.prelude;
-    interp.runPrelude(prelude);
-  }
+  const prelude = !opts.prelude ? undefined : typeof opts.prelude === 'string' ? parse(opts.prelude, 'stdlib.pic') : opts.prelude;
+  // a prelude that defines its own `mode` keeps it: the scene's `mode x` lines call it, as before VGA
+  const modeIsCall = !!prelude && transparent(prelude.body).some((s) => (s.type === 'fn' || s.type === 'let') && s.name === 'mode');
+  const mode = modeIsCall ? 'agi' : declaredMode(program);
+  const interp = new Interpreter(program.file, variant, opts, mode, modeIsCall);
+  if (prelude) interp.runPrelude(prelude);
   interp.run(program);
   return {
     ops: interp.ops,
+    mode,
     title: interp.title,
     variants: variants.length ? variants : [DEFAULT_VARIANT],
     variant,
@@ -136,6 +145,17 @@ function checkRemapVariants(body: Stmt[], variants: string[]) {
       if (s.else) checkRemapVariants(s.else, variants);
     }
   }
+}
+
+/** The picture mode a scene's top-level `mode` statement asks for ('agi' without one), without running it. */
+export function declaredMode(program: Program): Mode {
+  let mode: Extract<Stmt, { type: 'mode' }> | undefined;
+  for (const s of transparent(program.body)) {
+    if (s.type !== 'mode') continue;
+    if (mode && mode.mode !== s.mode) throw new PicError(`the scene asks for 'mode ${mode.mode}' (line ${mode.loc.line}) and 'mode ${s.mode}'; pick one`, s.loc);
+    mode = s;
+  }
+  return mode?.mode ?? 'agi';
 }
 
 /** Variant names declared by top-level `variants` statements, without running the scene. */
@@ -184,25 +204,59 @@ class Interpreter {
   private delayLevel = 0;
   /** Library errors already given a "called from" note, so outer statements don't add another. */
   private readonly placed = new WeakSet<PicError>();
-  private turtle: Turtle = { x: 80, y: 84, heading: 0, down: true };
+  private turtle: Turtle;
   private turtleStack: Turtle[] = [];
   private turtleOp?: Op;
   private splatter = false;
   private warnedLines = new Set<string>();
   private readonly maxOps: number;
   private readonly maxSteps: number;
+  /** Picture size: 160×168 (AGI) or 320×200 (VGA). */
+  private readonly W: number;
+  private readonly H: number;
+  private readonly vga: boolean;
+  /** VGA: the palette so far (index → RGB as allocated, 0-15 the EGA colours), shared with the screen op. */
+  private readonly palette: Array<[number, number, number]> = [];
+  /** VGA: what each index shows now; differs from `palette` after a whole-picture tint (a palette op). */
+  private readonly current: Array<[number, number, number]> = [];
+  /** VGA: paints every op as it is emitted, so tint/glow/pixel can see the picture so far. */
+  private readonly shadow?: Painter;
+  private warnedPalette = false;
+  /** VGA: the pen the last `color` set, and whether drawing is on, so a palette tint can renew it. */
+  private pen?: { color: number; pattern?: Pattern };
+  private penOn = false;
+  /** VGA: a palette tint changed a colour of the pen; renew it before the next line, plot or fill. */
+  private penStale = false;
 
   constructor(
     private readonly mainFile: string,
     private readonly variant: string,
     opts: CompileOptions,
+    mode: Mode = 'agi',
+    private readonly modeIsCall = false,
   ) {
+    this.vga = mode === 'vga';
+    this.W = this.vga ? VGA_WIDTH : PIC_WIDTH;
+    this.H = this.vga ? VGA_HEIGHT : PIC_HEIGHT;
+    this.turtle = { x: this.W / 2, y: this.H / 2, heading: 0, down: true };
+    if (this.vga) {
+      for (const c of EGA_PALETTE) {
+        this.palette.push([c[0], c[1], c[2]]);
+        this.current.push([c[0], c[1], c[2]]);
+      }
+      const screen: Screen = { mode: 'vga', width: this.W, height: this.H, aspect: 1, palette: this.palette };
+      this.shadow = new Painter(new Framebuffer(undefined, screen));
+    }
     this.rng = makeRng(opts.seed ?? 1);
     this.maxOps = opts.maxOps ?? 200_000;
     this.maxSteps = opts.maxSteps ?? 5_000_000;
     this.userLoc = { file: mainFile, line: 1, col: 1 };
     this.globals = new Env(undefined, true);
     this.installBuiltins();
+    if (this.vga) {
+      this.installVgaBuiltins();
+      this.emit({ kind: 'screen', mode: 'vga', width: this.W, height: this.H, palette: this.palette });
+    }
     this.sceneEnv = new Env(this.globals);
   }
 
@@ -225,12 +279,23 @@ class Interpreter {
   }
 
   private emit(op: Op): Op {
+    if (this.penStale && this.penOn && this.pen && (op.kind === 'line' || op.kind === 'plot' || op.kind === 'fill')) {
+      // renew the pen a palette tint changed, so it paints the colours it was given
+      this.penStale = false;
+      const pen = this.pen;
+      this.pen = {
+        color: this.fresh(pen.color, this.userLoc),
+        ...(pen.pattern ? { pattern: { ...pen.pattern, colors: pen.pattern.colors.map((k) => this.fresh(k, this.userLoc)) } } : {}),
+      };
+      this.emit({ kind: 'color', ...this.pen });
+    }
     this.charge();
     if (this.ops.length >= this.maxOps) throw new PicError(`too many drawing operations (limit ${this.maxOps}) - is a loop running away?`, this.userLoc);
     const src: SourceRef = { ...this.userLoc, instr: this.instr };
     const out = { ...op, src } as Op;
     if (this.delayLevel) out.delay = this.delayLevel;
     this.ops.push(out);
+    this.shadow?.apply(out);
     return out;
   }
 
@@ -358,10 +423,25 @@ class Interpreter {
       }
       case 'variants':
         return; // resolved before execution
+      case 'mode':
+        // a prelude's own `mode` takes the statement back as a call to it (see compileProgram)
+        if (this.modeIsCall) this.eval({ type: 'call', callee: { type: 'ident', name: 'mode', loc: s.loc }, args: [{ value: s.arg, loc: s.arg.loc }], loc: s.loc }, env);
+        return;
       case 'remap': {
         if (s.variant && s.variant !== this.variant) return;
-        const map = Array.from({ length: 16 }, (_, i) => i);
-        for (const [from, to] of s.pairs) map[this.color(this.eval(from, env), from.loc)] = this.color(this.eval(to, env), to.loc);
+        const map = Array.from({ length: this.vga ? 256 : 16 }, (_, i) => i);
+        for (const [from, to] of s.pairs) {
+          if (!this.vga) {
+            map[this.color(this.eval(from, env), from.loc)] = this.color(this.eval(to, env), to.loc);
+            continue;
+          }
+          // VGA: every index showing the `from` colour (after a palette tint that may be several, or none)
+          const rgb = this.colorRgb(this.eval(from, env), from.loc);
+          const c = this.color(this.eval(to, env), to.loc);
+          this.current.forEach((k, i) => {
+            if (k[0] === rgb[0] && k[1] === rgb[1] && k[2] === rgb[2]) map[i] = c;
+          });
+        }
         this.emit({ kind: 'remap', map });
         this.turtleOp = undefined;
         return;
@@ -563,12 +643,121 @@ class Interpreter {
   private color(v: Value, at: Loc): number {
     if (typeof v === 'string') {
       const idx = colorIndex(v);
-      if (idx >= 0) return idx;
+      if (idx >= 0) return this.vga ? this.fresh(idx, at) : idx;
+      const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v.trim());
+      if (hex) {
+        if (!this.vga) throw new PicError(`hex colours like '${v}' need 'mode vga' (AGI has only the 16 named colours)`, at);
+        const h = hex[1].length === 3 ? [...hex[1]].map((d) => d + d).join('') : hex[1];
+        return this.alloc(parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), at);
+      }
       throw new PicError(`unknown colour '${v}'`, at);
     }
+    if (this.vga && Array.isArray(v)) throw new PicError(`a pattern (dither/linear/radial) can only be used as a pen colour (color, shape(...) fills), not here`, at);
     const n = Math.round(this.num(v, at, 'colour'));
+    if (this.vga) {
+      if (n < 0 || n >= this.palette.length) throw new PicError(`colour must be a colour name, a '#rrggbb' string or a palette index 0-${this.palette.length - 1} (from rgb(), mix() …), got ${n}`, at);
+      return this.fresh(n, at);
+    }
     if (n < 0 || n > 15) throw new PicError(`colour must be 0-15 or a colour name, got ${n}`, at);
     return n;
+  }
+
+  /** VGA: has a whole-picture tint (a palette op) changed what index i shows from the colour it was made with? */
+  private retired(i: number): boolean {
+    const [a, b] = [this.palette[i], this.current[i]];
+    return a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2];
+  }
+
+  /**
+   * VGA: index `i` if it still shows the colour it was made with; after a whole-picture tint changed
+   * it, an index that shows that colour now. So a colour value always paints the colour it names.
+   */
+  private fresh(i: number, at: Loc): number {
+    if (!this.retired(i)) return i;
+    const a = this.palette[i];
+    return this.alloc(a[0], a[1], a[2], at);
+  }
+
+  /** VGA: the RGB a colour value names, without adding it to the palette (for tint and glow colours). */
+  private colorRgb(v: Value, at: Loc): readonly number[] {
+    if (typeof v === 'string') {
+      const idx = colorIndex(v);
+      if (idx >= 0) return EGA_PALETTE[idx];
+      const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v.trim());
+      if (hex) {
+        const h = hex[1].length === 3 ? [...hex[1]].map((d) => d + d).join('') : hex[1];
+        return [0, 2, 4].map((k) => dac6(parseInt(h.slice(k, k + 2), 16)));
+      }
+    }
+    if (Array.isArray(v)) return this.palette[this.color(v, at)]; // (an error: patterns aren't colours)
+    const n = Math.round(this.num(v, at, 'colour'));
+    if (n < 0 || n >= this.palette.length) return this.palette[this.color(v, at)]; // (the range error)
+    return this.palette[n];
+  }
+
+  /**
+   * VGA: the palette index of an RGB colour (rounded to the 6-bit DAC), adding it if it is new.
+   * With `near`, a colour already in the palette within that distance (0-255 units) is used instead.
+   */
+  private alloc(r: number, g: number, b: number, at: Loc, near = 0): number {
+    const q: [number, number, number] = [dac6(r), dac6(g), dac6(b)];
+    const cur = this.current;
+    // index 15 is the white canvas (fills spread into it): a painted white gets its own index; and an
+    // index a palette tint changed is never handed out (a colour value must keep its colour)
+    for (let i = 0; i < cur.length; i++) if (i !== WHITE && cur[i][0] === q[0] && cur[i][1] === q[1] && cur[i][2] === q[2] && !this.retired(i)) return i;
+    if (near > 0) {
+      const n = this.nearest(q);
+      if (n.d <= near * near) return n.i;
+    }
+    if (cur.length < 256) {
+      this.palette.push(q);
+      cur.push([q[0], q[1], q[2]]);
+      return cur.length - 1;
+    }
+    if (!this.warnedPalette) {
+      this.warnedPalette = true;
+      this.warn('the palette is full (256 colours): further new colours use the nearest one already in it', at);
+    }
+    return this.nearest(q).i;
+  }
+
+  /** The palette index (not the canvas white, nor one a palette tint changed) showing the colour closest to q, and its squared distance. */
+  private nearest(q: readonly number[]): { i: number; d: number } {
+    const cur = this.current;
+    let i = 0;
+    let d = Infinity;
+    for (const anyway of [false, true]) {
+      for (let k = 0; k < cur.length; k++) {
+        if (k === WHITE || (this.retired(k) && !anyway)) continue;
+        const dk = (cur[k][0] - q[0]) ** 2 + (cur[k][1] - q[1]) ** 2 + (cur[k][2] - q[2]) ** 2;
+        if (dk < d) (i = k), (d = dk);
+      }
+      // only when a palette tint has changed every slot: the closest colour showing now, as best we can
+      if (d < Infinity) break;
+    }
+    return { i, d };
+  }
+
+  /** VGA: a pen colour, which may be a pattern made by dither(), linear() or radial(). */
+  private penColor(v: Value, at: Loc): { color: number; pattern?: Pattern } {
+    if (!this.vga || !Array.isArray(v)) return { color: this.color(v, at) };
+    const bad = () => new PicError(`not a colour or pattern: ${show(v)} (make patterns with dither(), linear() or radial())`, at);
+    const kind = v[0];
+    const nums = (from: number, to: number) => v.slice(from, to).map((x) => this.num(x, at, 'pattern value'));
+    const colours = (list: Value) => {
+      if (!Array.isArray(list) || !list.length) throw bad();
+      return list.map((c) => this.color(c, at));
+    };
+    let pattern: Pattern;
+    if (kind === 'dither' && v.length === 4) pattern = { colors: [this.color(v[1], at), this.color(v[2], at)], t: nums(3, 4)[0] };
+    else if (kind === 'linear' && v.length === 6) {
+      const [x1, y1, x2, y2] = nums(1, 5);
+      pattern = { colors: colours(v[5]), kind: 'linear', x1, y1, x2, y2 };
+    } else if (kind === 'radial' && v.length === 5) {
+      const [x1, y1, r] = nums(1, 4);
+      pattern = { colors: colours(v[4]), kind: 'radial', x1, y1, x2: x1 + r, y2: y1 };
+    } else throw bad();
+    return { color: pattern.colors[0], pattern };
   }
 
   /** Flatten numbers/lists into integer x,y pairs, clamped to the picture. */
@@ -588,12 +777,12 @@ class Interpreter {
     let clamped = false;
     const out = flat.map((v, i) => {
       const r = Math.round(v);
-      const max = i % 2 === 0 ? PIC_WIDTH - 1 : PIC_HEIGHT - 1;
+      const max = i % 2 === 0 ? this.W - 1 : this.H - 1;
       const c = r < 0 ? 0 : r > max ? max : r;
       if (c !== r) clamped = true;
       return c;
     });
-    if (clamped) this.warn(`${what}: point off the 160×168 picture was clamped to the edge`, at);
+    if (clamped) this.warn(`${what}: point off the ${this.W}×${this.H} picture was clamped to the edge`, at);
     return out;
   }
 
@@ -616,8 +805,10 @@ class Interpreter {
     COLOR_NAMES.forEach((n, i) => g.declare(n, i));
     for (const [n, i] of Object.entries(COLOR_ALIASES)) g.declare(n, i);
     for (const s of ['circle', 'square', 'solid', 'splatter']) g.declare(s, s);
-    g.declare('WIDTH', PIC_WIDTH);
-    g.declare('HEIGHT', PIC_HEIGHT);
+    g.declare('WIDTH', this.W);
+    g.declare('HEIGHT', this.H);
+    g.declare('ASPECT', this.vga ? 1 : 2);
+    g.declare('MODE', this.vga ? 'vga' : 'agi');
     g.declare('variant', this.variant);
     g.declare('null', null);
 
@@ -625,13 +816,19 @@ class Interpreter {
     def('color', (a, n, at) => {
       noNamed('color', n, at);
       arity('color', a, 1, 1, at);
-      this.emit({ kind: 'color', color: this.color(a[0], at) });
+      if (this.vga) {
+        this.pen = this.penColor(a[0], at);
+        this.penOn = true;
+        this.penStale = false;
+        this.emit({ kind: 'color', ...this.pen });
+      } else this.emit({ kind: 'color', color: this.color(a[0], at) });
       this.turtleOp = undefined;
       return null;
     });
     def('nocolor', (a, n, at) => {
       noNamed('nocolor', n, at);
       arity('nocolor', a, 0, 0, at);
+      this.penOn = false;
       this.emit({ kind: 'nocolor' });
       this.turtleOp = undefined;
       return null;
@@ -678,7 +875,7 @@ class Interpreter {
       for (let i = 0; i < raw.length; i += 2) {
         const x = Math.round(raw[i]);
         const y = Math.round(raw[i + 1]);
-        if (x < 0 || y < 0 || x >= PIC_WIDTH || y >= PIC_HEIGHT) this.warn(`fill seed (${x}, ${y}) is off the picture and was skipped`, at);
+        if (x < 0 || y < 0 || x >= this.W || y >= this.H) this.warn(`fill seed (${x}, ${y}) is off the picture and was skipped`, at);
         else pts.push(x, y);
       }
       if (pts.length) this.emit({ kind: 'fill', points: pts });
@@ -729,9 +926,9 @@ class Interpreter {
     // --- solid shapes: painted as horizontal AGI lines, so they cover anything underneath ---
     const spans = (rows: Array<[number, number, number]>) => {
       for (const [y, x1, x2] of rows) {
-        if (y < 0 || y >= PIC_HEIGHT) continue;
+        if (y < 0 || y >= this.H) continue;
         const a = Math.max(0, x1);
-        const b = Math.min(PIC_WIDTH - 1, x2);
+        const b = Math.min(this.W - 1, x2);
         if (a <= b) this.emit({ kind: 'line', points: [a, y, b, y] });
       }
       this.turtleOp = undefined;
@@ -741,28 +938,10 @@ class Interpreter {
       const p = this.rawNumbers(a, at, 'polygon');
       if (p.length < 6 || p.length % 2) throw new PicError('polygon needs at least 3 x,y points', at);
       // Clip to the picture once, so the fill and the outline agree; shapes may run off-canvas.
-      const clipped = clipToPicture(p);
+      const clipped = clipToPicture(p, this.W, this.H);
       if (clipped.length < 6) return null;
       const pts = clipped.map(Math.round);
-      const rows: Array<[number, number, number]> = [];
-      let minY = Infinity;
-      let maxY = -Infinity;
-      for (let i = 1; i < pts.length; i += 2) {
-        minY = Math.min(minY, pts[i]);
-        maxY = Math.max(maxY, pts[i]);
-      }
-      const n2 = pts.length / 2;
-      for (let y = minY; y <= maxY; y++) {
-        const xs: number[] = [];
-        for (let i = 0; i < n2; i++) {
-          const [x1, y1] = [pts[2 * i], pts[2 * i + 1]];
-          const [x2, y2] = [pts[(2 * i + 2) % pts.length], pts[(2 * i + 3) % pts.length]];
-          if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) xs.push(x1 + ((y - y1) * (x2 - x1)) / (y2 - y1));
-        }
-        xs.sort((u, v) => u - v);
-        for (let k = 0; k + 1 < xs.length; k += 2) rows.push([y, Math.ceil(xs[k]), Math.floor(xs[k + 1])]);
-      }
-      spans(rows);
+      spans(scanRows(pts));
       // the outline makes the edge pixels match AGI line rasterization exactly
       this.emit({ kind: 'line', points: [...pts, pts[0], pts[1]] });
       return null;
@@ -775,7 +954,7 @@ class Interpreter {
       const p = this.rawNumbers(a, at, name).map((v) => Math.round(Math.max(-1e6, Math.min(1e6, v))));
       // stroke also takes a single point (a dot), skipped when it is off the picture
       if (!closed && p.length === 2) {
-        if (p[0] >= 0 && p[1] >= 0 && p[0] < PIC_WIDTH && p[1] < PIC_HEIGHT) this.emit({ kind: 'line', points: p });
+        if (p[0] >= 0 && p[1] >= 0 && p[0] < this.W && p[1] < this.H) this.emit({ kind: 'line', points: p });
         this.turtleOp = undefined;
         return null;
       }
@@ -788,13 +967,13 @@ class Interpreter {
         run = [];
       };
       for (let i = 0; i + 3 < pts.length; i += 2) {
-        const seg = clipSegment(pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
+        const seg = clipSegment(pts[i], pts[i + 1], pts[i + 2], pts[i + 3], this.W, this.H);
         if (!seg) {
           flush();
           continue;
         }
-        const [x1, x2] = [seg[0], seg[2]].map((v) => Math.max(0, Math.min(PIC_WIDTH - 1, Math.round(v))));
-        const [y1, y2] = [seg[1], seg[3]].map((v) => Math.max(0, Math.min(PIC_HEIGHT - 1, Math.round(v))));
+        const [x1, x2] = [seg[0], seg[2]].map((v) => Math.max(0, Math.min(this.W - 1, Math.round(v))));
+        const [y1, y2] = [seg[1], seg[3]].map((v) => Math.max(0, Math.min(this.H - 1, Math.round(v))));
         if (run.length && (run[run.length - 2] !== x1 || run[run.length - 1] !== y1)) flush();
         if (!run.length) run.push(x1, y1);
         run.push(x2, y2);
@@ -822,7 +1001,7 @@ class Interpreter {
       const [x1, x2] = p[0] <= p[2] ? [p[0], p[2]] : [p[2], p[0]];
       const [y1, y2] = p[1] <= p[3] ? [p[1], p[3]] : [p[3], p[1]];
       const rows: Array<[number, number, number]> = [];
-      for (let y = Math.max(0, y1); y <= Math.min(PIC_HEIGHT - 1, y2); y++) rows.push([y, x1, x2]);
+      for (let y = Math.max(0, y1); y <= Math.min(this.H - 1, y2); y++) rows.push([y, x1, x2]);
       spans(rows);
       return null;
     });
@@ -834,7 +1013,7 @@ class Interpreter {
       if (rx < 0 || ry < 0) throw new PicError('ellipse radii must not be negative', at);
       const rows: Array<[number, number, number]> = [];
       const top = Math.max(0, Math.round(cy - ry));
-      const bottom = Math.min(PIC_HEIGHT - 1, Math.round(cy + ry));
+      const bottom = Math.min(this.H - 1, Math.round(cy + ry));
       for (let y = top; y <= bottom; y++) {
         const t = ry === 0 ? 0 : (y - cy) / ry;
         if (Math.abs(t) > 1) continue;
@@ -1045,6 +1224,240 @@ class Interpreter {
     });
   }
 
+  // ---------- VGA builtins (only in `mode vga` scenes) ----------
+  private installVgaBuiltins() {
+    const g = this.globals;
+    const REQUIRED = Symbol('required');
+    type Spec = Array<[string, Value | typeof REQUIRED]>;
+    /** Positional and named arguments matched to `spec` (name, default), as one record. */
+    const args = (name: string, a: Value[], n: Record<string, Value>, spec: Spec, at: Loc): Record<string, Value> => {
+      if (a.length > spec.length) throw new PicError(`${name} takes at most ${spec.length} arguments (${spec.map((p) => p[0]).join(', ')}) but got ${a.length}`, at);
+      const out: Record<string, Value> = {};
+      spec.forEach(([k, d], i) => {
+        if (i < a.length) {
+          if (k in n) throw new PicError(`${name}: '${k}' given twice`, at);
+          out[k] = a[i];
+        } else if (k in n) out[k] = n[k];
+        else if (d === REQUIRED) throw new PicError(`${name} is missing argument '${k}' (${spec.map((p) => p[0]).join(', ')})`, at);
+        else out[k] = d;
+      });
+      for (const k of Object.keys(n)) if (!spec.some((p) => p[0] === k)) throw new PicError(`${name} has no argument named '${k}' (arguments: ${spec.map((p) => p[0]).join(', ')})`, at);
+      return out;
+    };
+    const def = (name: string, spec: Spec, call: (v: Record<string, Value>, at: Loc) => Value) =>
+      g.declare(name, { kind: 'builtin', name, call: (a, n, at) => call(args(name, a, n, spec, at), at) });
+    const rgbOf = (c: number) => this.current[c];
+    const num = (v: Value, at: Loc, what: string) => this.num(v, at, what);
+    const amount = (v: Value, at: Loc, name: string) => {
+      const t = num(v, at, `${name} amount`);
+      if (t < 0 || t > 1) throw new PicError(`${name}: amount must be 0-1, got ${t}`, at);
+      return t;
+    };
+    const mixRgb = (a: readonly number[], b: readonly number[], t: number) => [0, 1, 2].map((k) => a[k] + (b[k] - a[k]) * t);
+    const BLENDS = ['mix', 'add', 'multiply', 'screen'];
+    const blend = (base: readonly number[], c: readonly number[], t: number, how: string) =>
+      [0, 1, 2].map((k) => {
+        const b = base[k];
+        const l = c[k];
+        if (how === 'add') return b + l * t;
+        if (how === 'multiply') return b * (1 + (l / 255 - 1) * t);
+        if (how === 'screen') return 255 - ((255 - b) * (255 - l * t)) / 255;
+        return b + (l - b) * t;
+      });
+    const blendMode = (v: Value, at: Loc, name: string) => {
+      if (typeof v !== 'string' || !BLENDS.includes(v)) throw new PicError(`${name}: how must be one of ${BLENDS.map((b) => `"${b}"`).join(', ')}, got ${show(v)}`, at);
+      return v;
+    };
+    const allocRgb = (rgb: number[], at: Loc, near = 0) => this.alloc(rgb[0], rgb[1], rgb[2], at, near);
+    /** Lighting reuses a colour within this distance rather than adding a new one: it saves palette, and dithering hides it. */
+    const LIGHT_NEAR = 6;
+    const colourList = (v: Value, at: Loc, name: string) => {
+      if (!Array.isArray(v) || !v.length) throw new PicError(`${name} needs a list of colours, e.g. [black, "#335", white] or ramp(…)`, at);
+      return v.map((c) => this.color(c, at));
+    };
+    /** `stops` blended into `steps` evenly spaced colours (as they are when steps is 0 or no more than them). */
+    const spread = (stops: number[], stepsV: Value, at: Loc, name: string) => {
+      const steps = Math.round(num(stepsV, at, `${name}() steps`));
+      if (steps < 0 || steps > 64) throw new PicError(`${name}: steps must be 0-64, got ${steps}`, at);
+      if (steps <= stops.length || stops.length < 2) return stops;
+      const out: number[] = [];
+      for (let i = 0; i < steps; i++) {
+        const s = (i / (steps - 1)) * (stops.length - 1);
+        const k = Math.min(Math.floor(s), stops.length - 2);
+        out.push(allocRgb(mixRgb(rgbOf(stops[k]), rgbOf(stops[k + 1]), s - k), at));
+      }
+      return out;
+    };
+    /** The palette indices showing in rows of [y, x1, x2] runs (or the whole picture). */
+    const present = (rows?: number[]) => {
+      const fb = this.shadow!.fb;
+      const seen = new Set<number>();
+      if (!rows) for (const c of fb.pixels) seen.add(c);
+      else for (let k = 0; k < rows.length; k += 3) for (let x = rows[k + 1]; x <= rows[k + 2]; x++) seen.add(fb.pixels[rows[k] * fb.width + x]);
+      return seen;
+    };
+    /** A remap table taking each of `colours` to f(its colour); a colour f leaves alone keeps its index. */
+    const recolour = (colours: Set<number>, f: (rgb: readonly number[]) => number[], at: Loc) => {
+      const map = Array.from({ length: 256 }, (_, i) => i);
+      for (const c of colours) {
+        const rgb = f(rgbOf(c)).map(dac6);
+        const was = rgbOf(c);
+        if (rgb[0] !== was[0] || rgb[1] !== was[1] || rgb[2] !== was[2]) map[c] = allocRgb(rgb, at, LIGHT_NEAR);
+      }
+      return map;
+    };
+
+    def('rgb', [['r', REQUIRED], ['g', REQUIRED], ['b', REQUIRED]], (v, at) =>
+      this.alloc(num(v.r, at, 'rgb() red'), num(v.g, at, 'rgb() green'), num(v.b, at, 'rgb() blue'), at),
+    );
+    def('mix', [['a', REQUIRED], ['b', REQUIRED], ['t', 0.5]], (v, at) =>
+      allocRgb(mixRgb(rgbOf(this.color(v.a, at)), rgbOf(this.color(v.b, at)), amount(v.t, at, 'mix')), at),
+    );
+    def('shade', [['c', REQUIRED], ['k', REQUIRED]], (v, at) => {
+      const k = num(v.k, at, 'shade() amount');
+      if (k < -1 || k > 1) throw new PicError(`shade: k must be -1 (black) … 1 (white), got ${k}`, at);
+      return allocRgb(mixRgb(rgbOf(this.color(v.c, at)), k < 0 ? [0, 0, 0] : [255, 255, 255], Math.abs(k)), at);
+    });
+    def('ramp', [['a', REQUIRED], ['b', null], ['n', null]], (v, at) => {
+      // ramp(a, b, n), or ramp([c1, c2, …], n) through several stops
+      let stops: number[];
+      let nv: Value;
+      if (Array.isArray(v.a)) {
+        stops = colourList(v.a, at, 'ramp');
+        nv = v.b;
+      } else {
+        if (v.b === null || v.n === null) throw new PicError('ramp takes (a, b, n) or ([colours], n)', at);
+        stops = [this.color(v.a, at), this.color(v.b, at)];
+        nv = v.n;
+      }
+      const n = Math.round(num(nv, at, 'ramp() count'));
+      if (n < 2 || n > 64) throw new PicError(`ramp: n must be 2-64, got ${n}`, at);
+      if (stops.length < 2) throw new PicError('ramp needs at least 2 colours', at);
+      const out: Value[] = [];
+      for (let i = 0; i < n; i++) {
+        const s = (i / (n - 1)) * (stops.length - 1);
+        const k = Math.min(Math.floor(s), stops.length - 2);
+        out.push(allocRgb(mixRgb(rgbOf(stops[k]), rgbOf(stops[k + 1]), s - k), at));
+      }
+      return out;
+    });
+    def('rgbof', [['c', REQUIRED]], (v, at) => [...rgbOf(this.color(v.c, at))]);
+    def('dither', [['a', REQUIRED], ['b', REQUIRED], ['t', 0.5]], (v, at) => ['dither', this.color(v.a, at), this.color(v.b, at), amount(v.t, at, 'dither')]);
+    def('linear', [['x1', REQUIRED], ['y1', REQUIRED], ['x2', REQUIRED], ['y2', REQUIRED], ['colors', REQUIRED], ['steps', 8]], (v, at) => [
+      'linear',
+      num(v.x1, at, 'linear() x1'),
+      num(v.y1, at, 'linear() y1'),
+      num(v.x2, at, 'linear() x2'),
+      num(v.y2, at, 'linear() y2'),
+      spread(colourList(v.colors, at, 'linear'), v.steps, at, 'linear'),
+    ]);
+    def('radial', [['cx', REQUIRED], ['cy', REQUIRED], ['r', REQUIRED], ['colors', REQUIRED], ['steps', 8]], (v, at) => {
+      const r = num(v.r, at, 'radial() radius');
+      if (r <= 0) throw new PicError('radial: r must be more than 0', at);
+      return ['radial', num(v.cx, at, 'radial() cx'), num(v.cy, at, 'radial() cy'), r, spread(colourList(v.colors, at, 'radial'), v.steps, at, 'radial')];
+    });
+    def('palette_size', [], () => this.current.length);
+    def('pixel', [['x', REQUIRED], ['y', REQUIRED]], (v, at) => {
+      const x = Math.round(num(v.x, at, 'pixel() x'));
+      const y = Math.round(num(v.y, at, 'pixel() y'));
+      if (x < 0 || y < 0 || x >= this.W || y >= this.H) throw new PicError(`pixel(${x}, ${y}) is off the picture`, at);
+      // a colour value for what shows there (white canvas stays the canvas while it still shows white)
+      const i = this.shadow!.fb.get(x, y);
+      if (!this.retired(i)) return i;
+      const rgb = this.current[i];
+      return this.alloc(rgb[0], rgb[1], rgb[2], at);
+    });
+    def('tint', [['c', REQUIRED], ['amount', 0.5], ['region', null], ['how', 'mix']], (v, at) => {
+      const c = this.colorRgb(v.c, at);
+      const t = amount(v.amount, at, 'tint');
+      const how = blendMode(v.how, at, 'tint');
+      let spans: number[] | undefined;
+      if (v.region !== null) {
+        const p = this.rawNumbers([v.region], at, 'tint region');
+        if (p.length < 6 || p.length % 2) throw new PicError('tint: region must be a closed outline of at least 3 [x, y] points', at);
+        spans = this.regionSpans(clipToPicture(p, this.W, this.H).map(Math.round));
+        if (!spans.length) return null;
+        const map = recolour(present(spans), (rgb) => blend(rgb, c, t, how), at);
+        this.emit({ kind: 'remap', map, spans });
+        this.turtleOp = undefined;
+        return null;
+      }
+      // the whole picture: change the palette entries of the colours in it (no new colours), as VGA
+      // games faded to night; colour values used afterwards still paint their own colours (fresh)
+      const entries: number[] = [];
+      for (const i of present()) {
+        const rgb = blend(rgbOf(i), c, t, how).map(dac6);
+        const was = this.current[i];
+        if (rgb[0] === was[0] && rgb[1] === was[1] && rgb[2] === was[2]) continue;
+        this.current[i] = [rgb[0], rgb[1], rgb[2]];
+        entries.push(i, rgb[0], rgb[1], rgb[2]);
+      }
+      if (entries.length) this.emit({ kind: 'palette', entries });
+      // the pen in hand may use a changed index: it is renewed before it next draws (emit)
+      const pen = this.pen;
+      if (entries.length && pen && [pen.color, ...(pen.pattern?.colors ?? [])].some((k) => this.retired(k))) this.penStale = true;
+      this.turtleOp = undefined;
+      return null;
+    });
+    def('glow', [['cx', REQUIRED], ['cy', REQUIRED], ['rx', REQUIRED], ['ry', REQUIRED], ['c', REQUIRED], ['amount', 0.6], ['steps', 8], ['how', 'add']], (v, at) => {
+      const [cx, cy, rx, ry] = [v.cx, v.cy, v.rx, v.ry].map((x) => num(x, at, 'glow() position'));
+      if (rx <= 0 || ry <= 0) throw new PicError('glow: rx and ry must be more than 0', at);
+      const c = this.colorRgb(v.c, at);
+      const t = amount(v.amount, at, 'glow');
+      const steps = Math.round(num(v.steps, at, 'glow() steps'));
+      if (steps < 1 || steps > 16) throw new PicError(`glow: steps must be 1-16, got ${steps}`, at);
+      const how = blendMode(v.how, at, 'glow');
+      // only the colours inside the ellipse get new palette entries
+      const rows: number[] = [];
+      for (let y = Math.max(0, Math.floor(cy - ry)); y <= Math.min(this.H - 1, Math.ceil(cy + ry)); y++) {
+        let a = -1;
+        let b = -2;
+        for (let x = Math.max(0, Math.floor(cx - rx)); x <= Math.min(this.W - 1, Math.ceil(cx + rx)); x++) {
+          if (!glowLevel(cx, cy, rx, ry, steps, x, y)) continue;
+          if (a < 0) a = x;
+          b = x;
+        }
+        if (a >= 0) rows.push(y, a, b);
+      }
+      if (!rows.length) return null;
+      const colours = present(rows);
+      const maps: number[][] = [];
+      for (let k = 1; k <= steps; k++) maps.push(recolour(colours, (rgb) => blend(rgb, c, (t * k) / steps, how), at));
+      this.emit({ kind: 'glow', cx, cy, rx, ry, maps });
+      this.turtleOp = undefined;
+      return null;
+    });
+  }
+
+  /** [y, x1, x2] runs (flattened) of a closed, clipped, rounded outline: its inside and its edge pixels, as `polygon` paints them. */
+  private regionSpans(pts: number[]): number[] {
+    if (pts.length < 6) return [];
+    const rows = new Map<number, Array<[number, number]>>();
+    const add = (y: number, a: number, b: number) => {
+      if (y < 0 || y >= this.H) return;
+      a = Math.max(0, a);
+      b = Math.min(this.W - 1, b);
+      if (a <= b) (rows.get(y) ?? rows.set(y, []).get(y)!).push([a, b]);
+    };
+    for (const [y, a, b] of scanRows(pts)) add(y, a, b);
+    const closed = [...pts, pts[0], pts[1]];
+    for (let i = 0; i + 3 < closed.length; i += 2) agiLine(closed[i], closed[i + 1], closed[i + 2], closed[i + 3], (x, y) => add(y, x, x), this.W, this.H);
+    const out: number[] = [];
+    for (const y of [...rows.keys()].sort((u, v) => u - v)) {
+      const runs = rows.get(y)!.sort((u, v) => u[0] - v[0]);
+      let [a, b] = runs[0];
+      for (const [c, d] of runs.slice(1)) {
+        if (c <= b + 1) b = Math.max(b, d);
+        else {
+          out.push(y, a, b);
+          [a, b] = [c, d];
+        }
+      }
+      out.push(y, a, b);
+    }
+    return out;
+  }
+
   private rawNumbers(args: Value[], at: Loc, what: string): number[] {
     const flat: number[] = [];
     const walk = (v: Value) => {
@@ -1064,6 +1477,7 @@ class Interpreter {
       if (p[p.length - 2] === ax && p[p.length - 1] === ay && last.src?.line === this.userLoc.line && (last.delay ?? 0) === this.delayLevel) {
         this.charge();
         p.push(bx, by);
+        this.shadow?.apply({ kind: 'line', points: [ax, ay, bx, by] });
         return;
       }
     }
@@ -1080,15 +1494,38 @@ export function colorIndex(name: string): number {
   return i >= 0 ? i : (COLOR_ALIASES[n] ?? -1);
 }
 
+/** Scanline rows [y, x1, x2] of a closed polygon (flat, rounded x,y list), even-odd. */
+function scanRows(pts: number[]): Array<[number, number, number]> {
+  const rows: Array<[number, number, number]> = [];
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 1; i < pts.length; i += 2) {
+    minY = Math.min(minY, pts[i]);
+    maxY = Math.max(maxY, pts[i]);
+  }
+  const n2 = pts.length / 2;
+  for (let y = minY; y <= maxY; y++) {
+    const xs: number[] = [];
+    for (let i = 0; i < n2; i++) {
+      const [x1, y1] = [pts[2 * i], pts[2 * i + 1]];
+      const [x2, y2] = [pts[(2 * i + 2) % pts.length], pts[(2 * i + 3) % pts.length]];
+      if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) xs.push(x1 + ((y - y1) * (x2 - x1)) / (y2 - y1));
+    }
+    xs.sort((u, v) => u - v);
+    for (let k = 0; k + 1 < xs.length; k += 2) rows.push([y, Math.ceil(xs[k]), Math.floor(xs[k + 1])]);
+  }
+  return rows;
+}
+
 /** Sutherland-Hodgman clip of a closed polygon (flat x,y list) to the picture rectangle. */
-function clipToPicture(flat: number[]): number[] {
+function clipToPicture(flat: number[], W: number, H: number): number[] {
   let pts: Array<[number, number]> = [];
   for (let i = 0; i < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
   const edges: Array<[(p: [number, number]) => boolean, (a: [number, number], b: [number, number]) => [number, number]]> = [
     [(p) => p[0] >= 0, (a, b) => [0, a[1] + ((b[1] - a[1]) * (0 - a[0])) / (b[0] - a[0])]],
-    [(p) => p[0] <= PIC_WIDTH - 1, (a, b) => [PIC_WIDTH - 1, a[1] + ((b[1] - a[1]) * (PIC_WIDTH - 1 - a[0])) / (b[0] - a[0])]],
+    [(p) => p[0] <= W - 1, (a, b) => [W - 1, a[1] + ((b[1] - a[1]) * (W - 1 - a[0])) / (b[0] - a[0])]],
     [(p) => p[1] >= 0, (a, b) => [a[0] + ((b[0] - a[0]) * (0 - a[1])) / (b[1] - a[1]), 0]],
-    [(p) => p[1] <= PIC_HEIGHT - 1, (a, b) => [a[0] + ((b[0] - a[0]) * (PIC_HEIGHT - 1 - a[1])) / (b[1] - a[1]), PIC_HEIGHT - 1]],
+    [(p) => p[1] <= H - 1, (a, b) => [a[0] + ((b[0] - a[0]) * (H - 1 - a[1])) / (b[1] - a[1]), H - 1]],
   ];
   for (const [inside, cross] of edges) {
     const input = pts;
@@ -1107,16 +1544,16 @@ function clipToPicture(flat: number[]): number[] {
 }
 
 /** Liang-Barsky clip of the segment (x1,y1)-(x2,y2) to the picture; null if it is entirely off it. */
-function clipSegment(x1: number, y1: number, x2: number, y2: number): [number, number, number, number] | null {
+function clipSegment(x1: number, y1: number, x2: number, y2: number, W: number, H: number): [number, number, number, number] | null {
   const dx = x2 - x1;
   const dy = y2 - y1;
   let t0 = 0;
   let t1 = 1;
   const checks: Array<[number, number]> = [
     [-dx, x1],
-    [dx, PIC_WIDTH - 1 - x1],
+    [dx, W - 1 - x1],
     [-dy, y1],
-    [dy, PIC_HEIGHT - 1 - y1],
+    [dy, H - 1 - y1],
   ];
   for (const [p, q] of checks) {
     if (p === 0) {
@@ -1179,6 +1616,7 @@ const KNOWN_HINTS: Record<string, string> = {
   var: "declare variables with 'let name = …'",
   const: "declare variables with 'let name = …'",
   elif: "use 'else if'",
+  mode: "the picture mode is 'mode vga' (or 'mode agi', the default) on a line of its own at the top of the scene",
 };
 
 function suggest(name: string): string {

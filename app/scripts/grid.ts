@@ -3,8 +3,8 @@
 //
 //   pnpm grid <image> [--name <name>] [--anchor center|top|bottom|left|right]
 //                     [--crop x,y,w,h] [--max-squash <0-0.5>] [--tile CxR:c,r] [--trim]
-//                     [--brighten [<gamma>]] [--fit] [--out <dir>]
-//   pnpm grid <layout.txt> [--name <name>] [--out <dir>]
+//                     [--brighten [<gamma>]] [--fit] [--vga] [--out <dir>]
+//   pnpm grid <layout.txt> [--name <name>] [--vga] [--out <dir>]
 //
 // The picture is 160×168 logical pixels shown at 2:1, i.e. a 1.9:1 screen. Most images are a
 // different shape, so the image is REFRAMED first: it is cropped to within --max-squash (default
@@ -41,6 +41,10 @@
 //   strokes.pic    (--fit images with paint) every stroke's points as PicScript lists to paste
 //   paint.png      (--fit images with paint) the ink in its own colours, for `render --overlay`
 //
+// --vga prepares for a `mode vga` scene instead: the picture is 320×200 with square pixels (a 1.6:1
+// screen), so everything above is measured in VGA picture coordinates (x 0-319, y 0-199):
+// picture.png is 320×200, view.png and the overlays 960×600, and the grids are labelled to match.
+//
 // The grid is a measuring aid only: choose colours by eye, never by sampling these images.
 // Needs ImageMagick 7 (`magick`). Exit codes: 0 ok, 1 ImageMagick failed, 2 bad arguments.
 import { execFileSync } from 'node:child_process';
@@ -48,13 +52,14 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { basename, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PIC_HEIGHT, PIC_WIDTH } from '../src/engine/framebuffer.ts';
+import { PIC, usePicture } from './lib/geometry.ts';
 import { readPng, resampleRgba } from './lib/png.ts';
 import { blobTable, CELL_H, CELL_W, inkBlobs, inkOverlay, layoutLabelArgs, layoutMvg, layoutTable, paperField, parseLayout, type InkBlob, type Layout } from './lib/sketch.ts';
 import { attachWords, brushStrokes, paintOverlay, strokesPic, strokeTable, type StrokeResult } from './lib/strokes.ts';
 import { PNG } from 'pngjs';
 
-const SCREEN_ASPECT = (PIC_WIDTH * 2) / PIC_HEIGHT; // 320:168 ≈ 1.905
+/** The screen's shape: 320:168 ≈ 1.905 for AGI (2:1 pixels), 320:200 = 1.6 for VGA. */
+const screenAspect = () => (PIC.width * PIC.aspect) / PIC.height;
 
 class UsageError extends Error {}
 class MagickError extends Error {}
@@ -75,12 +80,14 @@ interface Args {
   fit: boolean;
   /** an ASCII layout (.txt) rather than an image */
   layout: boolean;
+  /** prepare for a `mode vga` scene: a 320×200 picture with square pixels */
+  vga: boolean;
   out: string;
 }
 
 function parseArgs(argv: string[]): Args {
   let image: string | undefined;
-  const a: Omit<Args, 'image'> = { anchor: 'center', maxSquash: 0.15, out: 'out/source', trim: false, fit: false, layout: false };
+  const a: Omit<Args, 'image'> = { anchor: 'center', maxSquash: 0.15, out: 'out/source', trim: false, fit: false, layout: false, vga: false };
   const given = new Set<string>();
   const value = (i: number, name: string) => {
     const v = argv[i];
@@ -94,6 +101,7 @@ function parseArgs(argv: string[]): Args {
     if (v === '--name') a.name = value(++i, '--name');
     else if (v === '--trim') a.trim = true;
     else if (v === '--fit') a.fit = true;
+    else if (v === '--vga') a.vga = true;
     else if (v === '--brighten') {
       const next = argv[i + 1];
       // a number after --brighten is its gamma, unless it is the name of an existing file
@@ -138,7 +146,7 @@ function parseArgs(argv: string[]): Args {
     for (const o of ['--anchor', '--max-squash']) if (given.has(o)) throw new UsageError(`${o} chooses what to crop; --fit keeps everything, so they don't go together`);
   }
   if (/\.txt$/i.test(image)) {
-    const extra = [...given].filter((o) => !['--name', '--out', '--fit'].includes(o));
+    const extra = [...given].filter((o) => !['--name', '--out', '--fit', '--vga'].includes(o));
     if (extra.length) throw new UsageError(`${extra.join(', ')} can't be used with an ASCII layout (.txt): the frame is the picture's edge`);
     a.layout = true;
     a.fit = true;
@@ -159,19 +167,19 @@ function magick(args: string[]): string {
 }
 
 /** Squash needed to show a w×h region on the 1.9:1 screen (0 = none). */
-const squashOf = (w: number, h: number) => (w / h < SCREEN_ASPECT ? 1 - w / h / SCREEN_ASPECT : 1 - SCREEN_ASPECT / (w / h));
+const squashOf = (w: number, h: number) => (w / h < screenAspect() ? 1 - w / h / screenAspect() : 1 - screenAspect() / (w / h));
 
 /** How a --fit region is stretched on the 1.9:1 screen, in words. */
 export function stretchOf(w: number, h: number): string {
-  const r = w / h / SCREEN_ASPECT; // > 1: wider than the screen, so squeezed horizontally
+  const r = w / h / screenAspect(); // > 1: wider than the screen, so squeezed horizontally
   if (Math.abs(r - 1) < 0.005) return 'no distortion';
   return r > 1 ? `shapes come out ${r.toFixed(2)}× narrower than drawn` : `shapes come out ${(1 / r).toFixed(2)}× wider than drawn`;
 }
 
 /** The region of a w×h image to keep, so that at most `maxSquash` squashing reaches 1.9:1. */
 export function reframe(w: number, h: number, maxSquash: number, anchor: Anchor): { x: number; y: number; w: number; h: number; squash: number } {
-  const tallest = SCREEN_ASPECT * (1 - maxSquash); // narrower than this: crop height
-  const widest = SCREEN_ASPECT / (1 - maxSquash); // wider than this: crop width
+  const tallest = screenAspect() * (1 - maxSquash); // narrower than this: crop height
+  const widest = screenAspect() / (1 - maxSquash); // wider than this: crop width
   let cw = w;
   let ch = h;
   // round inward, so rounding never pushes the squash past the limit
@@ -300,18 +308,18 @@ function run(args: Args) {
     }
     const look = gamma > 1 ? ['-gamma', String(gamma)] : [];
 
-    // 160×168 full-colour picture, and the on-screen view (2:1 pixels → 960×504 at ×3)
-    magick([...src, '-resize', `${PIC_WIDTH}x${PIC_HEIGHT}!`, join(dir, 'picture.png')]);
-    magick([...src, ...look, '-resize', `${PIC_WIDTH * 6}x${PIC_HEIGHT * 3}!`, join(dir, 'view.png')]);
+    // full-colour picture (160×168; 320×200 VGA), and the on-screen view at ×3 (2:1 pixels → 960×504; VGA 960×600)
+    magick([...src, '-resize', `${PIC.width}x${PIC.height}!`, join(dir, 'picture.png')]);
+    magick([...src, ...look, '-resize', `${PIC.width * PIC.aspect * 3}x${PIC.height * 3}!`, join(dir, 'view.png')]);
 
     // gridded overview (×4) and four zoomed quarters (×8), smooth-scaled from the source so
     // details stay legible, in picture coordinates
     const zoomed = join(work, 'zoom8.png');
-    magick([...src, ...look, '-resize', `${PIC_WIDTH * 8}x${PIC_HEIGHT * 8}!`, zoomed]);
-    writeFileSync(join(work, 'grid.mvg'), gridMvg(0, 0, PIC_WIDTH, PIC_HEIGHT, 4, 20));
-    magick([zoomed, '-resize', `${PIC_WIDTH * 4}x${PIC_HEIGHT * 4}!`, '-draw', `@${join(work, 'grid.mvg')}`, join(dir, 'grid.png')]);
-    const hw = PIC_WIDTH / 2;
-    const hh = PIC_HEIGHT / 2;
+    magick([...src, ...look, '-resize', `${PIC.width * 8}x${PIC.height * 8}!`, zoomed]);
+    writeFileSync(join(work, 'grid.mvg'), gridMvg(0, 0, PIC.width, PIC.height, 4, 20));
+    magick([zoomed, '-resize', `${PIC.width * 4}x${PIC.height * 4}!`, '-draw', `@${join(work, 'grid.mvg')}`, join(dir, 'grid.png')]);
+    const hw = PIC.width / 2;
+    const hh = PIC.height / 2;
     for (const [q, qx, qy] of [['tl', 0, 0], ['tr', hw, 0], ['bl', 0, hh], ['br', hw, hh]] as const) {
       writeFileSync(join(work, `grid-${q}.mvg`), gridMvg(qx, qy, hw, hh, 8, 10));
       magick([zoomed, '-crop', `${hw * 8}x${hh * 8}+${qx * 8}+${qy * 8}`, '+repage', '-draw', `@${join(work, `grid-${q}.mvg`)}`, join(dir, `grid-${q}.png`)]);
@@ -323,8 +331,9 @@ function run(args: Args) {
       mode: args.layout ? 'layout' : args.fit ? 'fit' : 'reframe',
       normalisedSize: [iw, ih],
       region: { x: sx + region.x, y: sy + region.y, w: region.w, h: region.h },
-      scale: [PIC_WIDTH / region.w, PIC_HEIGHT / region.h],
+      scale: [PIC.width / region.w, PIC.height / region.h],
       picture: '(sx − region.x)·scale[0], (sy − region.y)·scale[1]; floor for the pixel',
+      ...(args.vga && { pictureSize: [PIC.width, PIC.height], pixelAspect: PIC.aspect, sceneMode: 'vga' }),
       ...(layout && { cells: [layout.w, layout.h], cellPixels: [CELL_W, CELL_H] }),
     };
     writeFileSync(join(dir, 'transform.json'), `${JSON.stringify(transform, null, 2)}\n`);
@@ -337,7 +346,7 @@ function run(args: Args) {
       // extract at the source's own resolution (capped at 4× view.png), so thin or pale marks
       // aren't blended away before the threshold, then shrink the overlay
       const nativePath = join(work, 'ink-src.png');
-      magick([...src, '-resize', `${PIC_WIDTH * 24}x${PIC_HEIGHT * 12}>`, nativePath]);
+      magick([...src, '-resize', `${PIC.width * PIC.aspect * 12}x${PIC.height * 12}>`, nativePath]);
       const native = readPng(nativePath);
       const img = { width: native.width, height: native.height, data: native.data };
       const paper = paperField(img);
@@ -347,16 +356,16 @@ function run(args: Args) {
         writeFileSync(join(dir, name), PNG.sync.write(png));
       };
       const inkNative = inkOverlay(img, paper);
-      writeOverlay(resampleRgba(inkNative, PIC_WIDTH * 6, PIC_HEIGHT * 3), 'ink.png');
+      writeOverlay(resampleRgba(inkNative, PIC.width * PIC.aspect * 3, PIC.height * 3), 'ink.png');
       // where the ink is: words, marks and line work, for reading label positions off an image
       // sketch (an ASCII layout has exact positions instead); thick paint goes to its own table
       if (!layout) {
         strokes = brushStrokes(img, paper);
         if (strokes.strokes.length) {
           for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) if (strokes.isBrush(x, y)) inkNative.data[(y * img.width + x) * 4 + 3] = 0;
-          writeOverlay(resampleRgba(paintOverlay(img, paper), PIC_WIDTH * 6, PIC_HEIGHT * 3), 'paint.png');
+          writeOverlay(resampleRgba(paintOverlay(img, paper), PIC.width * PIC.aspect * 3, PIC.height * 3), 'paint.png');
         }
-        blobs = inkBlobs(resampleRgba(inkNative, PIC_WIDTH * 6, PIC_HEIGHT * 3));
+        blobs = inkBlobs(resampleRgba(inkNative, PIC.width * PIC.aspect * 3, PIC.height * 3));
         writeFileSync(join(dir, 'blobs.json'), `${JSON.stringify(blobs, null, 2)}\n`);
         if (strokes.strokes.length) {
           attachWords(strokes.strokes, blobs);
@@ -372,7 +381,7 @@ function run(args: Args) {
     const how = layout
       ? ''
       : args.fit
-      ? `, fitted: x ×${(PIC_WIDTH / region.w).toFixed(3)}, y ×${(PIC_HEIGHT / region.h).toFixed(3)} (${stretchOf(region.w, region.h)})`
+      ? `, fitted: x ×${(PIC.width / region.w).toFixed(3)}, y ×${(PIC.height / region.h).toFixed(3)} (${stretchOf(region.w, region.h)})`
       : region.squash > 0.005 ? `, squashed ${(region.squash * 100).toFixed(0)}% to fit` : '';
     const trimmed = args.trim && !notes.some((n) => n.startsWith('--trim')) ? `, trimmed to ${sw}×${sh}` : '';
     const what = layout ? `${args.image}: ASCII layout, ${layoutTable(layout)}\n  drawn as ${iw}×${ih}` : (args.tile ? `tile ${args.tile.c},${args.tile.r} of ${args.image}` : `${args.image} (${iw}×${ih})`) + trimmed;
@@ -400,6 +409,7 @@ function run(args: Args) {
     if (args.brighten !== undefined) again.push('--brighten', String(args.brighten));
     if (!args.layout) again.push('--crop', `${region.x},${region.y},${region.w},${region.h}`);
     if (args.fit && !args.layout) again.push('--fit');
+    if (args.vga) again.push('--vga');
     if (args.name) again.push('--name', args.name);
     console.log(`  reproduce: ${again.map(shq).join(' ')}`);
   } finally {
@@ -408,7 +418,9 @@ function run(args: Args) {
 }
 
 try {
-  run(parseArgs(process.argv.slice(2)));
+  const args = parseArgs(process.argv.slice(2));
+  if (args.vga) usePicture('vga');
+  run(args);
 } catch (e) {
   if (e instanceof UsageError) {
     console.error(`grid: ${e.message}`);

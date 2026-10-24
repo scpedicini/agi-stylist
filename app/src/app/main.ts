@@ -3,7 +3,7 @@ import { Framebuffer, PIC_HEIGHT, PIC_WIDTH } from '../engine/framebuffer.ts';
 import type { Op } from '../engine/ops.ts';
 import { rgbToIndex } from '../engine/palette.ts';
 import { compileProgram, declaredVariants, formatDiagnostic, parse, PicError, type CompileResult } from '../lang/index.ts';
-import { SHOW_AGI_BYTES } from './config.ts';
+import { DISABLE_SPLASH_IN_DEV, SHOW_AGI_BYTES } from './config.ts';
 import { LISTED, SCENES, stdlibProgram, type SceneEntry } from './scenes.ts';
 import { Stage } from './sketch.ts';
 import { openWelcome, welcomeSeen } from './welcome/welcome.ts';
@@ -78,16 +78,20 @@ function drawFramebuffer(canvas: HTMLCanvasElement, fb: Framebuffer, mask?: Uint
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(framebufferCanvas(fb, mask), 0, 0, canvas.width, canvas.height);
+  // at display aspect, centred (a VGA picture is a little taller than the AGI-shaped canvases)
+  const aspect = (fb.width * fb.screen.aspect) / fb.height;
+  const w = Math.min(canvas.width, canvas.height * aspect);
+  const h = Math.min(canvas.height, canvas.width / aspect);
+  ctx.drawImage(framebufferCanvas(fb, mask), (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
 }
 
-/** The framebuffer as a 160×168 canvas, `mask`ed pixels in magenta. */
+/** The framebuffer as a canvas at its logical size (160×168 for AGI), `mask`ed pixels in magenta. */
 function framebufferCanvas(fb: Framebuffer, mask?: Uint8Array): HTMLCanvasElement {
   const off = document.createElement('canvas');
-  off.width = PIC_WIDTH;
-  off.height = PIC_HEIGHT;
+  off.width = fb.width;
+  off.height = fb.height;
   const octx = off.getContext('2d')!;
-  const img = octx.createImageData(PIC_WIDTH, PIC_HEIGHT);
+  const img = octx.createImageData(fb.width, fb.height);
   fb.toRGBA(img.data);
   if (mask) {
     for (let i = 0; i < mask.length; i++) {
@@ -283,6 +287,7 @@ function loadScene() {
   state.finalHash = execute(state.ops).hash();
   document.body.dataset.scene = scene.id;
   document.body.dataset.variant = r?.variant ?? '';
+  document.body.dataset.mode = r?.mode ?? 'agi';
   document.body.dataset.error = String(errors.length > 0);
 
   stage.opsPerFrame = SPEEDS[state.speed];
@@ -683,7 +688,8 @@ $('boot-status').remove();
 $('app').removeAttribute('aria-busy');
 document.body.classList.remove('booting');
 // first visit: the title screen, then on to the stage, painting its scene afresh now it's in view
-if (!welcomeSeen()) {
+const splashOff = DISABLE_SPLASH_IN_DEV && import.meta.env.DEV && !import.meta.env.VITE_FORCE_SPLASH;
+if (!welcomeSeen() && !splashOff) {
   openWelcome(() => {
     $('stage').focus({ preventScroll: true });
     restart();

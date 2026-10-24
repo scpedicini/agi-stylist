@@ -3,7 +3,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { execute, Painter } from '../../src/engine/execute.ts';
+import { execute, Painter, screenOf } from '../../src/engine/execute.ts';
+import { Framebuffer } from '../../src/engine/framebuffer.ts';
 import type { Op } from '../../src/engine/ops.ts';
 import { instructionMarks, Playback, playOrder, record } from '../../src/engine/playback.ts';
 import { compile, compileProgram, parse } from '../../src/lang/index.ts';
@@ -29,14 +30,16 @@ describe('Playback, played op by op', () => {
       for (const [name, ops] of ALL) {
         if (ops.some((o) => o.delay)) continue;
         const pb = new Playback(ops, { recorded });
-        const painter = new Painter();
-        painter.touched = new Uint8Array(160 * 168);
+        // the scene's own picture: AGI's 160×168, or a VGA screen with its palette
+        const painter = new Painter(new Framebuffer(undefined, screenOf(ops)));
+        painter.touched = new Uint8Array(painter.fb.pixels.length);
         const every = Math.max(1, Math.floor(ops.length / 12));
         for (let i = 0; i < ops.length; i++) {
           painter.apply(ops[i]);
           pb.step();
           if (i % every && i !== ops.length - 1) continue;
           expect(pb.fb.diffCount(painter.fb), `${name} at ${i + 1}`).toBe(0);
+          expect(pb.fb.palette, `${name} palette at ${i + 1}`).toEqual(painter.fb.palette);
           expect(Buffer.compare(pb.touched, painter.touched), `${name} painted pixels at ${i + 1}`).toBe(0);
         }
       }

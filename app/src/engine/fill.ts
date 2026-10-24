@@ -42,3 +42,36 @@ export function agiFill(fb: Framebuffer, x: number, y: number, color: number, on
   }
   return painted;
 }
+
+/**
+ * The VGA flood fill: like agiFill it only spreads into white (unpainted) pixels, 4-connected, but
+ * each pixel takes `colorAt(x, y)` (a dither or gradient may put white back), so it keeps its own
+ * record of the pixels it has visited.
+ */
+export function vgaFill(fb: Framebuffer, x: number, y: number, colorAt: (x: number, y: number) => number, onPaint?: (index: number) => void): number {
+  if (!fb.inBounds(x, y) || fb.get(x, y) !== WHITE) return 0;
+  const { width, height, pixels } = fb;
+  const seen = new Uint8Array(width * height);
+  const stack: number[] = [y * width + x];
+  seen[y * width + x] = 1;
+  let painted = 0;
+  while (stack.length) {
+    const i = stack.pop()!;
+    const px = i % width;
+    const py = (i - px) / width;
+    pixels[i] = colorAt(px, py);
+    onPaint?.(i);
+    painted++;
+    const visit = (j: number) => {
+      if (!seen[j] && pixels[j] === WHITE) {
+        seen[j] = 1;
+        stack.push(j);
+      }
+    };
+    if (px > 0) visit(i - 1);
+    if (px < width - 1) visit(i + 1);
+    if (py > 0) visit(i - width);
+    if (py < height - 1) visit(i + width);
+  }
+  return painted;
+}
