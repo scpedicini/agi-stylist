@@ -91,6 +91,8 @@ canvas { touch-action: auto !important; }
 body[data-mode="vga"] #stage canvas { width: auto !important; aspect-ratio: 320 / 200; margin: 0 auto; }
 /* an original picture sits under the (then partly transparent) canvas, stretched to the same frame */
 #original { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+/* …and pillarboxed with a VGA picture, like the canvas */
+body[data-mode="vga"] #original { left: 50%; right: auto; width: auto; aspect-ratio: 320 / 200; transform: translateX(-50%); }
 #original.smooth { image-rendering: auto; }
 #original.loading { visibility: hidden; }
 /* an AGI message window: white, with a red rule inset from its edge, and black BIOS-font text */

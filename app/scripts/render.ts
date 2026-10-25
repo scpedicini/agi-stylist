@@ -244,9 +244,10 @@ for (const file of args.files) {
       failed = true;
       continue;
     }
-    if ((args.beside || overlay) && (r.mode === 'vga') !== (P().mode === 'vga')) {
+    // (a --crop too: measured against AGI's picture, it would cut a VGA scene short)
+    if ((args.beside || overlay || args.crop) && (r.mode === 'vga') !== (P().mode === 'vga')) {
       const made = P().mode === 'vga' ? `VGA (${P().width}×${P().height})` : `AGI (${P().width}×${P().height})`;
-      console.error(`${file}: this is a${r.mode === 'vga' ? " 'mode vga'" : 'n AGI'} scene, but --beside/--overlay were checked against the ${made} picture; render it on its own${r.mode === 'vga' ? " with a picture from 'pnpm grid <image> --vga'" : ''}`);
+      console.error(`${file}: this is a${r.mode === 'vga' ? " 'mode vga'" : 'n AGI'} scene, but --beside/--overlay/--crop were checked against the ${made} picture; render it on its own${r.mode === 'vga' && !args.crop ? " with a picture from 'pnpm grid <image> --vga'" : ''}`);
       failed = true;
       continue;
     }

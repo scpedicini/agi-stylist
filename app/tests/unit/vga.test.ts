@@ -104,6 +104,12 @@ describe('VGA palette', () => {
     const r = vga('print rgbof(mix(black, white, 0.5)), rgbof(shade("#808080", -1)), len(ramp(black, white, 5)), len(ramp([red, yellow, white], 9))');
     expect(r.logs[0]).toMatch(/\[130, 130, 130\] \[0, 0, 0\] 5 9$/);
   });
+
+  it('ramp takes its count named, but only once', () => {
+    expect(vga('print len(ramp(black, white, n: 4)), len(ramp([red, blue], n: 4))').logs[0]).toMatch(/4 4$/);
+    expect(() => vga('let r = ramp([red, blue], 3, n: 4)')).toThrow(/not both counts/);
+    expect(() => vga('let r = ramp([red, blue])')).toThrow(/ramp takes/);
+  });
 });
 
 describe('VGA patterns', () => {

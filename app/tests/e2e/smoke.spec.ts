@@ -76,9 +76,12 @@ for (const [route, width, height] of [
       await r.continue();
     });
     await page.goto(route, { waitUntil: 'commit' });
-    // the page shows once its fonts are in
-    await expect(page.locator('html')).not.toHaveClass(/fonts-loading/);
+    // the page shows once its fonts are in. Wait for the boot status first: at 'commit' the head
+    // script may not have added fonts-loading yet, and a page measured in the fallback font is wider
+    // (at 1335×900 the toolbar then wraps). The app gives up on the fonts after 3 s, so wait for them too.
     await expect(page.locator('#boot-status')).toHaveText('Loading scenes…');
+    await expect(page.locator('html')).not.toHaveClass(/fonts-loading/);
+    await page.waitForFunction(() => ['16px "IBM VGA"', '16px "IBM BIOS"'].every((f) => document.fonts.check(f)));
     await expect(page.locator('#prev')).toBeHidden();
     const before = await boxes();
     // the stage already fills its room

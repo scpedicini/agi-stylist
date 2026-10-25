@@ -161,7 +161,14 @@ describe.skipIf(!hasMagick)('pnpm render with a VGA reference', () => {
     const agiPic = join(tmp, 'agi.png');
     const r = tsx('app/scripts/render.ts', agi, scene, '--beside', agiPic, '--out', out);
     expect(r.status).toBe(1);
-    expect(r.stderr).toMatch(/is a 'mode vga' scene, but --beside\/--overlay were checked against the AGI \(160×168\) picture/);
+    expect(r.stderr).toMatch(/is a 'mode vga' scene, but --beside\/--overlay\/--crop were checked against the AGI \(160×168\) picture/);
+  });
+
+  it('a mixed batch crops the AGI scene, and refuses to cut the VGA one short', () => {
+    const r = tsx('app/scripts/render.ts', agi, scene, '--crop', '0,0,319,199', '--scale', '1', '--out', join(out, 'mixed'));
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/is a 'mode vga' scene, but --beside\/--overlay\/--crop were checked against the AGI \(160×168\) picture; render it on its own$/m);
+    expect(readPng(join(out, 'mixed', 'a.png')).width).toBe(320);
   });
 
   it('--compare stays AGI-only', () => {

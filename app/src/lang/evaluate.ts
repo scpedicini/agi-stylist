@@ -1324,7 +1324,10 @@ class Interpreter {
       let nv: Value;
       if (Array.isArray(v.a)) {
         stops = colourList(v.a, at, 'ramp');
-        nv = v.b;
+        // the count is the second argument here, but may be named n
+        if (v.b !== null && v.n !== null) throw new PicError('ramp takes (a, b, n) or ([colours], n), not both counts', at);
+        nv = v.b ?? v.n;
+        if (nv === null) throw new PicError('ramp takes (a, b, n) or ([colours], n)', at);
       } else {
         if (v.b === null || v.n === null) throw new PicError('ramp takes (a, b, n) or ([colours], n)', at);
         stops = [this.color(v.a, at), this.color(v.b, at)];

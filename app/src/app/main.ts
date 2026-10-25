@@ -78,11 +78,15 @@ function drawFramebuffer(canvas: HTMLCanvasElement, fb: Framebuffer, mask?: Uint
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // at display aspect, centred (a VGA picture is a little taller than the AGI-shaped canvases)
+  ctx.drawImage(framebufferCanvas(fb, mask), ...pictureRect(canvas, fb));
+}
+
+/** Where `fb` goes on `canvas`: at display aspect, centred (a VGA picture is a little taller than the AGI-shaped canvases). */
+function pictureRect(canvas: HTMLCanvasElement, fb: Framebuffer): [number, number, number, number] {
   const aspect = (fb.width * fb.screen.aspect) / fb.height;
   const w = Math.min(canvas.width, canvas.height * aspect);
   const h = Math.min(canvas.height, canvas.width / aspect);
-  ctx.drawImage(framebufferCanvas(fb, mask), (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+  return [(canvas.width - w) / 2, (canvas.height - h) / 2, w, h];
 }
 
 /** The framebuffer as a canvas at its logical size (160×168 for AGI), `mask`ed pixels in magenta. */
@@ -230,15 +234,17 @@ async function renderCompare() {
     const img = await loadImage(scene.originalUrl).catch(() => undefined);
     if (SCENES[state.index] !== scene || !state.compare) return;
     if (!img) return setScore("couldn't load the original");
+    // the original stretched to the picture's frame, as it is under the stage
     for (const c of [origCanvas, diffCanvas]) {
       const ctx = c.getContext('2d')!;
+      ctx.clearRect(0, 0, c.width, c.height);
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(img, 0, 0, c.width, c.height);
+      ctx.drawImage(img, ...pictureRect(c, rendered));
     }
     const ctx = diffCanvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.5;
-    ctx.drawImage(framebufferCanvas(rendered), 0, 0, diffCanvas.width, diffCanvas.height);
+    ctx.drawImage(framebufferCanvas(rendered), ...pictureRect(diffCanvas, rendered));
     ctx.globalAlpha = 1;
     setScore('overlay: the painting on its original');
     return;
